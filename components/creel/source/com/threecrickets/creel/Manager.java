@@ -487,7 +487,7 @@ public class Manager extends Notifier
 			Downloader downloader = new Downloader( 4, 4, this );
 			try
 			{
-				downloader.setDelay( 100 );
+				// downloader.setDelay( 100 );
 				for( Module module : identifiedModules )
 					for( Artifact artifact : module.getIdentifier().getArtifacts( directory, flat ) )
 					{
