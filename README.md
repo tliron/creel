@@ -43,22 +43,19 @@ JVM 8 comes with a great JavaScript engine that makes it a piece of cake to writ
         {group: 'org.jsoup', name: 'jsoup', version: '1.8.1'},
         {group: 'com.fasterxml.jackson', name: 'jackson'},
         {group: 'com.threecrickets.prudence', name: 'prudence'},
-        {group: 'jsslutils', name: 'jsslutils'} // download this only from the restlet repo
-    ]
+        {group: 'jsslutils', name: 'jsslutils'}]
     
     var local = false
     manager.repositories = [
         local ? {id: '3c', url: 'file:/Depot/Repository/'} : {id: '3c', url: 'http://repository.threecrickets.com/maven'},
         {id: 'restlet', url: 'http://maven.restlet.com', all: false},
-        {id: 'central', url: 'https://repo1.maven.org/maven2/'}
-    ]
+        {id: 'central', url: 'https://repo1.maven.org/maven2/'}]
     
     manager.rules = [
         {type: 'exclude', name: '*annotations*'},
         {type: 'excludeDependencies', group: 'org.apache.commons', name: 'commons-beanutils'},
         {type: 'rewriteVersion', group: 'com.beust', name: '*c?mmand*', newVersion: '1.35+'},
-        {type: 'repositories', group: 'jsslutils', repositories: ['restlet']}
-    ]
+        {type: 'repositories', group: 'jsslutils', repositories: 'restlet'}]
     
     manager.identify()
     manager.install('lib', true, false)
