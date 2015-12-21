@@ -24,6 +24,11 @@ And, actually, that's precisely the context in which Creel was created: it was s
 
 How does Creel compare to [Ivy](http://ant.apache.org/ivy/)? Well, Ivy can also be used to download Maven dependencies and integrates with Ant, but it's heavier and much more complex. We actually used Ivy for a long time, but found it too cumbersome to embed and extend. Creel was conceived as a light and fast replacement for Ivy.  
 
+TODO FOR VERSION 1.0
+
+* Handle upgrades
+* Integrate Sincerity packaging
+
 
 Embedded
 --------
