@@ -38,9 +38,7 @@ JVM 8 comes with a great JavaScript engine that makes it a piece of cake to writ
     var manager = new com.threecrickets.creel.Manager()
     manager.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true))
     
-    var local = false
-    
-    var modules = [
+    manager.modules = [
         {group: 'com.github.sommeri', name: 'less4j', version: '(,1.15.2)'},
         {group: 'org.jsoup', name: 'jsoup', version: '1.8.1'},
         {group: 'com.fasterxml.jackson', name: 'jackson'},
@@ -48,22 +46,19 @@ JVM 8 comes with a great JavaScript engine that makes it a piece of cake to writ
         {group: 'jsslutils', name: 'jsslutils'} // download this only from the restlet repo
     ]
     
-    var repositories = [
+    var local = false
+    manager.repositories = [
         local ? {id: '3c', url: 'file:/Depot/Repository/'} : {id: '3c', url: 'http://repository.threecrickets.com/maven'},
         {id: 'restlet', url: 'http://maven.restlet.com', all: false},
         {id: 'central', url: 'https://repo1.maven.org/maven2/'}
     ]
     
-    var rules = [
+    manager.rules = [
         {type: 'exclude', name: '*annotations*'},
         {type: 'excludeDependencies', group: 'org.apache.commons', name: 'commons-beanutils'},
         {type: 'rewriteVersion', group: 'com.beust', name: '*c?mmand*', newVersion: '1.35+'},
         {type: 'repositories', group: 'jsslutils', repositories: ['restlet']}
     ]
-    
-    manager.setExplicitModules(modules)
-    manager.setRepositories(repositories)
-    manager.setRules(rules)
     
     manager.identify()
     manager.install('lib', true, false)
