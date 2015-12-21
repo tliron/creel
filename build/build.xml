@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<project name="Creel" default="build" xmlns:creel="antlib:com.threecrickets.creel.ant">
+
+	<property name="root" location="${basedir}/.." />
+
+	<property file="${root}/build/private.properties" />
+	<property file="${root}/build/custom.properties" />
+	
+	<property name="component.source" location="${root}/components/${component}/source" />
+	<property name="component.resources" value="${root}/components/${component}/resources" />
+	<property name="component.notices" location="${root}/components/notices" />
+	
+	<property name="dependencies" location="${root}/dependencies" />
+
+	<property name="cache" location="${root}/build/cache" />
+	<property name="cache.classes" location="${cache}/classes" />
+	<property name="cache.jars" location="${cache}/jars" />
+	<property name="cache.maven.pom" location="${cache}/maven/pom" />
+	<property name="cache.maven.build" location="${cache}/maven/build" />
+
+	<property name="distribution" location="${root}/build/distribution" />
+	<property name="distribution.content" location="${distribution}/content" />
+	<property name="distribution.libraries" location="${distribution.content}/libraries" />
+	<property name="distribution.jars" location="${distribution.libraries}/jars" />
+	<property name="distribution.reference" location="${distribution.content}/reference" />
+	<property name="distribution.api" location="${distribution.reference}/documentation/api" />
+	<property name="distribution.source" location="${distribution.content}/reference/source" />
+
+	<taskdef resource="com/threecrickets/creel/ant/antlib.xml" uri="antlib:com.threecrickets.creel.ant" classpath="${dependencies}/libraries/jars/com.threecrickets.creel/creel/${creel.version}/creel.jar" />
+
+	<target name="dependencies" description="Resolve dependencies">
+		<creel:dependencies pathId="dependencies" destDir="cache/creel">
+			<module group="org.apache.ant" name="ant" version="1.8.4" />
+			<repository id="repo" url="${dependencies.repo}" />
+		</creel:dependencies>
+	</target>
+
+	<target name="classes" depends="dependencies" description="Compile Java code">
+		<mkdir dir="${cache.classes}" />
+		<javac srcdir="${component.source}" destdir="${cache.classes}" source="${compile.version}" target="${compile.version}" includeAntRuntime="no" debug="${compile.debug}" bootclasspath="${compile.boot}">
+			<classpath refid="dependencies" />
+			<exclude name="${compile.exclude.nashorn}" />
+		</javac>
+		<copy todir="${cache.classes}">
+			<fileset dir="${component.resources}" />
+		</copy>
+	</target>
+
+	<target name="javadocs" description="Create API documentation if not present">
+		<available file="${distribution.api}" property="javadocs-present" />
+		<antcall target="javadocs-overwrite" />
+	</target>
+
+	<target name="javadocs-overwrite" depends="dependencies" description="Create API documentation" unless="javadocs-present">
+		<javadoc
+			destdir="${distribution.api}" sourcepath="${component.source}" excludepackagenames="**.internal.*"
+			access="protected" source="${compile.version}"
+			windowtitle="${documentation.title} ${component.version}${component.version.postfix}" doctitle="${documentation.title} ${component.version}${component.version.postfix}"
+			author="true" splitindex="true" use="true" version="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false"
+			bootclasspath="${compile.boot}">
+			
+			<link href="${documentation.jvm}" />
+			<!-- Apache Ant has no online javadocs -->
+			<classpath refid="dependencies" />
+			<bottom>
+				<![CDATA[<i>${documentation.copyright}</i>]]>
+			</bottom>
+		</javadoc>
+	</target>
+	
+	<target name="libraries" depends="classes" description="Create jar">
+		<mkdir dir="${distribution.jars}" />
+		<jar destfile="${distribution.jars}/${component.group}/${component.artifact}/${component.version}${component.version.postfix}/${component.artifact}.jar" basedir="${cache.classes}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${component.group}:${component.artifact}" />
+				<attribute name="Implementation-Version" value="${component.version}${component.version.postfix}" />
+				<attribute name="Implementation-Vendor" value="Three Crickets" />
+				<attribute name="Main-Class" value="com.threecrickets.creel.Creel" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="distribution" depends="libraries, javadocs" description="Assemble distribution">
+		<copy todir="${distribution.source}/${component.group}/${component.artifact}/${component.version}${component.version.postfix}">
+			<fileset dir="${component.source}" />
+		</copy>
+		<copy todir="${distribution.content}">
+			<fileset dir="${component.notices}" />
+		</copy>
+	</target>
+	
+	<target name="deploy-maven" if="maven" depends="distribution" description="Deploy to Maven repository">
+		<delete dir="${cache.maven.pom}" />
+		<delete dir="${cache.maven.build}" />
+		<copy todir="${cache.maven.pom}">
+			<fileset dir="${root}/build/maven" excludes="**/*~" />
+			<filterchain>
+				<replacetokens>
+					<token key="VERSION" value="${component.version}${component.version.postfix}" />
+					<token key="DEPENDENCIES" value="${dependencies.repo}" />
+					<token key="CACHE" value="${cache.maven.build}" />
+					<token key="CONTENT" value="${distribution.content}" />
+				</replacetokens>
+			</filterchain>
+		</copy>
+		<exec executable="${maven}" dir="${cache.maven.pom}">
+			<arg value="deploy" />
+			<arg value="-DaltDeploymentRepository=default::default::${distribution.repo}" />
+		</exec>
+	</target>
+
+	<target name="package-zip" depends="distribution" description="Create distribution package">
+		<zip destfile="${distribution}/${component}-${component.version}${component.version.postfix}.zip">
+			<fileset dir="${distribution.content}" />
+		</zip>
+	</target>
+	
+	<target name="build" depends="distribution" description="Build distribution" />
+	
+	<target name="clean" description="Clean">
+		<delete dir="${cache}" />
+		<delete dir="${distribution}" />
+	</target>
+	
+	<target name="rebuild" depends="clean, build" description="First clean and then build distribution" />
+	
+</project>
