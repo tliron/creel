@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.threecrickets.creel.util.IoUtil;
+
 /**
  * @author Tal Liron
  */
@@ -33,7 +35,7 @@ public class Properties extends java.util.Properties
 
 	public Properties( File file ) throws IOException
 	{
-		load( new BufferedReader( new FileReader( file ) ) );
+		load( new BufferedReader( new FileReader( file ), IoUtil.BUFFER_SIZE ) );
 	}
 
 	//
@@ -64,9 +66,9 @@ public class Properties extends java.util.Properties
 	{
 		SortedMap<Integer, Map<String, ?>> configs = new TreeMap<Integer, Map<String, ?>>();
 
-		for( Object key : keySet() )
+		for( Map.Entry<Object, Object> entry : entrySet() )
 		{
-			String name = key.toString();
+			String name = entry.getKey().toString();
 			if( name.startsWith( type + '.' ) )
 			{
 				String[] parts = name.split( "\\." );
@@ -93,7 +95,7 @@ public class Properties extends java.util.Properties
 					configs.put( index, config );
 				}
 
-				config.put( attribute, get( key ) );
+				config.put( attribute, entry.getValue() );
 			}
 		}
 

@@ -12,6 +12,7 @@
 package com.threecrickets.creel;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +30,8 @@ import com.threecrickets.creel.downloader.internal.ConcurrentIdentificationConte
 import com.threecrickets.creel.event.EventHandlers;
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.exception.UnsupportedPlatformException;
+import com.threecrickets.creel.internal.ArtifactDatabase;
+import com.threecrickets.creel.internal.Command;
 import com.threecrickets.creel.internal.Conflicts;
 import com.threecrickets.creel.internal.IdentificationContext;
 import com.threecrickets.creel.internal.Modules;
@@ -477,10 +480,9 @@ public class Manager extends Notifier
 
 	public Iterable<Artifact> install( File directory, boolean overwrite, boolean flat )
 	{
-		Collection<Artifact> artifacts = new ArrayList<Artifact>();
-
 		String id = begin( "Installing" );
 
+		Collection<Artifact> installedArtifacts = new ArrayList<Artifact>();
 		int count;
 		if( isMultithreaded() )
 		{
@@ -496,7 +498,8 @@ public class Manager extends Notifier
 								module.getIdentifier().getRepository().validateFileTask( module.getIdentifier(), artifact.getFile(), this, downloader.getPhaser() ) );
 						else
 							module.getIdentifier().getRepository().validateFile( module.getIdentifier(), artifact.getFile(), this );
-						artifacts.add( artifact );
+						// TODO: but was it really installed?
+						installedArtifacts.add( artifact );
 					}
 				downloader.waitUntilDone();
 			}
@@ -512,9 +515,42 @@ public class Manager extends Notifier
 			count = 0;
 		}
 
-		end( id, "Installed " + count + ( count != 1 ? " artifacts" : " artifact" ) );
+		end( id, "Installed " + count + ( count != 1 ? " new artifacts" : " new artifact" ) );
 
-		return Collections.unmodifiableCollection( artifacts );
+		File db = new File( ".creel" );
+		try
+		{
+			File rootDir = new File( "" ).getCanonicalFile();
+			ArtifactDatabase knownArtifacts = new ArtifactDatabase( db, rootDir );
+
+			Iterable<Artifact> redundantArtifacts = knownArtifacts.getRedundantArtifacts( installedArtifacts );
+			if( redundantArtifacts.iterator().hasNext() )
+			{
+				id = begin( "Deleting redundant artifacts" );
+				int deletedCount = 0;
+				for( Artifact redundantArtifact : redundantArtifacts )
+				{
+					if( redundantArtifact.delete( rootDir ) )
+					{
+						info( "Deleted " + redundantArtifact.getFile() );
+						knownArtifacts.removeArtifact( redundantArtifact );
+						deletedCount++;
+					}
+					else
+						error( "Could not delete " + redundantArtifact.getFile() );
+				}
+				end( id, "Deleted " + deletedCount + ( deletedCount != 1 ? " redundant artifacts" : " redundant artifact" ) );
+			}
+
+			knownArtifacts.addArtifacts( installedArtifacts );
+			knownArtifacts.save();
+		}
+		catch( IOException x )
+		{
+			error( "Could not save artifact database to " + db, x );
+		}
+
+		return Collections.unmodifiableCollection( installedArtifacts );
 	}
 
 	@SuppressWarnings("unchecked")

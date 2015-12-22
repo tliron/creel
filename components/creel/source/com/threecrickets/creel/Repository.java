@@ -17,6 +17,7 @@ import java.util.Objects;
 import java.util.concurrent.Phaser;
 
 import com.threecrickets.creel.event.Notifier;
+import com.threecrickets.creel.internal.Command;
 import com.threecrickets.creel.util.ConfigHelper;
 
 /**

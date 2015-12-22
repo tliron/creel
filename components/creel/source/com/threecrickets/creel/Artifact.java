@@ -13,6 +13,7 @@ package com.threecrickets.creel;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Objects;
 
 /**
  * @author Tal Liron
@@ -23,31 +24,78 @@ public class Artifact
 	// Construction
 	//
 
-	public Artifact( URL sourceUrl, File file )
+	public Artifact( File file, URL sourceUrl )
 	{
-		super();
-		this.sourceUrl = sourceUrl;
 		this.file = file;
+		this.sourceUrl = sourceUrl;
 	}
 
 	//
 	// Attributes
 	//
 
-	public URL getSourceUrl()
-	{
-		return sourceUrl;
-	}
-
 	public File getFile()
 	{
 		return file;
 	}
 
+	public URL getSourceUrl()
+	{
+		return sourceUrl;
+	}
+
+	//
+	// Operations
+	//
+
+	public boolean delete( File root )
+	{
+		File file = getFile();
+		while( true )
+		{
+			if( file.isDirectory() )
+			{
+				if( !file.delete() )
+					break;
+			}
+			else if( file.exists() && !file.delete() )
+				return false;
+			file = file.getParentFile();
+			if( ( file == null ) || file.equals( root ) )
+				break;
+		}
+		return true;
+	}
+
+	//
+	// Objects
+	//
+
+	@Override
+	public String toString()
+	{
+		return "file:" + getFile() + ", sourceUrl: " + getSourceUrl();
+	}
+
+	@Override
+	public boolean equals( Object object )
+	{
+		if( ( object == null ) || ( getClass() != object.getClass() ) )
+			return false;
+		Artifact artifact = (Artifact) object;
+		return getFile().equals( artifact.getFile() );
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash( getFile() );
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final URL sourceUrl;
-
 	private final File file;
+
+	private final URL sourceUrl;
 }

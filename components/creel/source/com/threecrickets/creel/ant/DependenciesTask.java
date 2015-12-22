@@ -24,6 +24,7 @@ import org.apache.tools.ant.types.resources.FileResource;
 
 import com.threecrickets.creel.Artifact;
 import com.threecrickets.creel.Manager;
+import com.threecrickets.creel.ant.internal.DynamicType;
 import com.threecrickets.creel.event.ConsoleEventHandler;
 import com.threecrickets.creel.event.EventHandlers;
 import com.threecrickets.creel.internal.Properties;
@@ -119,23 +120,23 @@ public class DependenciesTask extends Task
 	// Operations
 	//
 
-	public Config createModule()
+	public DynamicType createModule()
 	{
-		Config config = new Config();
+		DynamicType config = new DynamicType();
 		modules.add( config );
 		return config;
 	}
 
-	public Config createRepository()
+	public DynamicType createRepository()
 	{
-		Config config = new Config();
+		DynamicType config = new DynamicType();
 		repositories.add( config );
 		return config;
 	}
 
-	public Config createRule()
+	public DynamicType createRule()
 	{
-		Config config = new Config();
+		DynamicType config = new DynamicType();
 		rules.add( config );
 		return config;
 	}

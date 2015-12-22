@@ -94,6 +94,8 @@ public abstract class IoUtil
 		}
 	}
 
+	// Copy
+
 	/**
 	 * Copies entire channels.
 	 * 
@@ -249,6 +251,8 @@ public abstract class IoUtil
 		Files.createDirectories( target.toPath().getParent() );
 		Files.copy( source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING );
 	}
+
+	// Read
 
 	/**
 	 * Reads all bytes from a URL. If you know the URL is of a file and you
