@@ -60,12 +60,14 @@ public class Version implements Comparable<Version>
 
 		if( version.isEmpty() )
 		{
+			isNull = true;
 			parsed = false;
 			parts = null;
 			extra = 0.0;
 			return;
 		}
 
+		isNull = false;
 		boolean parsed = false;
 		int[] parts = null;
 		double extra = 0.0;
@@ -147,6 +149,11 @@ public class Version implements Comparable<Version>
 	// Attributes
 	//
 
+	public boolean isNull()
+	{
+		return isNull;
+	}
+
 	public String getText()
 	{
 		return text;
@@ -175,6 +182,13 @@ public class Version implements Comparable<Version>
 	{
 		if( version == null )
 			throw new NullPointerException();
+
+		if( isNull() && version.isNull() )
+			return 0;
+		else if( isNull() && !version.isNull() )
+			return -1;
+		else if( !isNull() && version.isNull() )
+			return 1;
 
 		// Non-parseable versions will revert to a lexigraphic comparison
 		if( !isParsed() || !version.isParsed() )
@@ -241,6 +255,8 @@ public class Version implements Comparable<Version>
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private final boolean isNull;
 
 	private final boolean parsed;
 

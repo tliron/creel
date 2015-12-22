@@ -39,6 +39,7 @@ public class Creel
 
 		String propertiesPath = argumentsHelper.getString( "properties", "p", "creel.properties" );
 		String destinationPath = argumentsHelper.getString( "destination", "d", "lib" );
+		String databasePath = argumentsHelper.getString( "database", "b", null );
 		String defaultPlatform = argumentsHelper.getString( "platform", "l", "maven" );
 		boolean quiet = argumentsHelper.hasSwitch( "quiet", "q" );
 		boolean ansi = argumentsHelper.hasSwitch( "ansi", "a" );
@@ -62,7 +63,7 @@ public class Creel
 			manager.setRules( properties.getRuleConfigs() );
 
 			manager.identify();
-			manager.install( destinationPath, overwrite, flat );
+			manager.install( destinationPath, databasePath, overwrite, flat );
 		}
 		catch( Throwable x )
 		{
@@ -79,6 +80,7 @@ public class Creel
 		System.out.println( "  --help, -h              Show this help" );
 		System.out.println( "  --properties=, -p       Use this properties file (default: creel.properties)" );
 		System.out.println( "  --destination=, -d      Download to this directory (default: lib)" );
+		System.out.println( "  --database=, -b         Artifact database file (default: [destination]/.creel)" );
 		System.out.println( "  --platform=, -l         Set the default platform (default: maven)" );
 		System.out.println( "  --quiet, -q             Quiet mode: don't output anything" );
 		System.out.println( "  --ansi, -a              ANSI terminal output: pretty colors and animations" );

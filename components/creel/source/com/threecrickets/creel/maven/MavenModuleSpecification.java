@@ -81,7 +81,7 @@ public class MavenModuleSpecification extends ModuleSpecification
 		if( ( group == null ) || ( name == null ) )
 			throw new RuntimeException();
 		String version = configHelper.getString( "version" );
-		strict = configHelper.getBoolean( "strict" );
+		strict = configHelper.getBoolean( "strict", false );
 		options.add( new SpecificationOption( group, name, version, strict ) );
 	}
 

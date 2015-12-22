@@ -330,7 +330,10 @@ public class Manager extends Notifier
 		identifiedModules.sortByIdentifiers();
 		unidentifiedModules.sortBySpecifications();
 
-		end( id, "Made " + count + ( count != 1 ? " identifications" : " identification" ) );
+		if( count == 0 )
+			end( id, "No modules identified" );
+		else
+			end( id, "Made " + count + ( count != 1 ? " identifications" : " identification" ) );
 	}
 
 	/**
@@ -473,16 +476,31 @@ public class Manager extends Notifier
 			}
 	}
 
-	public Iterable<Artifact> install( String directory, boolean overwrite, boolean flat )
+	public Iterable<Artifact> install( String directory )
 	{
-		return install( new File( directory ), overwrite, flat );
+		return install( directory, null, false, false );
 	}
 
-	public Iterable<Artifact> install( File directory, boolean overwrite, boolean flat )
+	public Iterable<Artifact> install( String directory, String databaseFile, boolean overwrite, boolean flat )
+	{
+		return install( new File( directory ), databaseFile != null ? new File( databaseFile ) : null, overwrite, flat );
+	}
+
+	public Iterable<Artifact> install( File directory, File databaseFile, boolean overwrite, boolean flat )
 	{
 		String id = begin( "Installing" );
-
 		Collection<Artifact> installedArtifacts = new ArrayList<Artifact>();
+
+		try
+		{
+			directory = directory.getCanonicalFile();
+		}
+		catch( IOException x )
+		{
+			fail( id, "Could not access directory: " + directory );
+			return Collections.unmodifiableCollection( installedArtifacts );
+		}
+
 		int count;
 		if( isMultithreaded() )
 		{
@@ -515,13 +533,17 @@ public class Manager extends Notifier
 			count = 0;
 		}
 
-		end( id, "Installed " + count + ( count != 1 ? " new artifacts" : " new artifact" ) );
+		if( count == 0 )
+			end( id, "No new artifacts to install" );
+		else
+			end( id, "Installed " + count + ( count != 1 ? " new artifacts" : " new artifact" ) );
 
-		File db = new File( ".creel" );
+		if( databaseFile == null )
+			databaseFile = new File( directory, ".creel" );
+
 		try
 		{
-			File rootDir = new File( "" ).getCanonicalFile();
-			ArtifactDatabase knownArtifacts = new ArtifactDatabase( db, rootDir );
+			ArtifactDatabase knownArtifacts = new ArtifactDatabase( databaseFile, directory );
 
 			Iterable<Artifact> redundantArtifacts = knownArtifacts.getRedundantArtifacts( installedArtifacts );
 			if( redundantArtifacts.iterator().hasNext() )
@@ -530,7 +552,7 @@ public class Manager extends Notifier
 				int deletedCount = 0;
 				for( Artifact redundantArtifact : redundantArtifacts )
 				{
-					if( redundantArtifact.delete( rootDir ) )
+					if( redundantArtifact.delete( directory ) )
 					{
 						info( "Deleted " + redundantArtifact.getFile() );
 						knownArtifacts.removeArtifact( redundantArtifact );
@@ -547,7 +569,7 @@ public class Manager extends Notifier
 		}
 		catch( IOException x )
 		{
-			error( "Could not save artifact database to " + db, x );
+			error( "Could not save artifact database to " + databaseFile, x );
 		}
 
 		return Collections.unmodifiableCollection( installedArtifacts );

@@ -86,6 +86,11 @@ public class DependenciesTask extends Task
 		this.destDir = destDir;
 	}
 
+	public void setDatabase( FileResource database )
+	{
+		this.database = database;
+	}
+
 	public void setOverwrite( boolean overwrite )
 	{
 		this.overwrite = overwrite;
@@ -180,7 +185,7 @@ public class DependenciesTask extends Task
 		manager.setRules( rules );
 
 		manager.identify();
-		Iterable<Artifact> artifacts = manager.install( destDir.getFile(), overwrite, flat );
+		Iterable<Artifact> artifacts = manager.install( destDir.getFile(), database != null ? database.getFile() : null, overwrite, flat );
 
 		if( pathId != null )
 		{
@@ -204,7 +209,9 @@ public class DependenciesTask extends Task
 
 	private String pathId;
 
-	private FileResource destDir = new FileResource( new File( "." ) );
+	private FileResource destDir = new FileResource( new File( "" ) );
+
+	private FileResource database = null;
 
 	private boolean overwrite;
 

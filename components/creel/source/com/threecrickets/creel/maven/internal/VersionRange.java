@@ -66,8 +66,8 @@ public class VersionRange
 
 	public boolean allows( Version version )
 	{
-		int compareStart = getStart() != null ? version.compareTo( getStart() ) : 1;
-		int compareEnd = getEnd() != null ? getEnd().compareTo( version ) : 1;
+		int compareStart = !getStart().isNull() ? version.compareTo( getStart() ) : 1;
+		int compareEnd = !getEnd().isNull() ? getEnd().compareTo( version ) : 1;
 
 		if( isIncludeStart() && isIncludeEnd() )
 			return ( compareStart >= 0 ) && ( compareEnd >= 0 );
