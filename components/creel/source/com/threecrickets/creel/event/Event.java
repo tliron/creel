@@ -18,7 +18,7 @@ public class Event
 {
 	public enum Type
 	{
-		INFO, BEGIN, END, FAIL, UPDATE, ERROR
+		INFO, BEGIN, END, FAIL, UPDATE, ERROR, DEBUG
 	}
 
 	//

@@ -12,7 +12,7 @@
 package com.threecrickets.creel.maven;
 
 import java.io.File;
-import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -88,14 +88,9 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 	{
 		MavenRepository repository = (MavenRepository) getRepository();
 		Collection<Artifact> artifacts = new ArrayList<Artifact>();
-		try
-		{
-			artifacts.add( new Artifact( repository.getFile( this, "jar", directory, flat ).getCanonicalFile(), repository.getUrl( this, "jar" ) ) );
-		}
-		catch( IOException x )
-		{
-			// TODO: notify?
-		}
+		File file = repository.getFile( this, "jar", directory, flat );
+		URL sourceUrl = repository.getUrl( this, "jar" );
+		artifacts.add( new Artifact( file, sourceUrl, false ) );
 		return Collections.unmodifiableCollection( artifacts );
 	}
 

@@ -35,7 +35,13 @@ public class MultiValueProperties extends SortedProperties
 
 	public Object put( int index, Object key, Object value )
 	{
-		return put( Integer.toString( index ) + '.' + key, value );
+		return put( Integer.toString( index ) + '.' + key, value.toString() );
+	}
+
+	public void putMap( int index, Map<String, Object> map )
+	{
+		for( Map.Entry<String, Object> entry : map.entrySet() )
+			put( index, entry.getKey(), entry.getValue() );
 	}
 
 	public Iterable<Map<String, String>> toMaps()

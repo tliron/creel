@@ -61,8 +61,7 @@ public class DownloadTask extends DownloaderTask implements IoUtil.ProgressListe
 		}
 		catch( Exception x )
 		{
-			getDownloader().getNotifier().error( x );
-			getDownloader().getNotifier().fail( id, "Could not download from " + getUrl() );
+			getDownloader().getNotifier().fail( id, "Could not download from " + getUrl(), x );
 		}
 		done();
 	}

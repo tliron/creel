@@ -69,7 +69,7 @@ public class Notifier
 
 	public void debug( CharSequence message )
 	{
-		// TODO
+		fireEvent( Event.Type.DEBUG, null, message, null, null );
 	}
 
 	public String begin( CharSequence message )
@@ -109,6 +109,11 @@ public class Notifier
 	public void fail( String id, CharSequence message )
 	{
 		fireEvent( Event.Type.FAIL, id, message, null, null );
+	}
+
+	public void fail( String id, CharSequence message, Throwable exception )
+	{
+		fireEvent( Event.Type.FAIL, id, message, null, exception );
 	}
 
 	public void error( CharSequence message )

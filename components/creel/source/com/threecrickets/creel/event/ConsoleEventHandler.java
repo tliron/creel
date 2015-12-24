@@ -13,13 +13,11 @@ package com.threecrickets.creel.event;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.Collection;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Tal Liron
  */
-public class ConsoleEventHandler implements EventHandler
+public class ConsoleEventHandler extends OngoingEventHandler
 {
 	//
 	// Construction
@@ -32,13 +30,127 @@ public class ConsoleEventHandler implements EventHandler
 
 	public ConsoleEventHandler( OutputStream out, boolean ansi )
 	{
-		this( new PrintWriter( out, true ), ansi );
+		this( new PrintWriter( out ), ansi );
 	}
 
 	public ConsoleEventHandler( PrintWriter out, boolean ansi )
 	{
 		this.out = out;
 		this.ansi = ansi;
+	}
+
+	//
+	// Attributes
+	//
+
+	public boolean isAnsi()
+	{
+		return ansi;
+	}
+
+	public PrintWriter getOut()
+	{
+		return out;
+	}
+
+	public String getEndGraphics()
+	{
+		return endGraphics;
+	}
+
+	public void setEndGraphics( String endGraphics )
+	{
+		this.endGraphics = endGraphics;
+	}
+
+	public String getFailGraphics()
+	{
+		return failGraphics;
+	}
+
+	public void setFailGraphics( String failGraphics )
+	{
+		this.failGraphics = failGraphics;
+	}
+
+	public String getErrorGraphics()
+	{
+		return errorGraphics;
+	}
+
+	public void setErrorGraphics( String errorGraphics )
+	{
+		this.errorGraphics = errorGraphics;
+	}
+
+	public String getOngoingGraphics()
+	{
+		return ongoingGraphics;
+	}
+
+	public void setOngoingGraphics( String ongoingGraphics )
+	{
+		this.ongoingGraphics = ongoingGraphics;
+	}
+
+	public String getDefaultGraphics()
+	{
+		return defaultGraphics;
+	}
+
+	public void setDefaultGraphics( String defaultGraphics )
+	{
+		this.defaultGraphics = defaultGraphics;
+	}
+
+	public int getProgressLength()
+	{
+		return progressLength;
+	}
+
+	public void setProgressLength( int progressLength )
+	{
+		this.progressLength = progressLength;
+	}
+
+	public String getProgressStart()
+	{
+		return progressStart;
+	}
+
+	public void setProgressStart( String progressStart )
+	{
+		this.progressStart = progressStart;
+	}
+
+	public String getProgressEnd()
+	{
+		return progressEnd;
+	}
+
+	public void setProgressEnd( String progressEnd )
+	{
+		this.progressEnd = progressEnd;
+	}
+
+	public String getProgressDone()
+	{
+		return progressDone;
+	}
+
+	public void setProgressDone( String progressDone )
+	{
+		this.progressDone = progressDone;
+	}
+
+	public String getProgressTodo()
+	{
+		return progressTodo;
+	}
+
+	public void setProgressTodo( String progressTodo )
+	{
+		this.progressTodo = progressTodo;
 	}
 
 	//
@@ -50,65 +162,35 @@ public class ConsoleEventHandler implements EventHandler
 		// Move up before the ongoing block we printed last time
 		int ongoingEventsHeight = ongoingEvents.size();
 		if( ongoingEventsHeight > 0 )
-			controlSequence( "" + ongoingEventsHeight + 'A' );
+			controlSequence( Integer.toString( ongoingEventsHeight ) + 'A' );
+
+		super.handleEvent( event );
 
 		Event.Type type = event.getType();
-		if( type == Event.Type.BEGIN )
-		{
-			// Add ongoing event
-			if( event.getId() != null )
-				ongoingEvents.add( event );
-		}
-		else if( ( type == Event.Type.END ) || ( type == Event.Type.FAIL ) )
-		{
-			// Remove ongoing event
-			String id = event.getId();
-			for( Event ongoingEvent : ongoingEvents )
-			{
-				if( ongoingEvent.getId().equals( id ) )
-				{
-					ongoingEvents.remove( ongoingEvent );
-					break;
-				}
-			}
-			// This line will take the place of the line we removed
-			controlSequence( ( type == Event.Type.FAIL ? failGraphics : endGraphics ) + 'm' );
-			print( event );
-		}
-		else if( type == Event.Type.UPDATE )
-		{
-			// Update ongoing event
-			String id = event.getId();
-			for( Event ongoingEvent : ongoingEvents )
-			{
-				if( ongoingEvent.getId().equals( id ) )
-				{
-					ongoingEvent.update( event );
-					break;
-				}
-			}
-		}
+		if( type == Event.Type.END )
+			controlSequence( getEndGraphics() + 'm' );
+		else if( type == Event.Type.FAIL )
+			controlSequence( getFailGraphics() + 'm' );
 		else if( type == Event.Type.ERROR )
-		{
-			controlSequence( errorGraphics + 'm' );
-			print( event );
-		}
-		else
-		{
-			controlSequence( defaultGraphics + 'm' );
-			print( event );
-		}
+			controlSequence( getErrorGraphics() + 'm' );
+		else if( type == Event.Type.INFO )
+			controlSequence( getDefaultGraphics() + 'm' );
 
-		// Print ongoing block after everything else
-		if( ansi )
+		if( ( type != Event.Type.BEGIN ) && ( type != Event.Type.UPDATE ) && ( type != Event.Type.DEBUG ) )
+			print( event );
+
+		// Print ongoing events block after everything else
+		if( isAnsi() )
 			for( Event ongoingEvent : ongoingEvents )
 			{
-				controlSequence( ongoingGraphics + 'm' );
+				controlSequence( getOngoingGraphics() + 'm' );
 				print( ongoingEvent );
 			}
 
 		// Erase to end of screen
 		controlSequence( "0J" );
+
+		getOut().flush();
 
 		return false;
 	}
@@ -119,6 +201,66 @@ public class ConsoleEventHandler implements EventHandler
 	protected int getTerminalWidth()
 	{
 		return Integer.MAX_VALUE;
+	}
+
+	protected void print( Event event )
+	{
+		StringBuilder output = new StringBuilder();
+
+		Double progress = event.getProgress();
+		if( progress != null )
+		{
+			output.append( getProgressStart() );
+			for( int i = 0; i < getProgressLength(); i++ )
+				output.append( ( ( progress * getProgressLength() ) > i ) ? getProgressDone() : getProgressTodo() );
+			// TODO: spinner at end
+			output.append( getProgressEnd() );
+		}
+
+		CharSequence message = null;
+		if( event.getMessage() != null )
+			message = event.getMessage();
+		else if( event.getException() != null )
+			message = event.getException().getMessage();
+		if( message != null )
+			output.append( message );
+
+		// We are making sure that we always advance one row only, even if we
+		// print a line longer than a row
+		int length = output.length();
+		int terminalWidth = getTerminalWidth();
+		if( length >= terminalWidth )
+		{
+			// Will automatically advance to the next line
+			getOut().print( output.substring( 0, terminalWidth ) );
+		}
+		else
+		{
+			getOut().print( output );
+			// Reset graphics and erase to end of line
+			controlSequence( "0m", "K" );
+			getOut().println();
+		}
+
+		// Exception stack trace
+		Throwable exception = event.getException();
+		if( exception != null )
+		{
+			controlSequence( getErrorGraphics() + 'm' );
+			exception.printStackTrace( getOut() );
+			controlSequence( "0m" );
+		}
+	}
+
+	protected void controlSequence( CharSequence... args )
+	{
+		if( !isAnsi() )
+			return;
+		for( CharSequence c : args )
+		{
+			getOut().print( CSI );
+			getOut().print( c );
+		}
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -132,8 +274,6 @@ public class ConsoleEventHandler implements EventHandler
 	private final PrintWriter out;
 
 	private final boolean ansi;
-
-	private Collection<Event> ongoingEvents = new CopyOnWriteArrayList<Event>();
 
 	private volatile String endGraphics = "32";
 
@@ -154,60 +294,4 @@ public class ConsoleEventHandler implements EventHandler
 	private volatile String progressDone = "=";
 
 	private volatile String progressTodo = " ";
-
-	private void print( Event event )
-	{
-		StringBuilder output = new StringBuilder();
-
-		Double progress = event.getProgress();
-		if( progress != null )
-		{
-			output.append( progressStart );
-			for( int i = 0; i < progressLength; i++ )
-				output.append( ( ( progress * progressLength ) > i ) ? progressDone : progressTodo );
-			// TODO: spinner at end
-			output.append( progressEnd );
-		}
-
-		CharSequence message = event.getMessage();
-		if( message != null )
-			output.append( message );
-
-		// We are making sure that we always advance one row only, even if we
-		// print a line longer than a row
-		int length = output.length();
-		int terminalWidth = getTerminalWidth();
-		if( length >= terminalWidth )
-		{
-			// Will automatically advance to the next line
-			out.print( output.substring( 0, terminalWidth ) );
-		}
-		else
-		{
-			out.print( output );
-			// Reset graphics and erase to end of line
-			controlSequence( "0m", "K" );
-			out.println();
-		}
-
-		// Exception stack trace
-		Throwable exception = event.getException();
-		if( exception != null )
-		{
-			controlSequence( this.errorGraphics + 'm' );
-			exception.printStackTrace( out );
-			controlSequence( "0m" );
-		}
-	}
-
-	private void controlSequence( CharSequence... args )
-	{
-		if( !ansi )
-			return;
-		for( CharSequence c : args )
-		{
-			out.print( CSI );
-			out.print( c );
-		}
-	}
 }

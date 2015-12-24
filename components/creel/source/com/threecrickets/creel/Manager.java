@@ -12,6 +12,7 @@
 package com.threecrickets.creel;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,8 +36,11 @@ import com.threecrickets.creel.internal.Command;
 import com.threecrickets.creel.internal.Conflicts;
 import com.threecrickets.creel.internal.IdentificationContext;
 import com.threecrickets.creel.internal.Modules;
+import com.threecrickets.creel.packaging.Package;
+import com.threecrickets.creel.packaging.Packaging;
 import com.threecrickets.creel.util.ClassUtil;
 import com.threecrickets.creel.util.ConfigHelper;
+import com.threecrickets.creel.util.DirectoryClassLoader;
 
 /**
  * Handles identifying and installing modules.
@@ -171,6 +175,58 @@ public class Manager extends Notifier
 	public void setMultithreaded( boolean multithreaded )
 	{
 		this.multithreaded = multithreaded;
+	}
+
+	public File getRootDir()
+	{
+		return rootDir;
+	}
+
+	public void setRootDir( String rootPath ) throws IOException
+	{
+		setRootDir( new File( rootPath ) );
+	}
+
+	public void setRootDir( File rootDir ) throws IOException
+	{
+		this.rootDir = rootDir.getCanonicalFile();
+		if( getStateFile() == null )
+			setStateFile( new File( getRootDir(), ".creel" ) );
+	}
+
+	public File getStateFile()
+	{
+		return stateFile;
+	}
+
+	public void setStateFile( String statePath ) throws IOException
+	{
+		setStateFile( new File( statePath ) );
+	}
+
+	public void setStateFile( File stateFile ) throws IOException
+	{
+		this.stateFile = stateFile.getCanonicalFile();
+	}
+
+	public boolean isOverwrite()
+	{
+		return overwrite;
+	}
+
+	public void setOverwrite( boolean overwrite )
+	{
+		this.overwrite = overwrite;
+	}
+
+	public boolean isFlat()
+	{
+		return flat;
+	}
+
+	public void setFlat( boolean flat )
+	{
+		this.flat = flat;
 	}
 
 	public Iterable<Module> getExplicitModules()
@@ -325,8 +381,19 @@ public class Manager extends Notifier
 
 		int count = identifiedModules.size();
 
-		resolveConflicts();
+		// Resolve conflicts
+		conflicts.find( getIdentifiedModules() );
+		conflicts.resolve( getConflictPolicy(), this );
+		for( Conflict conflict : getConflicts() )
+		{
+			for( Module reject : conflict.getRejects() )
+			{
+				identifiedModules.remove( reject.getIdentifier() );
+				replaceModule( reject, conflict.getChosen() );
+			}
+		}
 
+		// Sort for human readability
 		identifiedModules.sortByIdentifiers();
 		unidentifiedModules.sortBySpecifications();
 
@@ -334,245 +401,6 @@ public class Manager extends Notifier
 			end( id, "No modules identified" );
 		else
 			end( id, "Made " + count + ( count != 1 ? " identifications" : " identification" ) );
-	}
-
-	/**
-	 * Identifies a module, optionally identifying its dependencies recursively
-	 * (supporting efficient multithreaded parallelism that avoids repeating
-	 * work already done).
-	 * <p>
-	 * "Identification" means finding the best identifier available from all the
-	 * candidates in all the repositories that match the specification. A
-	 * successful identification results in the the module has an identifier. An
-	 * unidentified module has only a specification, but no identifier.
-	 * <p>
-	 * A cache of identified modules is maintained in the manager to avoid
-	 * identifying the same module twice.
-	 * 
-	 * @param module
-	 * @param recursive
-	 * @param concurrentContext
-	 */
-	public void identifyModule( final Module module, final boolean recursive, final ConcurrentIdentificationContext concurrentContext )
-	{
-		IdentificationContext context = new IdentificationContext( getRepositories(), recursive );
-
-		applyRules( module, context );
-
-		if( context.isExclude() )
-		{
-			// Mark to not identify this specification
-			unidentifiedModules.addBySpecification( module );
-		}
-		else
-		{
-			if( module.getIdentifier() != null )
-			{
-				// Nothing to do: already identified
-			}
-			else if( unidentifiedModules.get( module.getSpecification() ) != null )
-			{
-				// Nothing to do: already failed to identify this specification,
-				// no use trying again
-			}
-			else
-			{
-				// Check to see if we've already identified it
-				Module identifiedModule = identifiedModules.get( module.getSpecification() );
-				if( identifiedModule == null )
-				{
-					if( concurrentContext != null )
-					{
-						boolean alreadyIdentifying = !concurrentContext.beginIdentifyingIfNotIdentifying( module, new IdentifyModule( module, recursive, concurrentContext ) );
-						if( alreadyIdentifying )
-						{
-							// Another thread is already in the process of
-							// identifying this specification, so we'll wait for
-							// them to finish
-							final String id = begin( "Waiting for identification of " + module.getSpecification() );
-							concurrentContext.onIdentified( module, new IdentifiedModule( module, id ) );
-							return;
-						}
-					}
-
-					String id = begin( "Identifying " + module.getSpecification() );
-
-					// Gather allowed module identifiers from all repositories
-					Set<ModuleIdentifier> allowedModuleIdentifiers = new LinkedHashSet<ModuleIdentifier>();
-					for( Repository repository : context.getRepositories() )
-						for( ModuleIdentifier allowedModuleIdentifier : repository.getAllowedModuleIdentifiers( module.getSpecification(), this ) )
-							allowedModuleIdentifiers.add( allowedModuleIdentifier );
-
-					// Pick the best module identifier
-					if( !allowedModuleIdentifiers.isEmpty() )
-					{
-						LinkedList<ModuleIdentifier> moduleIdentifiers = new LinkedList<ModuleIdentifier>( allowedModuleIdentifiers );
-						Collections.sort( moduleIdentifiers );
-
-						// Best module is last (newest)
-						ModuleIdentifier moduleIdentifier = moduleIdentifiers.getLast();
-						identifiedModule = moduleIdentifier.getRepository().getModule( moduleIdentifier, this );
-
-						if( identifiedModule != null )
-							end( id, "Identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
-						else
-							fail( id, "Could not get module " + moduleIdentifier + " from " + moduleIdentifier.getRepository().getId() + " repository" );
-					}
-					else
-						fail( id, "Could not identify " + module.getSpecification() );
-				}
-				else
-				{
-					debug( "Already identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
-					identifiedCacheHits.incrementAndGet();
-				}
-
-				if( identifiedModule != null )
-					module.copyIdentificationFrom( identifiedModule );
-			}
-
-			addModule( module );
-		}
-
-		if( concurrentContext != null )
-			concurrentContext.notifyIdentified( module );
-
-		if( context.isRecursive() )
-		{
-			// Identify dependencies recursively
-			if( concurrentContext != null )
-			{
-				for( Module dependency : module.getDependencies() )
-					concurrentContext.identifyModule( new IdentifyModule( dependency, true, concurrentContext ) );
-			}
-			else
-			{
-				for( Module dependency : module.getDependencies() )
-					identifyModule( dependency, true, null );
-			}
-		}
-		else
-		{
-			// Add dependencies as is (unidentified)
-			for( Module dependency : module.getDependencies() )
-				addModule( dependency );
-		}
-	}
-
-	public void findConflicts()
-	{
-		conflicts.find( getIdentifiedModules() );
-	}
-
-	public void resolveConflicts()
-	{
-		findConflicts();
-		conflicts.resolve( getConflictPolicy(), this );
-		for( Conflict conflict : getConflicts() )
-			for( Module reject : conflict.getRejects() )
-			{
-				identifiedModules.remove( reject.getIdentifier() );
-				replaceModule( reject, conflict.getChosen() );
-			}
-	}
-
-	public Iterable<Artifact> install( String directory )
-	{
-		return install( directory, null, false, false );
-	}
-
-	public Iterable<Artifact> install( String directory, String databaseFile, boolean overwrite, boolean flat )
-	{
-		return install( new File( directory ), databaseFile != null ? new File( databaseFile ) : null, overwrite, flat );
-	}
-
-	public Iterable<Artifact> install( File directory, File databaseFile, boolean overwrite, boolean flat )
-	{
-		String id = begin( "Installing" );
-		Collection<Artifact> installedArtifacts = new ArrayList<Artifact>();
-
-		try
-		{
-			directory = directory.getCanonicalFile();
-		}
-		catch( IOException x )
-		{
-			fail( id, "Could not access directory: " + directory );
-			return Collections.unmodifiableCollection( installedArtifacts );
-		}
-
-		int count;
-		if( isMultithreaded() )
-		{
-			Downloader downloader = new Downloader( 4, 4, this );
-			try
-			{
-				// downloader.setDelay( 100 );
-				for( Module module : identifiedModules )
-					for( Artifact artifact : module.getIdentifier().getArtifacts( directory, flat ) )
-					{
-						if( overwrite || !artifact.getFile().exists() )
-							downloader.submit( artifact.getSourceUrl(), artifact.getFile(),
-								module.getIdentifier().getRepository().validateFileTask( module.getIdentifier(), artifact.getFile(), this, downloader.getPhaser() ) );
-						else
-							module.getIdentifier().getRepository().validateFile( module.getIdentifier(), artifact.getFile(), this );
-						// TODO: but was it really installed?
-						installedArtifacts.add( artifact );
-					}
-				downloader.waitUntilDone();
-			}
-			finally
-			{
-				downloader.close();
-				count = downloader.getCount();
-			}
-		}
-		else
-		{
-			// TODO
-			count = 0;
-		}
-
-		if( count == 0 )
-			end( id, "No new artifacts to install" );
-		else
-			end( id, "Installed " + count + ( count != 1 ? " new artifacts" : " new artifact" ) );
-
-		if( databaseFile == null )
-			databaseFile = new File( directory, ".creel" );
-
-		try
-		{
-			ArtifactDatabase knownArtifacts = new ArtifactDatabase( databaseFile, directory );
-
-			Iterable<Artifact> redundantArtifacts = knownArtifacts.getRedundantArtifacts( installedArtifacts );
-			if( redundantArtifacts.iterator().hasNext() )
-			{
-				id = begin( "Deleting redundant artifacts" );
-				int deletedCount = 0;
-				for( Artifact redundantArtifact : redundantArtifacts )
-				{
-					if( redundantArtifact.delete( directory ) )
-					{
-						info( "Deleted " + redundantArtifact.getFile() );
-						knownArtifacts.removeArtifact( redundantArtifact );
-						deletedCount++;
-					}
-					else
-						error( "Could not delete " + redundantArtifact.getFile() );
-				}
-				end( id, "Deleted " + deletedCount + ( deletedCount != 1 ? " redundant artifacts" : " redundant artifact" ) );
-			}
-
-			knownArtifacts.addArtifacts( installedArtifacts );
-			knownArtifacts.save();
-		}
-		catch( IOException x )
-		{
-			error( "Could not save artifact database to " + databaseFile, x );
-		}
-
-		return Collections.unmodifiableCollection( installedArtifacts );
 	}
 
 	@SuppressWarnings("unchecked")
@@ -619,7 +447,7 @@ public class Manager extends Notifier
 						if( id.equals( repository.getId() ) )
 						{
 							context.getRepositories().add( repository );
-							if( ids.length() == 0 )
+							if( ids.length() != 0 )
 								ids.append( ", " );
 							ids.append( id );
 						}
@@ -628,6 +456,291 @@ public class Manager extends Notifier
 			}
 			else
 				error( "Unsupported command: " + command.getType() );
+		}
+	}
+
+	public Iterable<Artifact> install()
+	{
+		if( getUnidentifiedModules().iterator().hasNext() )
+			throw new RuntimeException( "Cannot install because could not identify all modules" );
+
+		String id = begin( "Installing" );
+		Collection<Artifact> installedArtifacts = new ArrayList<Artifact>();
+
+		// Install modules
+
+		int count;
+		int threadsPerHost = isMultithreaded() ? 4 : 1;
+		int chunksPerFile = isMultithreaded() ? 4 : 1;
+		Downloader downloader = new Downloader( threadsPerHost, chunksPerFile, this );
+		try
+		{
+			// downloader.setDelay( 100 );
+			for( Module module : identifiedModules )
+			{
+				for( Artifact artifact : module.getIdentifier().getArtifacts( getRootDir(), isFlat() ) )
+				{
+					if( isOverwrite() || !artifact.getFile().exists() )
+						downloader.submit( artifact.getSourceUrl(), artifact.getFile(),
+							module.getIdentifier().getRepository().validateFileTask( module.getIdentifier(), artifact.getFile(), this, downloader.getPhaser() ) );
+					else
+						// Only validate
+						module.getIdentifier().getRepository().validateFile( module.getIdentifier(), artifact.getFile(), this );
+					installedArtifacts.add( artifact );
+				}
+			}
+			downloader.waitUntilDone();
+		}
+		finally
+		{
+			downloader.close();
+			count = downloader.getCount();
+		}
+
+		// Unpack packages
+
+		ArtifactDatabase knownArtifacts = null;
+		try
+		{
+			knownArtifacts = new ArtifactDatabase( getStateFile(), getRootDir() );
+		}
+		catch( FileNotFoundException x )
+		{
+		}
+		catch( IOException x )
+		{
+			error( "Could not load state from " + getStateFile(), x );
+		}
+
+		ClassLoader classLoader = new DirectoryClassLoader( getRootDir() );
+		Iterable<Package> packages = null;
+		try
+		{
+			packages = Packaging.getPackages( classLoader, getRootDir() );
+		}
+		catch( IOException x )
+		{
+			error( "Could not scan for packages", x );
+		}
+
+		if( packages != null )
+		{
+			for( Package thePackage : packages )
+			{
+				if( !thePackage.iterator().hasNext() )
+					continue;
+
+				String pId = begin( "Unpacking " + thePackage.getSourceFile() );
+				try
+				{
+					int pCount = 0;
+					for( Artifact artifact : thePackage )
+					{
+						boolean copy = false;
+
+						if( isOverwrite() || !artifact.exists() )
+							copy = true;
+						else
+						{
+							// TODO
+
+							Artifact knownArtifact = knownArtifacts != null ? knownArtifacts.getArtifact( artifact.getFile() ) : null;
+							if( knownArtifact != null )
+							{
+								if( artifact.isVolatile() )
+								{
+									if( !knownArtifact.hasChanged() )
+										copy = true;
+								}
+								else
+								{
+								}
+							}
+						}
+
+						if( copy )
+						{
+							artifact.copy( null );
+							artifact.updateDigest();
+							pCount++;
+							count++;
+						}
+
+						installedArtifacts.add( artifact );
+					}
+
+					if( pCount == 0 )
+						end( pId, "No new files unpacked from " + thePackage.getSourceFile() );
+					else
+						end( pId, "Unpacked " + pCount + ( pCount != 1 ? " new files from " : " file from " ) + thePackage.getSourceFile() );
+				}
+				catch( IOException x )
+				{
+					fail( pId, "Could not unpack " + thePackage.getSourceFile(), x );
+				}
+			}
+		}
+
+		if( count == 0 )
+			end( id, "No new artifacts to install" );
+		else
+			end( id, "Installed " + count + ( count != 1 ? " new artifacts" : " new artifact" ) );
+
+		// Delete redundant
+
+		if( knownArtifacts != null )
+		{
+			Iterable<Artifact> redundantArtifacts = knownArtifacts.getRedundantArtifacts( installedArtifacts );
+			if( redundantArtifacts.iterator().hasNext() )
+			{
+				id = begin( "Deleting redundant artifacts" );
+				int deletedCount = 0;
+				for( Artifact redundantArtifact : redundantArtifacts )
+				{
+					if( redundantArtifact.delete( getRootDir() ) )
+					{
+						debug( "Deleted " + redundantArtifact.getFile() );
+						knownArtifacts.removeArtifact( redundantArtifact );
+						deletedCount++;
+					}
+					else
+						error( "Could not delete " + redundantArtifact.getFile() );
+				}
+				end( id, "Deleted " + deletedCount + ( deletedCount != 1 ? " redundant artifacts" : " redundant artifact" ) );
+			}
+
+			knownArtifacts.addArtifacts( installedArtifacts );
+
+			try
+			{
+				knownArtifacts.save();
+				info( "Saved state to " + getStateFile() );
+			}
+			catch( IOException x )
+			{
+				error( "Could not save state to " + getStateFile(), x );
+			}
+		}
+
+		return Collections.unmodifiableCollection( installedArtifacts );
+
+	}
+
+	/**
+	 * Identifies a module, optionally identifying its dependencies recursively
+	 * (supporting efficient multithreaded parallelism that avoids repeating
+	 * work already done).
+	 * <p>
+	 * "Identification" means finding the best identifier available from all the
+	 * candidates in all the repositories that match the specification. A
+	 * successful identification results in the the module has an identifier. An
+	 * unidentified module has only a specification, but no identifier.
+	 * <p>
+	 * A cache of identified modules is maintained in the manager to avoid
+	 * identifying the same module twice.
+	 * 
+	 * @param module
+	 * @param recursive
+	 * @param concurrentContext
+	 */
+	public void identifyModule( final Module module, final boolean recursive, final ConcurrentIdentificationContext concurrentContext )
+	{
+		IdentificationContext context = new IdentificationContext( getRepositories(), recursive );
+
+		applyRules( module, context );
+
+		if( context.isExclude() )
+			return;
+
+		if( module.getIdentifier() != null )
+		{
+			// Nothing to do: already identified
+		}
+		else if( unidentifiedModules.get( module.getSpecification() ) != null )
+		{
+			// Nothing to do: already failed to identify this specification,
+			// no use trying again
+		}
+		else
+		{
+			// Check to see if we've already identified it
+			Module identifiedModule = identifiedModules.get( module.getSpecification() );
+			if( identifiedModule == null )
+			{
+				if( concurrentContext != null )
+				{
+					boolean alreadyIdentifying = !concurrentContext.beginIdentifyingIfNotIdentifying( module, new IdentifyModule( module, recursive, concurrentContext ) );
+					if( alreadyIdentifying )
+					{
+						// Another thread is already in the process of
+						// identifying this specification, so we'll wait for
+						// them to finish
+						final String id = begin( "Waiting for identification of " + module.getSpecification() );
+						concurrentContext.onIdentified( module, new IdentifiedModule( module, id ) );
+						return;
+					}
+				}
+
+				String id = begin( "Identifying " + module.getSpecification() );
+
+				// Gather allowed module identifiers from all repositories
+				Set<ModuleIdentifier> allowedModuleIdentifiers = new LinkedHashSet<ModuleIdentifier>();
+				for( Repository repository : context.getRepositories() )
+					for( ModuleIdentifier allowedModuleIdentifier : repository.getAllowedModuleIdentifiers( module.getSpecification(), this ) )
+						allowedModuleIdentifiers.add( allowedModuleIdentifier );
+
+				// Pick the best module identifier
+				if( !allowedModuleIdentifiers.isEmpty() )
+				{
+					LinkedList<ModuleIdentifier> moduleIdentifiers = new LinkedList<ModuleIdentifier>( allowedModuleIdentifiers );
+					Collections.sort( moduleIdentifiers );
+
+					// Best module is last (newest)
+					ModuleIdentifier moduleIdentifier = moduleIdentifiers.getLast();
+					identifiedModule = moduleIdentifier.getRepository().getModule( moduleIdentifier, this );
+
+					if( identifiedModule != null )
+						end( id, "Identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
+					else
+						fail( id, "Could not get module " + moduleIdentifier + " from " + moduleIdentifier.getRepository().getId() + " repository" );
+				}
+				else
+					fail( id, "Could not identify " + module.getSpecification() );
+			}
+			else
+			{
+				debug( "Already identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
+				identifiedCacheHits.incrementAndGet();
+			}
+
+			if( identifiedModule != null )
+				module.copyIdentificationFrom( identifiedModule );
+		}
+
+		addModule( module );
+
+		if( concurrentContext != null )
+			concurrentContext.notifyIdentified( module );
+
+		if( context.isRecursive() )
+		{
+			// Identify dependencies recursively
+			if( concurrentContext != null )
+			{
+				for( Module dependency : module.getDependencies() )
+					concurrentContext.identifyModule( new IdentifyModule( dependency, true, concurrentContext ) );
+			}
+			else
+			{
+				for( Module dependency : module.getDependencies() )
+					identifyModule( dependency, true, null );
+			}
+		}
+		else
+		{
+			// Add dependencies as is (unidentified)
+			for( Module dependency : module.getDependencies() )
+				addModule( dependency );
 		}
 	}
 
@@ -641,6 +754,14 @@ public class Manager extends Notifier
 	private ConflictPolicy conflictPolicy = ConflictPolicy.NEWEST;
 
 	private boolean multithreaded = true;
+
+	private File rootDir;
+
+	private File stateFile;
+
+	private boolean overwrite;
+
+	private boolean flat;
 
 	private final List<Module> explicitModules = new ArrayList<Module>();
 

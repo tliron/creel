@@ -12,8 +12,20 @@
 package com.threecrickets.creel;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+
+import com.threecrickets.creel.util.DigestUtil;
+import com.threecrickets.creel.util.HexUtil;
+import com.threecrickets.creel.util.IoUtil;
+import com.threecrickets.creel.util.IoUtil.ProgressListener;
 
 /**
  * @author Tal Liron
@@ -24,10 +36,42 @@ public class Artifact
 	// Construction
 	//
 
-	public Artifact( File file, URL sourceUrl )
+	public Artifact( File file, URL sourceUrl, boolean isVolatile )
 	{
-		this.file = file;
+		try
+		{
+			this.file = file.getCanonicalFile();
+		}
+		catch( IOException x )
+		{
+			throw new RuntimeException( "Could not access artifact file: " + file, x );
+		}
 		this.sourceUrl = sourceUrl;
+		this.isVolatile = isVolatile;
+	}
+
+	public Artifact( Map<String, String> config, File rootDir )
+	{
+		String url = config.get( "url" );
+		if( url == null )
+			throw new RuntimeException( "Missing URL" );
+		try
+		{
+			this.sourceUrl = new URL( url );
+		}
+		catch( MalformedURLException x )
+		{
+			throw new RuntimeException( "Bad URL: " + url );
+		}
+		String file = config.get( "file" );
+		if( file == null )
+			throw new RuntimeException( "Missing file" );
+		this.file = rootDir != null ? new File( rootDir, file ) : new File( file );
+		String isVolatile = config.get( "volatile" );
+		this.isVolatile = isVolatile != null ? Boolean.valueOf( isVolatile ) : false;
+		String digest = config.get( "digest" );
+		if( digest != null )
+			this.digest = HexUtil.fromHex( digest );
 	}
 
 	//
@@ -44,37 +88,75 @@ public class Artifact
 		return sourceUrl;
 	}
 
+	public boolean isVolatile()
+	{
+		return isVolatile;
+	}
+
+	public byte[] getDigest()
+	{
+		return digest;
+	}
+
 	//
 	// Operations
 	//
 
-	public boolean delete( File root )
+	public Map<String, Object> toConfig( File rootDir )
 	{
-		File file = getFile();
-		while( true )
+		Map<String, Object> config = new HashMap<String, Object>();
+		config.put( "url", getSourceUrl().toString() );
+		Path path = getFile().toPath();
+		try
 		{
-			if( file.isDirectory() )
-			{
-				if( !file.delete() )
-					break;
-			}
-			else if( file.exists() && !file.delete() )
-				return false;
-			file = file.getParentFile();
-			if( ( file == null ) || file.equals( root ) )
-				break;
+			config.put( "file", rootDir.toPath().relativize( path ) );
 		}
-		return true;
+		catch( IllegalArgumentException x )
+		{
+			config.put( "file", path );
+		}
+		if( isVolatile() )
+			config.put( "volatile", true );
+		if( getDigest() != null )
+			config.put( "digest", HexUtil.toHex( getDigest() ) );
+		return Collections.unmodifiableMap( config );
+	}
+
+	public boolean exists()
+	{
+		return getFile().exists();
+	}
+
+	public boolean hasChanged() throws IOException
+	{
+		if( ( getDigest() == null ) || !exists() )
+			return true;
+		return !Arrays.equals( getDigest(), DigestUtil.getDigest( getFile(), "SHA-1" ) );
+	}
+
+	public void copy( ProgressListener progressListener ) throws IOException
+	{
+		IoUtil.copy( getSourceUrl(), getFile(), progressListener );
+	}
+
+	public boolean delete( File rootDir )
+	{
+		return IoUtil.deleteWithParentDirectories( getFile(), rootDir );
+	}
+
+	public void updateDigest() throws IOException
+	{
+		digest = DigestUtil.getDigest( getFile(), "SHA-1" );
 	}
 
 	//
-	// Objects
+	// Object
 	//
 
 	@Override
 	public String toString()
 	{
-		return "file:" + getFile() + ", sourceUrl: " + getSourceUrl();
+		return "file: " + getFile() + ", sourceUrl: " + getSourceUrl();
 	}
 
 	@Override
@@ -98,4 +180,8 @@ public class Artifact
 	private final File file;
 
 	private final URL sourceUrl;
+
+	private final boolean isVolatile;
+
+	private byte[] digest;
 }

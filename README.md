@@ -53,8 +53,9 @@ JVM 8 comes with a great JavaScript engine that makes it a piece of cake to writ
         {type: 'rewriteVersion', group: 'com.beust', name: '*c?mmand*', newVersion: '1.35+'},
         {type: 'repositories', group: 'jsslutils', repositories: 'restlet'}]
     
+    manager.rootDir = 'lib'
     manager.identify()
-    manager.install('lib')
+    manager.install()
 
 To run it:
 
@@ -130,7 +131,7 @@ The following rules are built in:
 
 ##### exclude
 
-Excludes modules from installation. Note that this also excludes all their dependencies.
+Excludes modules from installation. Note that their dependencies will be excluded from identification, but can still be pulled in by other modules.
 
 To match, set `group`, `name`, and optionally `version`. You can use globs and version ranges.
 

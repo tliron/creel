@@ -94,6 +94,24 @@ public abstract class IoUtil
 		}
 	}
 
+	public static boolean deleteWithParentDirectories( File file, File root )
+	{
+		while( true )
+		{
+			if( file.isDirectory() )
+			{
+				if( !file.delete() )
+					break;
+			}
+			else if( file.exists() && !file.delete() )
+				return false;
+			file = file.getParentFile();
+			if( ( file == null ) || file.equals( root ) )
+				break;
+		}
+		return true;
+	}
+
 	// Copy
 
 	/**

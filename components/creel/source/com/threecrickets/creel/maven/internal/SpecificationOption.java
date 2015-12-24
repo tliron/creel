@@ -35,8 +35,8 @@ public class SpecificationOption
 		this.group = group.isEmpty() ? "*" : group;
 		this.name = name.isEmpty() ? "*" : name;
 		this.version = version;
-		exclude = !version.isEmpty() && ( version.charAt( 0 ) == '!' );
 		this.strict = strict;
+		exclude = !version.isEmpty() && ( version.charAt( 0 ) == '!' );
 	}
 
 	//

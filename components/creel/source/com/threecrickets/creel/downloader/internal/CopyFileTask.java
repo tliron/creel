@@ -61,8 +61,7 @@ public class CopyFileTask extends DownloaderTask
 		}
 		catch( IOException x )
 		{
-			getDownloader().getNotifier().error( x );
-			getDownloader().getNotifier().fail( id, "Could not copy file from " + getFromFile() );
+			getDownloader().getNotifier().fail( id, "Could not copy file from " + getFromFile(), x );
 		}
 		done();
 	}

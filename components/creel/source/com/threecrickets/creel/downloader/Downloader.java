@@ -135,14 +135,21 @@ public class Downloader implements Closeable
 		{
 			try
 			{
-				URLConnection connection = sourceUrl.openConnection();
-				boolean supportsChunks = connection.getHeaderField( "Accept-Ranges" ).equals( "bytes" );
+				boolean supportsChunks = false;
 				int streamSize = 0;
-				if( supportsChunks )
+
+				if( getChunksPerFile() > 1 )
 				{
-					streamSize = connection.getContentLength();
-					if( streamSize == -1 )
-						supportsChunks = false;
+					// Make sure the host supports ranges
+					URLConnection connection = sourceUrl.openConnection();
+					String acceptRanges = connection.getHeaderField( "Accept-Ranges" );
+					supportsChunks = "bytes".equals( acceptRanges );
+					if( supportsChunks )
+					{
+						streamSize = connection.getContentLength();
+						if( streamSize == -1 )
+							supportsChunks = false;
+					}
 				}
 
 				if( supportsChunks )

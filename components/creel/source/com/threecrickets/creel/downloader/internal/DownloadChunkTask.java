@@ -97,8 +97,7 @@ public class DownloadChunkTask extends DownloaderTask implements IoUtil.Progress
 		}
 		catch( IOException x )
 		{
-			getDownloader().getNotifier().error( x );
-			getDownloader().getNotifier().fail( id, "Could not download from " + getUrl() + " (" + getChunk() + "/" + getChunks() + ")" );
+			getDownloader().getNotifier().fail( id, "Could not download from " + getUrl() + " (" + getChunk() + "/" + getChunks() + ")", x );
 		}
 		done( getCounter() );
 	}

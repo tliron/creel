@@ -19,9 +19,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,13 +42,27 @@ public class ArtifactDatabase
 
 	public ArtifactDatabase( String databaseFile, String rootDir ) throws IOException
 	{
-		this( new File( databaseFile ).getCanonicalFile(), rootDir != null ? new File( rootDir ).getCanonicalFile() : null );
+		this( new File( databaseFile ), rootDir != null ? new File( rootDir ) : null );
 	}
 
 	public ArtifactDatabase( File databaseFile, File rootDir ) throws IOException
 	{
-		this.databaseFile = databaseFile;
-		this.rootDir = rootDir != null ? rootDir : new File( "" ).getCanonicalFile();
+		try
+		{
+			this.databaseFile = databaseFile.getCanonicalFile();
+		}
+		catch( IOException x )
+		{
+			throw new RuntimeException( "Could not access database file: " + databaseFile, x );
+		}
+		try
+		{
+			this.rootDir = rootDir != null ? rootDir.getCanonicalFile() : new File( "" ).getCanonicalFile();
+		}
+		catch( IOException x )
+		{
+			throw new RuntimeException( "Could not access root directory: " + rootDir, x );
+		}
 		try
 		{
 			MultiValueProperties properties = new MultiValueProperties();
@@ -58,16 +70,13 @@ public class ArtifactDatabase
 
 			for( Map<String, String> config : properties.toMaps() )
 			{
-				String urlValue = config.get( "url" );
-				if( urlValue == null )
-					continue;
-				String fileValue = config.get( "file" );
-				if( fileValue == null )
-					continue;
-				URL url = new URL( urlValue );
-				File file = rootDir != null ? new File( rootDir, fileValue ) : new File( fileValue );
-				Artifact artifact = new Artifact( file.getCanonicalFile(), url );
-				addArtifact( artifact );
+				try
+				{
+					addArtifact( new Artifact( config, getRootDir() ) );
+				}
+				catch( RuntimeException x )
+				{
+				}
 			}
 		}
 		catch( FileNotFoundException x )
@@ -89,23 +98,31 @@ public class ArtifactDatabase
 		return rootDir;
 	}
 
+	public Artifact getArtifact( File file )
+	{
+		for( Artifact artifact : getArtifacts() )
+			if( file.equals( artifact.getFile() ) )
+				return artifact;
+		return null;
+	}
+
 	public Iterable<Artifact> getArtifacts()
 	{
 		return Collections.unmodifiableCollection( artifacts );
 	}
 
-	public boolean addArtifact( Artifact artifact ) throws IOException
+	public boolean addArtifact( Artifact artifact )
 	{
 		return artifacts.add( artifact );
 	}
 
-	public void addArtifacts( Iterable<Artifact> artifacts ) throws IOException
+	public void addArtifacts( Iterable<Artifact> artifacts )
 	{
 		for( Artifact artifact : artifacts )
 			addArtifact( artifact );
 	}
 
-	public boolean removeArtifact( Artifact artifact ) throws IOException
+	public boolean removeArtifact( Artifact artifact )
 	{
 		return artifacts.remove( artifact );
 	}
@@ -128,24 +145,12 @@ public class ArtifactDatabase
 	{
 		Files.createDirectories( databaseFile.toPath().getParent() );
 
-		Path rootPath = getRootDir().toPath();
-
 		MultiValueProperties properties = new MultiValueProperties();
-
 		int index = 0;
 		for( Artifact artifact : getArtifacts() )
 		{
-			properties.put( index, "url", artifact.getSourceUrl().toString() );
-			Path path = artifact.getFile().toPath();
-			try
-			{
-				properties.put( index, "file", rootPath.relativize( path ).toString() );
-			}
-			catch( IllegalArgumentException x )
-			{
-				properties.put( index, "file", path.toString() );
-			}
-			index++;
+			Map<String, Object> config = artifact.toConfig( getRootDir() );
+			properties.putMap( index++, config );
 		}
 
 		Writer writer = new BufferedWriter( new FileWriter( databaseFile ), IoUtil.BUFFER_SIZE );

@@ -39,7 +39,8 @@ public class Creel
 
 		String propertiesPath = argumentsHelper.getString( "properties", "p", "creel.properties" );
 		String destinationPath = argumentsHelper.getString( "destination", "d", "lib" );
-		String databasePath = argumentsHelper.getString( "database", "b", null );
+		String statePath = argumentsHelper.getString( "state", "s", null );
+		int end = argumentsHelper.getInt( "end", "e", 4 );
 		String defaultPlatform = argumentsHelper.getString( "platform", "l", "maven" );
 		boolean quiet = argumentsHelper.hasSwitch( "quiet", "q" );
 		boolean ansi = argumentsHelper.hasSwitch( "ansi", "a" );
@@ -47,27 +48,33 @@ public class Creel
 		boolean flat = argumentsHelper.hasSwitch( "flat", "f" );
 		boolean multithreaded = argumentsHelper.getBoolean( "multithreaded", "m", true );
 
+		Manager manager = new Manager();
+		if( !quiet )
+			( (EventHandlers) manager.getEventHandler() ).add( new ConsoleEventHandler( ansi ) );
+
 		try
 		{
-			Properties properties = new Properties( new File( propertiesPath ) );
-
-			Manager manager = new Manager();
 			manager.setMultithreaded( multithreaded );
 			manager.setDefaultPlatform( defaultPlatform );
+			manager.setRootDir( destinationPath );
+			manager.setStateFile( statePath );
+			manager.setOverwrite( overwrite );
+			manager.setFlat( flat );
 
-			if( !quiet )
-				( (EventHandlers) manager.getEventHandler() ).add( new ConsoleEventHandler( ansi ) );
-
+			Properties properties = new Properties( new File( propertiesPath ) );
 			manager.setExplicitModules( properties.getExplicitModuleConfigs() );
 			manager.setRepositories( properties.getRepositoryConfigs() );
 			manager.setRules( properties.getRuleConfigs() );
 
-			manager.identify();
-			manager.install( destinationPath, databasePath, overwrite, flat );
+			if( end > 0 )
+				manager.identify();
+
+			if( end > 1 )
+				manager.install();
 		}
 		catch( Throwable x )
 		{
-			x.printStackTrace();
+			manager.error( x );
 		}
 	}
 
@@ -78,15 +85,16 @@ public class Creel
 		System.out.println();
 		System.out.println( "Options:" );
 		System.out.println( "  --help, -h              Show this help" );
-		System.out.println( "  --properties=, -p       Use this properties file (default: creel.properties)" );
-		System.out.println( "  --destination=, -d      Download to this directory (default: lib)" );
-		System.out.println( "  --database=, -b         Artifact database file (default: [destination]/.creel)" );
-		System.out.println( "  --platform=, -l         Set the default platform (default: maven)" );
+		System.out.println( "  --properties=, -p       Use properties file (default: creel.properties)" );
+		System.out.println( "  --destination=, -d      Download to directory (default: lib)" );
+		System.out.println( "  --state=, -s            State file (default: [destination]/.creel)" );
+		System.out.println( "  --end=, -e              Where to end: 1=identify, 2=install, 3=unpack, 4=delete redundant (default: 4)" );
+		System.out.println( "  --platform=, -l         Set default platform (default: maven)" );
 		System.out.println( "  --quiet, -q             Quiet mode: don't output anything" );
 		System.out.println( "  --ansi, -a              ANSI terminal output: pretty colors and animations" );
 		System.out.println( "  --overwrite, -o         Overwrite files if they already exist" );
 		System.out.println( "  --flat, -f              Flat file structure (no subdirectories)" );
-		System.out.println( "  --multithreaded=, -m    Toggle multi-threaded mode (default: true)" );
+		System.out.println( "  --multithreaded=, -m    Set multi-threaded mode (default: true)" );
 		System.out.println();
 		System.out.println( "For more information see: https://github.com/tliron/creel" );
 	}

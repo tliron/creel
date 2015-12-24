@@ -123,7 +123,16 @@ public class MavenRepository extends Repository
 
 	public File getFile( MavenModuleIdentifier moduleIdentifier, String extension, File directory, boolean flat )
 	{
-		File file = directory;
+		File file;
+		try
+		{
+			file = directory.getCanonicalFile();
+		}
+		catch( IOException x )
+		{
+			throw new RuntimeException( "Could not access directory: " + directory );
+		}
+
 		if( flat )
 		{
 			StringBuilder s = new StringBuilder();
@@ -143,7 +152,14 @@ public class MavenRepository extends Repository
 			file = new File( file, moduleIdentifier.getVersion() );
 			file = new File( file, moduleIdentifier.getName() + '.' + extension );
 		}
-		return file;
+		try
+		{
+			return file.getCanonicalFile();
+		}
+		catch( IOException x )
+		{
+			throw new RuntimeException( "Could not access file: " + file );
+		}
 	}
 
 	public URL getUrl( MavenModuleIdentifier moduleIdentifier, String extension )
