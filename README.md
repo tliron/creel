@@ -29,7 +29,9 @@ How does Creel compare to [Ivy](http://ant.apache.org/ivy/)? Well, Ivy can also 
 Embedded
 --------
 
-JVM 8 comes with a great JavaScript engine that makes it a piece of cake to write a Creel script. Here's an example `creel.js`:
+It's easy to embed Creel into your Java (or Groovy, Clojure, Scala, etc.) application. A simple [EventHandler interface](creel/tree/master/components/creel/source/com/threecrickets/creel/event) can allow you to integrate Creel activity as appropriate.   
+
+Here's a simple example in JavaScript, `creel.js`, using the excellent JavaScript engine (Nashorn) that comes with JVM 8: 
 
     var manager = new com.threecrickets.creel.Manager()
     manager.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true))
@@ -60,8 +62,6 @@ JVM 8 comes with a great JavaScript engine that makes it a piece of cake to writ
 To run it:
 
     jjs -cp creel.jar creel.js
-
-Of course, you can also embed Creel into your Java, Groovy, Scala, etc., application.
 
 
 Command Line
