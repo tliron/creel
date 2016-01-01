@@ -127,11 +127,19 @@ public class Artifact
 		return getFile().exists();
 	}
 
-	public boolean hasChanged() throws IOException
+	public boolean wasModified() throws IOException
 	{
 		if( ( getDigest() == null ) || !exists() )
 			return true;
-		return !Arrays.equals( getDigest(), DigestUtil.getDigest( getFile(), "SHA-1" ) );
+		byte[] currentDigest = DigestUtil.getDigest( getFile(), ALGORITHM );
+		return !Arrays.equals( getDigest(), currentDigest );
+	}
+
+	public boolean isDifferent() throws IOException
+	{
+		byte[] currentDigest = DigestUtil.getDigest( getFile(), ALGORITHM );
+		byte[] sourceDigest = DigestUtil.getDigest( getSourceUrl(), ALGORITHM );
+		return !Arrays.equals( currentDigest, sourceDigest );
 	}
 
 	public void copy( ProgressListener progressListener ) throws IOException
@@ -146,7 +154,7 @@ public class Artifact
 
 	public void updateDigest() throws IOException
 	{
-		digest = DigestUtil.getDigest( getFile(), "SHA-1" );
+		digest = DigestUtil.getDigest( getFile(), ALGORITHM );
 	}
 
 	//
@@ -176,6 +184,8 @@ public class Artifact
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private static final String ALGORITHM = "SHA-1";
 
 	private final File file;
 

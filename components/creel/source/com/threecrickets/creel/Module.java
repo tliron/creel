@@ -17,7 +17,11 @@ import java.util.Iterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * A module can have dependencies as well as supplicants.
+ * Represents a module. Modules are specified by a {@link ModuleSpecification},
+ * and may optionally have a {@link ModuleIdentifier}, meaning that they have
+ * been identified. A module can have one or more dependencies (modules that it
+ * needs) as well as one or more supplicants (modules that have this module as a
+ * dependency).
  * 
  * @author Tal Liron
  */
@@ -81,6 +85,7 @@ public class Module
 	 * Adds a new supplicant if we don't have it already.
 	 * 
 	 * @param supplicant
+	 *        The supplicant module
 	 */
 	public void addSupplicant( Module supplicant )
 	{
@@ -90,6 +95,7 @@ public class Module
 	 * Removes a supplicant if we have it.
 	 * 
 	 * @param supplicant
+	 *        The supplicant module
 	 */
 	public void removeSupplicant( Module supplicant )
 	{
@@ -97,6 +103,9 @@ public class Module
 
 	/**
 	 * Copies identifier, repository, and dependencies from another module.
+	 * 
+	 * @param module
+	 *        The other module
 	 */
 	public void copyIdentificationFrom( Module module )
 	{
@@ -111,6 +120,7 @@ public class Module
 	 * other module is explicit.
 	 * 
 	 * @param module
+	 *        The other module
 	 */
 	public void mergeSupplicants( Module module )
 	{
@@ -122,6 +132,7 @@ public class Module
 
 	public void replaceModule( Module oldModule, Module newModule, boolean recursive )
 	{
+		// TODO
 	}
 
 	public String toString( boolean longForm )

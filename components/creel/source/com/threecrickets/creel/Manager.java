@@ -32,6 +32,7 @@ import com.threecrickets.creel.event.EventHandlers;
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.exception.UnsupportedPlatformException;
 import com.threecrickets.creel.internal.ArtifactDatabase;
+import com.threecrickets.creel.internal.ArtifactsClassLoader;
 import com.threecrickets.creel.internal.Command;
 import com.threecrickets.creel.internal.Conflicts;
 import com.threecrickets.creel.internal.IdentificationContext;
@@ -40,10 +41,26 @@ import com.threecrickets.creel.packaging.Package;
 import com.threecrickets.creel.packaging.Packaging;
 import com.threecrickets.creel.util.ClassUtil;
 import com.threecrickets.creel.util.ConfigHelper;
-import com.threecrickets.creel.util.DirectoryClassLoader;
 
 /**
- * Handles identifying and installing modules.
+ * Handles:
+ * <ul>
+ * <li>identifying modules and their dependencies (multithreaded)</li>
+ * <li>resolving conflicts</li>
+ * <li>installing modules by downloading or copying them from repositories
+ * (multithreaded)</li>
+ * <li>properly unpacking packages</li>
+ * <li>removing redundant files</li>
+ * </ul>
+ * <p>
+ * The manager is itself ignorant as to specific repository and module
+ * technologies, here called "platforms". Those specifics are handled by classes
+ * that extend {@link ModuleIdentifier}, {@link ModuleSpecification}, and
+ * {@link Repository} . By default, support for Maven is installed and is used
+ * as the default platform. Use {@link Manager#setPlatform(String, String)} to
+ * add more.
+ * <p>
+ * The class is not thread-safe.
  * 
  * @author Tal Liron
  */
@@ -57,61 +74,6 @@ public class Manager extends Notifier
 	{
 		NEWEST, OLDEST
 	};
-
-	//
-	// Classes
-	//
-
-	public class IdentifyModule implements Runnable
-	{
-		public IdentifyModule( Module module, boolean recursive, ConcurrentIdentificationContext concurrentContext )
-		{
-			this.module = module;
-			this.recursive = recursive;
-			this.concurrentContext = concurrentContext;
-		}
-
-		public void run()
-		{
-			try
-			{
-				identifyModule( module, recursive, concurrentContext );
-			}
-			catch( Throwable x )
-			{
-				error( "Identification error for " + module.getSpecification() + ": " + x.getMessage(), x );
-			}
-			concurrentContext.identified();
-		}
-
-		private final Module module;
-
-		private final boolean recursive;
-
-		private final ConcurrentIdentificationContext concurrentContext;
-	}
-
-	public class IdentifiedModule implements Runnable
-	{
-		public IdentifiedModule( Module module, String id )
-		{
-			this.module = module;
-			this.id = id;
-		}
-
-		public void run()
-		{
-			Module identifiedModule = identifiedModules.get( module.getSpecification() );
-			if( identifiedModule != null )
-				end( id, "Already identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
-			else
-				fail( id, "Could not identify " + module.getSpecification() );
-		}
-
-		private final Module module;
-
-		private final String id;
-	}
 
 	//
 	// Construction
@@ -240,6 +202,7 @@ public class Manager extends Notifier
 	 * defaultPlatform.
 	 * 
 	 * @param moduleSpecificationConfigs
+	 *        The module specification configs
 	 */
 	public void setExplicitModules( Collection<Map<String, ?>> moduleSpecificationConfigs )
 	{
@@ -266,6 +229,7 @@ public class Manager extends Notifier
 	 * defaultPlatform.
 	 * 
 	 * @param repositoryConfigs
+	 *        The repository configs
 	 */
 	public void setRepositories( Collection<Map<String, ?>> repositoryConfigs )
 	{
@@ -511,7 +475,7 @@ public class Manager extends Notifier
 			error( "Could not load state from " + getStateFile(), x );
 		}
 
-		ClassLoader classLoader = new DirectoryClassLoader( getRootDir() );
+		ClassLoader classLoader = new ArtifactsClassLoader( installedArtifacts );
 		Iterable<Package> packages = null;
 		try
 		{
@@ -541,18 +505,21 @@ public class Manager extends Notifier
 							copy = true;
 						else
 						{
-							// TODO
-
 							Artifact knownArtifact = knownArtifacts != null ? knownArtifacts.getArtifact( artifact.getFile() ) : null;
-							if( knownArtifact != null )
+							if( knownArtifact == null )
+								copy = true;
+							else
 							{
-								if( artifact.isVolatile() )
-								{
-									if( !knownArtifact.hasChanged() )
-										copy = true;
-								}
+								if( !knownArtifact.isVolatile() )
+									copy = artifact.isDifferent();
 								else
 								{
+									if( !knownArtifact.wasModified() )
+									{
+										copy = artifact.isDifferent();
+										if( !copy )
+											info( "Not overwriting " + artifact.getFile() );
+									}
 								}
 							}
 						}
@@ -560,7 +527,8 @@ public class Manager extends Notifier
 						if( copy )
 						{
 							artifact.copy( null );
-							artifact.updateDigest();
+							if( artifact.isVolatile() )
+								artifact.updateDigest();
 							pCount++;
 							count++;
 						}
@@ -596,14 +564,36 @@ public class Manager extends Notifier
 				int deletedCount = 0;
 				for( Artifact redundantArtifact : redundantArtifacts )
 				{
-					if( redundantArtifact.delete( getRootDir() ) )
+					boolean delete = false;
+
+					if( !redundantArtifact.isVolatile() )
+						delete = true;
+					else
 					{
-						debug( "Deleted " + redundantArtifact.getFile() );
-						knownArtifacts.removeArtifact( redundantArtifact );
-						deletedCount++;
+						try
+						{
+							if( !redundantArtifact.wasModified() )
+								delete = true;
+						}
+						catch( IOException x )
+						{
+							error( "Could not access " + redundantArtifact.getFile() );
+						}
+					}
+
+					if( delete )
+					{
+						if( redundantArtifact.delete( getRootDir() ) )
+						{
+							debug( "Deleted " + redundantArtifact.getFile() );
+							knownArtifacts.removeArtifact( redundantArtifact );
+							deletedCount++;
+						}
+						else
+							error( "Could not delete " + redundantArtifact.getFile() );
 					}
 					else
-						error( "Could not delete " + redundantArtifact.getFile() );
+						info( "Not deleting " + redundantArtifact.getFile() );
 				}
 				end( id, "Deleted " + deletedCount + ( deletedCount != 1 ? " redundant artifacts" : " redundant artifact" ) );
 			}
@@ -639,8 +629,11 @@ public class Manager extends Notifier
 	 * identifying the same module twice.
 	 * 
 	 * @param module
+	 *        The module
 	 * @param recursive
+	 *        Whether to recurse into dependencies
 	 * @param concurrentContext
+	 *        The concurrent context or null
 	 */
 	public void identifyModule( final Module module, final boolean recursive, final ConcurrentIdentificationContext concurrentContext )
 	{
@@ -741,6 +734,61 @@ public class Manager extends Notifier
 			for( Module dependency : module.getDependencies() )
 				addModule( dependency );
 		}
+	}
+
+	//
+	// Classes
+	//
+
+	public class IdentifyModule implements Runnable
+	{
+		public IdentifyModule( Module module, boolean recursive, ConcurrentIdentificationContext concurrentContext )
+		{
+			this.module = module;
+			this.recursive = recursive;
+			this.concurrentContext = concurrentContext;
+		}
+
+		public void run()
+		{
+			try
+			{
+				identifyModule( module, recursive, concurrentContext );
+			}
+			catch( Throwable x )
+			{
+				error( "Identification error for " + module.getSpecification() + ": " + x.getMessage(), x );
+			}
+			concurrentContext.identified();
+		}
+
+		private final Module module;
+
+		private final boolean recursive;
+
+		private final ConcurrentIdentificationContext concurrentContext;
+	}
+
+	public class IdentifiedModule implements Runnable
+	{
+		public IdentifiedModule( Module module, String id )
+		{
+			this.module = module;
+			this.id = id;
+		}
+
+		public void run()
+		{
+			Module identifiedModule = identifiedModules.get( module.getSpecification() );
+			if( identifiedModule != null )
+				end( id, "Already identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
+			else
+				fail( id, "Could not identify " + module.getSpecification() );
+		}
+
+		private final Module module;
+
+		private final String id;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

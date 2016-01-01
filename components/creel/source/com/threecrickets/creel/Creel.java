@@ -20,6 +20,13 @@ import com.threecrickets.creel.internal.Properties;
 import com.threecrickets.creel.util.ArgumentsHelper;
 
 /**
+ * A simple command line interface to Creel.
+ * <p>
+ * Use the "--help" option to see all available options.
+ * <p>
+ * By default will try to load its configuration from a file named
+ * "creel.properties" in the current directory.
+ * 
  * @author Tal Liron
  */
 public class Creel
@@ -58,25 +65,25 @@ public class Creel
 			String statePath = properties.getProperty( "state", null );
 			statePath = argumentsHelper.getString( "state", "s", statePath );
 
-			int end = properties.getPropertyInteger( "end", 4 );
+			int end = properties.getInteger( "end", 4 );
 			end = argumentsHelper.getInt( "end", "e", end );
 
 			String defaultPlatform = properties.getProperty( "platform", "maven" );
 			defaultPlatform = argumentsHelper.getString( "platform", "l", defaultPlatform );
 
-			boolean quiet = properties.getPropertyBoolean( "quiet", false );
+			boolean quiet = properties.getBoolean( "quiet", false );
 			quiet = quiet || argumentsHelper.hasSwitch( "quiet", "q" );
 
-			boolean ansi = properties.getPropertyBoolean( "ansi", false );
+			boolean ansi = properties.getBoolean( "ansi", false );
 			ansi = ansi || argumentsHelper.hasSwitch( "ansi", "a" );
 
-			boolean overwrite = properties.getPropertyBoolean( "overwrite", false );
+			boolean overwrite = properties.getBoolean( "overwrite", false );
 			overwrite = overwrite || argumentsHelper.hasSwitch( "overwrite", "o" );
 
-			boolean flat = properties.getPropertyBoolean( "flat", false );
+			boolean flat = properties.getBoolean( "flat", false );
 			flat = flat || argumentsHelper.hasSwitch( "flat", "f" );
 
-			boolean multithreaded = properties.getPropertyBoolean( "multithreaded", true );
+			boolean multithreaded = properties.getBoolean( "multithreaded", true );
 			multithreaded = argumentsHelper.getBoolean( "multithreaded", "m", multithreaded );
 
 			manager = new Manager();
@@ -109,6 +116,10 @@ public class Creel
 				x.printStackTrace( System.err );
 		}
 	}
+
+	//
+	// Static operations
+	//
 
 	public static void help( PrintStream out )
 	{

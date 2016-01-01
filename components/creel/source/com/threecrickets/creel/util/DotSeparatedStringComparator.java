@@ -16,6 +16,7 @@ import java.util.Comparator;
 /**
  * @author Tal Liron
  * @param <T>
+ *        The type of objects that may be compared by this comparator
  */
 public class DotSeparatedStringComparator<T> implements Comparator<T>
 {

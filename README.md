@@ -8,30 +8,31 @@ It can be run as a command line tool, via an [Ant](http://ant.apache.org/) task,
 
 Features:
 
-* _No dependencies._ Just one tiny Jar. Requires JVM 7+.
+* _No dependencies._ Just one tiny jar. Requires JVM 7+.
 * Very fast multi-threaded, multi-part downloads. (The downloader class is general purpose and you can use it independently of Creel.)
 * Optimizes even further when using a filesystem-based ("file:" URL) repository, using fast copies and memory-mapped loading.
 * Resolves version conflicts according to policy, your choice of newest (cutting-edge) or oldest (conservative).
 * Define your own rules for rewriting versions, names, exclusions, etc. Create your own custom rule code if necessary.
 * Elegantly handles upgrades and other changes: keeps a tiny database of previously installed dependencies, and will remove them if they are no longer needed.
-* Supports Maven-style ("m2" a.k.a. "ibiblio") repositories out of the box, but is easily extensible if you'd like to support others. (Ivy, or your own custom repo.)
+* Supports Maven-style ("m2" a.k.a. "ibiblio") repositories out of the box, but is easily extensible if you'd like to support others. (Ivy, or your own custom technology.)
 * SHA-1 and MD5 validation of all downloaded files (and also pom.xml and maven-metadata.xml while processing them).
 * Extends the Maven spec with convenient pattern globbing ("*" and "?") and also supports Ivy's "+" suffix.
+* Supports an innovative, straightforward [packaging format](PACKAGE.md) that allows you to easily distribute arbitrary files (not just JVM jars) in a Maven repo.
 * Colorful, animated ANSI terminal feedback where supported. See your downloads woosh!
 
 How does Creel compare to [Gradle](http://gradle.org/)? Well, Creel is _much_ lighter and _much_ faster, but it's also a one-trick pony designed only for resolving and downloading dependencies, while Gradle can be used for complete project development and management. Note that Creel could be a great choice as a library with which to build your own Gradle-like tool.
 
 And, actually, that's precisely the context in which Creel was created: it was spun off as an independent library out of [Sincerity](http://threecrickets.com/sincerity/). Sincerity is a terrific tool for managing and bootstrapping application containers. Check it out!
 
-How does Creel compare to [Ivy](http://ant.apache.org/ivy/)? Well, Ivy can also be used to download Maven dependencies and integrates with Ant, but it's heavier and much more complex. We actually used Ivy for a long time, but found it too cumbersome to embed and extend. Creel was conceived as a light and fast replacement for Ivy.  
+How does Creel compare to [Ivy](http://ant.apache.org/ivy/)? Well, Ivy can also be used to download Maven dependencies and integrates with Ant, but it's heavier and much more complex. We actually used Ivy for a long time, but found it too cumbersome to embed and extend. Creel was conceived as a lighter, faster, and simpler replacement for Ivy.  
 
 
 Embedded
 --------
 
-It's easy to embed Creel into your Java (or Groovy, Clojure, Scala, etc.) application. A simple [EventHandler interface](components/creel/source/com/threecrickets/creel/event) can allow you to integrate Creel activity as appropriate.   
+It's easy to embed Creel into your Java (or Groovy, Clojure, Scala, etc.) application. A simple [EventHandler interface](components/creel/source/com/threecrickets/creel/event) can allow you to integrate Creel activity notifications as appropriate.
 
-Here's a simple example in JavaScript, `creel.js`, using the excellent JavaScript engine (Nashorn) that comes with JVM 8: 
+Here's a simple example in JavaScript, `creel.js`, using the excellent Nashorn engine that comes with JVM 8: 
 
     var manager = new com.threecrickets.creel.Manager()
     manager.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true))

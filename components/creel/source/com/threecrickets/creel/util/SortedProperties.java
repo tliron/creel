@@ -19,6 +19,8 @@ import java.util.Properties;
 import java.util.TreeSet;
 
 /**
+ * Properties sorted by their keys.
+ * 
  * @author Tal Liron
  */
 public class SortedProperties extends Properties

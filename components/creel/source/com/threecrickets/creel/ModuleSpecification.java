@@ -58,7 +58,8 @@ public abstract class ModuleSpecification implements Cloneable
 	 * Checks whether a module identifier is allowed by the specification.
 	 * 
 	 * @param moduleIdentifier
-	 * @return
+	 *        The module identifier
+	 * @return True if allowed
 	 */
 	public abstract boolean allowsModuleIdentifier( ModuleIdentifier moduleIdentifier );
 
@@ -66,7 +67,8 @@ public abstract class ModuleSpecification implements Cloneable
 	 * Filters out those module identifiers that match the specification.
 	 * 
 	 * @param moduleIdentifiers
-	 * @return
+	 *        The module identifiers
+	 * @return The filtered module identifiers
 	 */
 	public Iterable<ModuleIdentifier> filterAllowedModuleIdentifiers( Iterable<ModuleIdentifier> moduleIdentifiers )
 	{

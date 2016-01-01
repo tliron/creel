@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,20 +36,25 @@ public class Properties extends java.util.Properties
 
 	public Properties( File file ) throws IOException
 	{
-		load( new BufferedReader( new FileReader( file ), IoUtil.BUFFER_SIZE ) );
+		this( new BufferedReader( new FileReader( file ), IoUtil.BUFFER_SIZE ) );
+	}
+
+	public Properties( Reader reader ) throws IOException
+	{
+		load( reader );
 	}
 
 	//
 	// Attributes
 	//
 
-	public Boolean getPropertyBoolean( String key, Boolean defaultValue )
+	public Boolean getBoolean( String key, Boolean defaultValue )
 	{
 		String value = getProperty( key );
 		return value != null ? new Boolean( value ) : defaultValue;
 	}
 
-	public Integer getPropertyInteger( String key, Integer defaultValue )
+	public Integer getInteger( String key, Integer defaultValue )
 	{
 		String value = getProperty( key );
 		return value != null ? new Integer( value ) : defaultValue;

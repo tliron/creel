@@ -18,6 +18,7 @@ public interface EventHandler
 {
 	/**
 	 * @param event
+	 *        The event
 	 * @return True if the event was swallowed
 	 */
 	public boolean handleEvent( Event event );

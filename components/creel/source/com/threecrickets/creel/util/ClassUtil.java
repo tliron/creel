@@ -16,6 +16,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 /**
+ * Class and instantiation utilities.
+ * 
  * @author Tal Liron
  */
 public abstract class ClassUtil

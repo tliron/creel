@@ -34,6 +34,11 @@ import com.threecrickets.creel.internal.DaemonThreadFactory;
 import com.threecrickets.creel.util.IoUtil;
 
 /**
+ * Fast file downloader supporting concurrent downloads and chunks. Just give it
+ * a list of source URLs to download and it will do the rest. Network (HTTP,
+ * FTP, etc.) URLs are supported, while file URLs are automatically optimized to
+ * use fast copying.
+ * 
  * @author Tal Liron
  */
 public class Downloader implements Closeable

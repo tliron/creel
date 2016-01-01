@@ -134,8 +134,10 @@ public abstract class Repository implements Cloneable
 	 * Expected to be sorted.
 	 * 
 	 * @param moduleSpecification
+	 *        The module specification
 	 * @param notifier
-	 * @return
+	 *        The notifier or null
+	 * @return The allowed module identifiers for the specification
 	 */
 	public abstract Iterable<ModuleIdentifier> getAllowedModuleIdentifiers( ModuleSpecification moduleSpecification, Notifier notifier );
 

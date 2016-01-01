@@ -129,6 +129,7 @@ public class Packaging
 	 *        The root directory
 	 * @return The package or null if not a package manifest
 	 * @throws IOException
+	 *         In case of an I/O error
 	 */
 	public static Package getPackage( URL manifestUrl, ClassLoader classLoader, File rootDir ) throws IOException
 	{

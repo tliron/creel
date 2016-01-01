@@ -20,10 +20,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -129,7 +129,7 @@ public class ArtifactDatabase
 
 	public Iterable<Artifact> getRedundantArtifacts( Iterable<Artifact> allArtifacts )
 	{
-		Collection<Artifact> reundantArtifacts = new ArrayList<Artifact>();
+		Collection<Artifact> reundantArtifacts = new LinkedList<Artifact>();
 		for( Artifact artifact : getArtifacts() )
 			reundantArtifacts.add( artifact );
 		for( Artifact artifact : allArtifacts )
