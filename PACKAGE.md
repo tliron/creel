@@ -36,7 +36,7 @@ All packaged files would be expected under the `/package/` directory inside the 
 Building with Ant
 -----------------
 
-Easy. Just nest a manifest inside a [<jar> task](https://ant.apache.org/manual/Tasks/jar.html):
+Easy. Just nest a manifest inside a [jar task](https://ant.apache.org/manual/Tasks/jar.html):
 
     <target name="package" description="Create package">
         <jar destfile="mypackage.jar" basedir="files">
