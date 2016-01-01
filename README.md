@@ -29,7 +29,7 @@ How does Creel compare to [Ivy](http://ant.apache.org/ivy/)? Well, Ivy can also 
 Embedded
 --------
 
-It's easy to embed Creel into your Java (or Groovy, Clojure, Scala, etc.) application. A simple [EventHandler interface](creel/tree/master/components/creel/source/com/threecrickets/creel/event) can allow you to integrate Creel activity as appropriate.   
+It's easy to embed Creel into your Java (or Groovy, Clojure, Scala, etc.) application. A simple [EventHandler interface](components/creel/source/com/threecrickets/creel/event) can allow you to integrate Creel activity as appropriate.   
 
 Here's a simple example in JavaScript, `creel.js`, using the excellent JavaScript engine (Nashorn) that comes with JVM 8: 
 
