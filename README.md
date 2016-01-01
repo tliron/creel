@@ -71,7 +71,9 @@ If you really don't want to or can't use scripting, then there's a basic command
 
     java -jar creel.jar
 
-By default it will look for a file called `creel.properties`. Here's a simple example:
+By default it will look for a file called `creel.properties` in the current directory. Here's a simple example:
+
+    destination=lib/jars
 
     module.1.group=com.github.sommeri
     module.1.name=less4j
@@ -88,7 +90,7 @@ By default it will look for a file called `creel.properties`. Here's a simple ex
 
 Use `--help` to get a list of command line options.
 
-(Note that the properties file can define all of the same attributes we used in the JavaScript example above, but we omitted them here for brevity.) 
+Note that the properties file can define all of the same attributes we used in the JavaScript example above, but we omitted them here for brevity. You may also set command line options in the properties file, such as `destination=` above. Command line options would override these. 
 
 
 Ant Task

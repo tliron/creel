@@ -190,23 +190,22 @@ public class Manager extends Notifier
 	public void setRootDir( File rootDir ) throws IOException
 	{
 		this.rootDir = rootDir.getCanonicalFile();
-		if( getStateFile() == null )
-			setStateFile( new File( getRootDir(), ".creel" ) );
 	}
 
 	public File getStateFile()
 	{
-		return stateFile;
+		File stateFile = this.stateFile;
+		return stateFile != null ? stateFile : new File( getRootDir(), ".creel" );
 	}
 
 	public void setStateFile( String statePath ) throws IOException
 	{
-		setStateFile( new File( statePath ) );
+		setStateFile( statePath != null ? new File( statePath ) : null );
 	}
 
 	public void setStateFile( File stateFile ) throws IOException
 	{
-		this.stateFile = stateFile.getCanonicalFile();
+		this.stateFile = stateFile != null ? stateFile.getCanonicalFile() : null;
 	}
 
 	public boolean isOverwrite()

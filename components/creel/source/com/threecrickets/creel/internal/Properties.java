@@ -42,6 +42,18 @@ public class Properties extends java.util.Properties
 	// Attributes
 	//
 
+	public Boolean getPropertyBoolean( String key, Boolean defaultValue )
+	{
+		String value = getProperty( key );
+		return value != null ? new Boolean( value ) : defaultValue;
+	}
+
+	public Integer getPropertyInteger( String key, Integer defaultValue )
+	{
+		String value = getProperty( key );
+		return value != null ? new Integer( value ) : defaultValue;
+	}
+
 	public Collection<Map<String, ?>> getExplicitModuleConfigs()
 	{
 		return getConfigs( "module" );
