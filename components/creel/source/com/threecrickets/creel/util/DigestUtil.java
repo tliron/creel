@@ -75,7 +75,7 @@ public abstract class DigestUtil
 		{
 			MessageDigest digest = MessageDigest.getInstance( algorithm );
 			digest.reset();
-			byte[] buffer = new byte[IoUtil.BUFFER_SIZE];
+			byte[] buffer = new byte[IoUtil.bufferSize];
 			int length = 0;
 			while( ( length = stream.read( buffer ) ) != -1 )
 				digest.update( buffer, 0, length );

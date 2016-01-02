@@ -121,6 +121,11 @@ public class DependenciesTask extends Task
 		this.quiet = quiet;
 	}
 
+	public void setVerbosity( int verbosity )
+	{
+		this.verbosity = verbosity;
+	}
+
 	//
 	// Operations
 	//
@@ -164,7 +169,7 @@ public class DependenciesTask extends Task
 		manager.setMultithreaded( multithreaded );
 
 		if( !quiet )
-			( (EventHandlers) manager.getEventHandler() ).add( new ConsoleEventHandler() );
+			( (EventHandlers) manager.getEventHandler() ).add( new ConsoleEventHandler( false, verbosity > 1 ) );
 
 		if( properties != null )
 		{
@@ -192,6 +197,7 @@ public class DependenciesTask extends Task
 		}
 		manager.setOverwrite( overwrite );
 		manager.setFlat( flat );
+		manager.setVerbosity( verbosity );
 		manager.setExplicitModules( modules );
 		manager.setRepositories( repositories );
 		manager.setRules( rules );
@@ -235,4 +241,6 @@ public class DependenciesTask extends Task
 	private boolean multithreaded = true;
 
 	private boolean quiet;
+
+	private int verbosity = 1;
 }

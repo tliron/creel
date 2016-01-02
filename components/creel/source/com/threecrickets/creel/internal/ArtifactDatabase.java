@@ -66,7 +66,7 @@ public class ArtifactDatabase
 		try
 		{
 			MultiValueProperties properties = new MultiValueProperties();
-			properties.load( new BufferedReader( new FileReader( databaseFile ), IoUtil.BUFFER_SIZE ) );
+			properties.load( new BufferedReader( new FileReader( databaseFile ), IoUtil.bufferSize ) );
 
 			for( Map<String, String> config : properties.toMaps() )
 			{
@@ -153,7 +153,7 @@ public class ArtifactDatabase
 			properties.putMap( index++, config );
 		}
 
-		Writer writer = new BufferedWriter( new FileWriter( databaseFile ), IoUtil.BUFFER_SIZE );
+		Writer writer = new BufferedWriter( new FileWriter( databaseFile ), IoUtil.bufferSize );
 		try
 		{
 			properties.store( writer, "Managed by Creel" );

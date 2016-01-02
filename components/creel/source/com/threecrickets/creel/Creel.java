@@ -123,7 +123,9 @@ public class Creel
 
 	public static void help( PrintStream out )
 	{
-		out.println( "Creel is a lightweight and lightning-fast tool for resolving and downloading" );
+		out.println( "Creel " + Manager.getVersion() );
+		out.println();
+		out.println( "A lightweight and lightning-fast tool for resolving and downloading" );
 		out.println( "JVM dependencies from Maven repositories." );
 		out.println();
 		out.println( "Options:" );

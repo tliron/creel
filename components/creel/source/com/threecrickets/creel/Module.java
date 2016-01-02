@@ -11,9 +11,10 @@
 
 package com.threecrickets.creel;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -84,23 +85,39 @@ public class Module
 	/**
 	 * Adds a new supplicant if we don't have it already.
 	 * 
-	 * @param supplicant
+	 * @param module
 	 *        The supplicant module
 	 */
-	public void addSupplicant( Module supplicant )
+	public void addSupplicant( Module module )
 	{
-		// TODO
+		boolean found = false;
+		for( Module supplicant : getSupplicants() )
+			if( module.getIdentifier().equals( supplicant.getIdentifier() ) )
+			{
+				found = true;
+				break;
+			}
+		if( !found )
+			supplicants.add( module );
 	}
 
 	/**
 	 * Removes a supplicant if we have it.
 	 * 
-	 * @param supplicant
+	 * @param module
 	 *        The supplicant module
 	 */
-	public void removeSupplicant( Module supplicant )
+	public void removeSupplicant( Module module )
 	{
-		// TODO
+		for( ListIterator<Module> i = supplicants.listIterator(); i.hasNext(); )
+		{
+			Module supplicant = i.next();
+			if( module.getIdentifier().equals( supplicant.getIdentifier() ) )
+			{
+				i.remove();
+				break;
+			}
+		}
 	}
 
 	/**
@@ -134,7 +151,19 @@ public class Module
 
 	public void replaceModule( Module oldModule, Module newModule, boolean recursive )
 	{
-		// TODO
+		removeSupplicant( oldModule );
+		for( ListIterator<Module> i = dependencies.listIterator(); i.hasNext(); )
+		{
+			Module dependency = i.next();
+			if( oldModule.getIdentifier().equals( dependency.getIdentifier() ) )
+			{
+				i.set( newModule );
+				newModule.addSupplicant( this );
+			}
+
+			if( recursive )
+				dependency.replaceModule( oldModule, newModule, true );
+		}
 	}
 
 	public String toString( boolean longForm )
@@ -204,7 +233,7 @@ public class Module
 
 	private volatile ModuleSpecification specification;
 
-	private final Collection<Module> dependencies = new CopyOnWriteArrayList<Module>();
+	private final List<Module> dependencies = new CopyOnWriteArrayList<Module>();
 
-	private final Collection<Module> supplicants = new CopyOnWriteArrayList<Module>();
+	private final List<Module> supplicants = new CopyOnWriteArrayList<Module>();
 }

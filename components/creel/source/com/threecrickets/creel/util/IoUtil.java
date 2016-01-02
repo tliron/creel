@@ -39,16 +39,12 @@ import java.nio.file.StandardCopyOption;
 public abstract class IoUtil
 {
 	//
-	// Constants
-	//
-
-	public static final int BUFFER_SIZE = 16 * 1024;
-
-	//
 	// Static attributes
 	//
 
 	public static volatile int timeout = 5000;
+
+	public static volatile int bufferSize = 16 * 1024;
 
 	public static volatile String userAgent = "Creel";
 
@@ -202,7 +198,7 @@ public abstract class IoUtil
 	 */
 	public static void copy( ReadableByteChannel source, WritableByteChannel target, ProgressListener progressListener, int length ) throws IOException
 	{
-		ByteBuffer buffer = ByteBuffer.allocate( BUFFER_SIZE );
+		ByteBuffer buffer = ByteBuffer.allocate( bufferSize );
 		int count, position = 0;
 		while( ( count = source.read( buffer ) ) != -1 )
 		{
@@ -232,7 +228,7 @@ public abstract class IoUtil
 	 */
 	public static void copy( InputStream source, OutputStream target, ProgressListener progressListener, int length ) throws IOException
 	{
-		byte[] buffer = new byte[BUFFER_SIZE];
+		byte[] buffer = new byte[bufferSize];
 		int count, position = 0;
 		while( ( count = source.read( buffer ) ) != -1 )
 		{
@@ -265,7 +261,7 @@ public abstract class IoUtil
 		try
 		{
 			random.seek( start );
-			byte[] buffer = new byte[BUFFER_SIZE];
+			byte[] buffer = new byte[bufferSize];
 			int count, position = 0;
 			while( ( count = source.read( buffer ) ) != -1 )
 			{
@@ -370,7 +366,7 @@ public abstract class IoUtil
 		ReadableByteChannel fromChannel = Channels.newChannel( connection.getInputStream() );
 		try
 		{
-			ByteArrayOutputStream buffer = new ByteArrayOutputStream( BUFFER_SIZE );
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream( bufferSize );
 			WritableByteChannel toChannel = Channels.newChannel( buffer );
 			copy( fromChannel, toChannel, progressListener, connection.getContentLength() );
 			return buffer.toByteArray();

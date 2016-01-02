@@ -368,6 +368,8 @@ public class Manager extends Notifier
 	 */
 	public Iterable<Artifact> install( int stage )
 	{
+		info( "Creel " + getVersion() );
+
 		Collection<Artifact> installedArtifacts = new ArrayList<Artifact>();
 
 		// Identification
@@ -525,11 +527,9 @@ public class Manager extends Notifier
 								else
 								{
 									if( !knownArtifact.wasModified() )
-									{
 										copy = artifact.isDifferent();
-										if( !copy )
-											info( "Not overwriting " + artifact.getFile() );
-									}
+									else
+										info( "Modified, so not overwriting " + artifact.getFile() );
 								}
 							}
 						}
@@ -609,6 +609,8 @@ public class Manager extends Notifier
 						{
 							if( !redundantArtifact.wasModified() )
 								delete = true;
+							else
+								info( "Modified, so not deleting " + redundantArtifact.getFile() );
 						}
 						catch( IOException x )
 						{
@@ -628,10 +630,12 @@ public class Manager extends Notifier
 						else
 							error( "Could not delete " + redundantArtifact.getFile() );
 					}
-					else
-						info( "Not deleting " + redundantArtifact.getFile() );
 				}
-				end( id, "Deleted " + deletedCount + ( deletedCount != 1 ? " redundant artifacts" : " redundant artifact" ) );
+
+				if( deletedCount > 0 )
+					end( id, "Deleted " + deletedCount + ( deletedCount != 1 ? " redundant artifacts" : " redundant artifact" ) );
+				else
+					end( id, "No redundant artifacts to delete" );
 			}
 
 			knownArtifacts.addArtifacts( installedArtifacts );

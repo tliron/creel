@@ -36,7 +36,7 @@ public class Properties extends java.util.Properties
 
 	public Properties( File file ) throws IOException
 	{
-		this( new BufferedReader( new FileReader( file ), IoUtil.BUFFER_SIZE ) );
+		this( new BufferedReader( new FileReader( file ), IoUtil.bufferSize ) );
 	}
 
 	public Properties( Reader reader ) throws IOException
