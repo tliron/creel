@@ -27,13 +27,13 @@ public class Jobs
 	// Operations
 	//
 
-	public synchronized boolean beginIfNotBegun( Object token, ExecutorService executor, Phaser phaser, Runnable onEnd )
+	public synchronized boolean beginIfNotBegun( int token, ExecutorService executor, Phaser phaser, Runnable onEnd )
 	{
-		Job job = jobs.get( token.toString() );
+		Job job = jobs.get( token );
 		if( job == null )
 		{
 			// New job
-			jobs.put( token.toString(), new Job( executor ) );
+			jobs.put( token, new Job( executor ) );
 			return true;
 		}
 		else
@@ -47,9 +47,9 @@ public class Jobs
 		}
 	}
 
-	public synchronized boolean notifyEnd( Object token )
+	public synchronized boolean notifyEnd( int token )
 	{
-		Job job = jobs.remove( token.toString() );
+		Job job = jobs.remove( token );
 		if( job != null )
 		{
 			job.end();
@@ -59,9 +59,9 @@ public class Jobs
 			return false;
 	}
 
-	public synchronized void onEnd( Object token, Runnable onEnd )
+	public synchronized void onEnd( int token, Runnable onEnd )
 	{
-		Job job = jobs.get( token.toString() );
+		Job job = jobs.get( token );
 		if( job != null )
 			// Do later
 			job.onEnd( onEnd );
@@ -73,5 +73,5 @@ public class Jobs
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private Map<String, Job> jobs = new HashMap<String, Job>();
+	private Map<Integer, Job> jobs = new HashMap<Integer, Job>();
 }

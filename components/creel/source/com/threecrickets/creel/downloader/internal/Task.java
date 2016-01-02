@@ -11,6 +11,7 @@
 
 package com.threecrickets.creel.downloader.internal;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.threecrickets.creel.downloader.Downloader;
@@ -18,15 +19,16 @@ import com.threecrickets.creel.downloader.Downloader;
 /**
  * @author Tal Liron
  */
-public abstract class DownloaderTask implements Runnable
+public abstract class Task implements Runnable
 {
 	//
 	// Construction
 	//
 
-	public DownloaderTask( Downloader downloader, Runnable validator )
+	public Task( Downloader downloader, ExecutorService executor, Runnable validator )
 	{
 		this.downloader = downloader;
+		this.executor = executor;
 		this.validator = validator;
 	}
 
@@ -39,6 +41,11 @@ public abstract class DownloaderTask implements Runnable
 		return downloader;
 	}
 
+	public ExecutorService getExecutor()
+	{
+		return executor;
+	}
+
 	public Runnable getValidator()
 	{
 		return validator;
@@ -47,22 +54,24 @@ public abstract class DownloaderTask implements Runnable
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
-	protected void done()
+	protected void done( boolean downloaded )
 	{
-		if( getValidator() != null )
+		if( downloaded )
 		{
-			getDownloader().getPhaser().register();
-			// TODO: submit it?
-			getValidator().run();
+			if( getValidator() != null )
+			{
+				getDownloader().getPhaser().register();
+				getExecutor().submit( new WrappedTask( getValidator(), getDownloader().getPhaser() ) );
+			}
+			getDownloader().incrementCount();
 		}
-		getDownloader().incrementCount();
 		getDownloader().getPhaser().arriveAndDeregister();
 	}
 
 	protected void done( AtomicInteger counter )
 	{
 		if( counter.decrementAndGet() == 0 )
-			done();
+			done( true );
 		else
 			getDownloader().getPhaser().arriveAndDeregister();
 	}
@@ -71,6 +80,8 @@ public abstract class DownloaderTask implements Runnable
 	// Private
 
 	private final Downloader downloader;
+
+	private final ExecutorService executor;
 
 	private final Runnable validator;
 }

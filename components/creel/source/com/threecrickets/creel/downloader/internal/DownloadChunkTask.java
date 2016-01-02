@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.threecrickets.creel.downloader.Downloader;
@@ -23,17 +24,15 @@ import com.threecrickets.creel.util.IoUtil;
 /**
  * @author Tal Liron
  */
-public class DownloadChunkTask extends DownloaderTask implements IoUtil.ProgressListener
+public class DownloadChunkTask extends DownloadTask
 {
 	//
 	// Construction
 	//
 
-	public DownloadChunkTask( Downloader downloader, Runnable validator, URL url, File file, int start, int length, int chunk, int chunks, AtomicInteger counter )
+	public DownloadChunkTask( Downloader downloader, ExecutorService executor, Runnable validator, URL sourceUrl, File file, int start, int length, int chunk, int chunks, AtomicInteger counter )
 	{
-		super( downloader, validator );
-		this.url = url;
-		this.file = file;
+		super( downloader, executor, validator, sourceUrl, file );
 		this.start = start;
 		this.length = length;
 		this.chunk = chunk;
@@ -44,16 +43,6 @@ public class DownloadChunkTask extends DownloaderTask implements IoUtil.Progress
 	//
 	// Attributes
 	//
-
-	public URL getUrl()
-	{
-		return url;
-	}
-
-	public File getFile()
-	{
-		return file;
-	}
 
 	public int getStart()
 	{
@@ -87,47 +76,23 @@ public class DownloadChunkTask extends DownloaderTask implements IoUtil.Progress
 	public void run()
 	{
 
-		id = getDownloader().getNotifier().begin( "Downloading from " + getUrl() + " (" + getChunk() + "/" + getChunks() + ")" );
+		id = getDownloader().getNotifier().begin( "Downloading from " + getSourceUrl() + " (" + getChunk() + "/" + getChunks() + ")" );
 		try
 		{
-			URLConnection connection = getUrl().openConnection();
+			URLConnection connection = getSourceUrl().openConnection();
 			connection.setRequestProperty( "Range", "bytes=" + getStart() + "-" + ( getStart() + getLength() ) );
 			IoUtil.copy( connection.getInputStream(), getFile(), getStart(), this, getLength() );
 			getDownloader().getNotifier().end( id, "Downloaded to " + getFile() + " (" + getChunk() + "/" + getChunks() + ")" );
 		}
 		catch( IOException x )
 		{
-			getDownloader().getNotifier().fail( id, "Could not download from " + getUrl() + " (" + getChunk() + "/" + getChunks() + ")", x );
+			getDownloader().getNotifier().fail( id, "Could not download from " + getSourceUrl() + " (" + getChunk() + "/" + getChunks() + ")", x );
 		}
 		done( getCounter() );
 	}
 
-	//
-	// IoUtil.Listener
-	//
-
-	public void onProgress( int position, int length )
-	{
-		if( length > 0 )
-			getDownloader().getNotifier().update( id, (double) position / (double) length );
-		if( getDownloader().getDelay() > 0 )
-		{
-			try
-			{
-				Thread.sleep( getDownloader().getDelay() );
-			}
-			catch( InterruptedException e )
-			{
-			}
-		}
-	}
-
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	private final URL url;
-
-	private final File file;
 
 	private final int start;
 

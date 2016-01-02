@@ -17,6 +17,12 @@ package com.threecrickets.creel.event;
 public class NullEventHandler implements EventHandler
 {
 	//
+	// Constants
+	//
+
+	public static final NullEventHandler INSTANCE = new NullEventHandler();
+
+	//
 	// EventHandler
 	//
 

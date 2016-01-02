@@ -15,7 +15,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +26,6 @@ import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.threecrickets.creel.downloader.internal.CopyFileTask;
-import com.threecrickets.creel.downloader.internal.DownloadChunkTask;
 import com.threecrickets.creel.downloader.internal.DownloadTask;
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.internal.DaemonThreadFactory;
@@ -134,53 +132,12 @@ public class Downloader implements Closeable
 		{
 			// Optimize for file copies
 			getPhaser().register();
-			executor.submit( new CopyFileTask( this, validator, sourceFile, file ) );
+			executor.submit( new CopyFileTask( this, executor, validator, sourceFile, file ) );
 		}
 		else
 		{
-			try
-			{
-				boolean supportsChunks = false;
-				int streamSize = 0;
-
-				if( getChunksPerFile() > 1 )
-				{
-					// Make sure the host supports ranges
-					URLConnection connection = sourceUrl.openConnection();
-					String acceptRanges = connection.getHeaderField( "Accept-Ranges" );
-					supportsChunks = "bytes".equals( acceptRanges );
-					if( supportsChunks )
-					{
-						streamSize = connection.getContentLength();
-						if( streamSize == -1 )
-							supportsChunks = false;
-					}
-				}
-
-				if( supportsChunks )
-				{
-					// We support chunks
-					AtomicInteger counter = new AtomicInteger( getChunksPerFile() );
-					int chunkSize = streamSize / getChunksPerFile();
-					for( int chunk = 0; chunk < getChunksPerFile(); chunk++ )
-					{
-						int start = chunk * chunkSize;
-						int length = chunk < getChunksPerFile() - 1 ? chunkSize : streamSize - start;
-						getPhaser().register();
-						executor.submit( new DownloadChunkTask( this, validator, sourceUrl, file, start, length, chunk + 1, getChunksPerFile(), counter ) );
-					}
-				}
-				else
-				{
-					// We don't support chunks
-					getPhaser().register();
-					executor.submit( new DownloadTask( this, validator, sourceUrl, file ) );
-				}
-			}
-			catch( IOException x )
-			{
-				getNotifier().error( x );
-			}
+			getPhaser().register();
+			executor.submit( new DownloadTask( this, executor, validator, sourceUrl, file ) );
 		}
 	}
 

@@ -110,7 +110,6 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 	// Cloneable
 	//
 
-	@Override
 	public MavenModuleIdentifier clone()
 	{
 		return new MavenModuleIdentifier( (MavenRepository) getRepository(), getGroup(), getName(), getVersion() );

@@ -13,6 +13,7 @@ package com.threecrickets.creel.downloader.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 
 import com.threecrickets.creel.downloader.Downloader;
 import com.threecrickets.creel.util.IoUtil;
@@ -20,31 +21,31 @@ import com.threecrickets.creel.util.IoUtil;
 /**
  * @author Tal Liron
  */
-public class CopyFileTask extends DownloaderTask
+public class CopyFileTask extends Task
 {
 	//
 	// Construction
 	//
 
-	public CopyFileTask( Downloader downloader, Runnable validator, File fromFile, File toFile )
+	public CopyFileTask( Downloader downloader, ExecutorService executor, Runnable validator, File sourceFile, File file )
 	{
-		super( downloader, validator );
-		this.fromFile = fromFile;
-		this.toFile = toFile;
+		super( downloader, executor, validator );
+		this.sourceFile = sourceFile;
+		this.file = file;
 	}
 
 	//
 	// Attributes
 	//
 
-	public File getFromFile()
+	public File getSourceFile()
 	{
-		return fromFile;
+		return sourceFile;
 	}
 
-	public File getToFile()
+	public File getFile()
 	{
-		return toFile;
+		return file;
 	}
 
 	//
@@ -53,23 +54,29 @@ public class CopyFileTask extends DownloaderTask
 
 	public void run()
 	{
-		String id = getDownloader().getNotifier().begin( "Copying file from " + getFromFile() );
+		if( !getSourceFile().exists() )
+		{
+			done( false );
+			return;
+		}
+
+		String id = getDownloader().getNotifier().begin( "Copying file from " + getSourceFile() );
 		try
 		{
-			IoUtil.copy( getFromFile(), getToFile() );
-			getDownloader().getNotifier().end( id, "Copied file to " + getToFile() );
+			IoUtil.copy( getSourceFile(), getFile() );
+			getDownloader().getNotifier().end( id, "Copied file to " + getFile() );
 		}
 		catch( IOException x )
 		{
-			getDownloader().getNotifier().fail( id, "Could not copy file from " + getFromFile(), x );
+			getDownloader().getNotifier().fail( id, "Could not copy file from " + getSourceFile(), x );
 		}
-		done();
+		done( true );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final File fromFile;
+	private final File sourceFile;
 
-	private final File toFile;
+	private final File file;
 }

@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -81,12 +83,26 @@ public abstract class IoUtil
 	 *        The URL
 	 * @return True if valid
 	 */
-	public static boolean isValid( URL url )
+	public static boolean exists( URL url )
 	{
+		File file = toFile( url );
+		if( file != null )
+			return file.exists();
+
 		try
 		{
-			url.openStream().close();
-			return true;
+			URLConnection connection = url.openConnection();
+			if( connection instanceof HttpURLConnection )
+			{
+				HttpURLConnection httpConnection = (HttpURLConnection) connection;
+				httpConnection.setRequestMethod( "HEAD" );
+				return httpConnection.getResponseCode() == HttpURLConnection.HTTP_OK;
+			}
+			else
+			{
+				connection.getInputStream().close();
+				return true;
+			}
 		}
 		catch( IOException x )
 		{

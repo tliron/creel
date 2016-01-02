@@ -66,17 +66,17 @@ public class ConcurrentIdentificationContext implements Closeable
 
 	public boolean beginIdentifyingIfNotIdentifying( Module module, Manager.IdentifyModule identifyModule )
 	{
-		return getJobs().beginIfNotBegun( module.getSpecification(), getExecutor(), getPhaser(), identifyModule );
+		return getJobs().beginIfNotBegun( module.getSpecification().hashCode(), getExecutor(), getPhaser(), identifyModule );
 	}
 
 	public void onIdentified( Module module, Manager.IdentifiedModule identifiedModule )
 	{
-		getJobs().onEnd( module.getSpecification(), identifiedModule );
+		getJobs().onEnd( module.getSpecification().hashCode(), identifiedModule );
 	}
 
 	public void notifyIdentified( Module module )
 	{
-		getJobs().notifyEnd( module.getSpecification() );
+		getJobs().notifyEnd( module.getSpecification().hashCode() );
 	}
 
 	public void identified()

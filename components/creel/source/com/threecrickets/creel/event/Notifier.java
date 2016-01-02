@@ -21,17 +21,25 @@ import com.threecrickets.creel.event.Event.Type;
 public class Notifier
 {
 	//
+	// Static attributes
+	//
+
+	public static volatile Notifier lastInstance;
+
+	//
 	// Construction
 	//
 
 	public Notifier()
 	{
-		this( new NullEventHandler() );
+		this( NullEventHandler.INSTANCE );
 	}
 
 	public Notifier( EventHandler eventHandler )
 	{
 		this.eventHandler = eventHandler;
+		if( eventHandler != NullEventHandler.INSTANCE )
+			lastInstance = this;
 	}
 
 	//

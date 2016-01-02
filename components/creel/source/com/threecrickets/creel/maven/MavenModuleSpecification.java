@@ -103,13 +103,13 @@ public class MavenModuleSpecification extends ModuleSpecification
 	// Operations
 	//
 
-	public boolean inPatterns( String group, String name, String version )
+	public boolean is( String group, String name, String version )
 	{
 		Pattern groupPattern = group != null ? GlobUtil.toPattern( group ) : null;
 		Pattern namePattern = name != null ? GlobUtil.toPattern( name ) : null;
 		Pattern versionPattern = version != null ? GlobUtil.toPattern( version ) : null;
 		for( SpecificationOption option : getOptions() )
-			if( option.inPatterns( groupPattern, namePattern, versionPattern ) )
+			if( option.is( groupPattern, namePattern, versionPattern ) )
 				return true;
 		return false;
 	}
@@ -120,7 +120,7 @@ public class MavenModuleSpecification extends ModuleSpecification
 		Pattern namePattern = name != null ? GlobUtil.toPattern( name ) : null;
 		Pattern versionPattern = version != null ? GlobUtil.toPattern( version ) : null;
 		for( SpecificationOption option : getOptions() )
-			if( option.inPatterns( groupPattern, namePattern, versionPattern ) )
+			if( option.is( groupPattern, namePattern, versionPattern ) )
 			{
 				option.rewrite( newGroup, newName, null );
 				return true;
@@ -134,7 +134,7 @@ public class MavenModuleSpecification extends ModuleSpecification
 		Pattern namePattern = name != null ? GlobUtil.toPattern( name ) : null;
 		Pattern versionPattern = version != null ? GlobUtil.toPattern( version ) : null;
 		for( SpecificationOption option : getOptions() )
-			if( option.inPatterns( groupPattern, namePattern, versionPattern ) )
+			if( option.is( groupPattern, namePattern, versionPattern ) )
 			{
 				option.rewrite( null, null, newVersion );
 				return true;
@@ -146,7 +146,6 @@ public class MavenModuleSpecification extends ModuleSpecification
 	// ModuleSpecification
 	//
 
-	@Override
 	public boolean allowsModuleIdentifier( ModuleIdentifier moduleIdentifier )
 	{
 		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
@@ -154,6 +153,7 @@ public class MavenModuleSpecification extends ModuleSpecification
 		boolean allowed = false;
 
 		for( SpecificationOption option : getOptions() )
+		{
 			if( option.matches( mavenModuleIdentifier ) )
 			{
 				if( option.isExclude() )
@@ -167,6 +167,7 @@ public class MavenModuleSpecification extends ModuleSpecification
 				if( !option.isExclude() )
 					break;
 			}
+		}
 
 		return allowed;
 	}
@@ -175,7 +176,6 @@ public class MavenModuleSpecification extends ModuleSpecification
 	// Cloneable
 	//
 
-	@Override
 	public MavenModuleSpecification clone()
 	{
 		return new MavenModuleSpecification( getOptions(), isStrict() );
@@ -207,7 +207,7 @@ public class MavenModuleSpecification extends ModuleSpecification
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash( super.hashCode(), getOptions(), isStrict() );
+		return Objects.hash( super.hashCode(), options, isStrict() );
 	}
 
 	@Override

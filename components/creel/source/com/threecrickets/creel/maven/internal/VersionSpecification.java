@@ -32,10 +32,10 @@ public class VersionSpecification
 		versionSpecification = versionSpecification == null ? "" : versionSpecification.trim();
 		text = versionSpecification;
 
-		// Check if all
-		if( isAll( versionSpecification ) )
+		// Check if wildcard
+		if( isWildcard( versionSpecification ) )
 		{
-			all = true;
+			wildcard = true;
 			trivial = false;
 			ranges = null;
 			return;
@@ -44,7 +44,7 @@ public class VersionSpecification
 		// Check if trivial
 		if( isTrivial( versionSpecification ) )
 		{
-			all = false;
+			wildcard = false;
 			trivial = true;
 			ranges = null;
 			return;
@@ -52,11 +52,11 @@ public class VersionSpecification
 
 		// TODO: regexp match to see if it's parseable
 
-		all = false;
+		wildcard = false;
 		trivial = false;
 		ranges = new ArrayList<VersionRange>();
 
-		// Convert Ivy range suffix to Maven: "1.0+" to "[1.0,)"
+		// Convert Ivy/Gradle range suffix to Maven: "1.0+" to "[1.0,)"
 		if( !strict && versionSpecification.endsWith( "+" ) )
 			versionSpecification = "[" + versionSpecification.substring( 0, versionSpecification.length() - 1 ) + ",)";
 
@@ -71,9 +71,9 @@ public class VersionSpecification
 			ranges.add( new VersionRange( start, end, open == '[', close == ']' ) );
 
 			/*
-			 * if (!matcher.find()) { // Make sure there is a comma in between
-			 * ranges var between = version.substring(lastIndex, matches.index);
-			 * if (!/^\s+,\s+$/.test(between)) return null; }
+			 * TODO: if (!matcher.find()) { // Make sure there is a comma in
+			 * between ranges var between = version.substring(lastIndex,
+			 * matches.index); if (!/^\s+,\s+$/.test(between)) return null; }
 			 */
 		}
 	}
@@ -87,9 +87,9 @@ public class VersionSpecification
 		return strict;
 	}
 
-	public boolean isAll()
+	public boolean isWildcard()
 	{
-		return all;
+		return wildcard;
 	}
 
 	public boolean isTrivial()
@@ -99,21 +99,16 @@ public class VersionSpecification
 
 	public boolean allows( Version version )
 	{
-		if( all )
+		if( isWildcard() )
 			return true;
 
-		if( trivial )
-			return text.equals( version.toString() );
+		if( isTrivial() )
+			return text.equals( version.getText() );
 
 		for( VersionRange range : ranges )
-		{
-			// System.out.println(range.toString() + ' ' + version + " > " +
-			// range.allows(
-			// version ));
 			if( range.allows( version ) )
 				// Logical or: it takes just one positive to be positive
 				return true;
-		}
 
 		return false;
 	}
@@ -125,7 +120,7 @@ public class VersionSpecification
 	@Override
 	public String toString()
 	{
-		if( trivial )
+		if( isTrivial() )
 			return text;
 		StringBuilder r = new StringBuilder();
 		for( Iterator<VersionRange> i = ranges.iterator(); i.hasNext(); )
@@ -147,7 +142,7 @@ public class VersionSpecification
 
 	private final boolean trivial;
 
-	private final boolean all;
+	private final boolean wildcard;
 
 	private final Collection<VersionRange> ranges;
 
@@ -156,7 +151,7 @@ public class VersionSpecification
 	 */
 	private static Pattern PATTERN = Pattern.compile( "[\\[\\(]\\s*([^,\\s]*)\\s*,\\s*([^,\\]\\)\\s]*)\\s*[\\]\\)]" );
 
-	private static boolean isAll( String versionSpecification )
+	private static boolean isWildcard( String versionSpecification )
 	{
 		return ( versionSpecification == null ) || versionSpecification.isEmpty() || versionSpecification.equals( "*" ) || versionSpecification.equals( "+" );
 	}

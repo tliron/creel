@@ -112,7 +112,7 @@ public class SpecificationOption
 		return true;
 	}
 
-	public boolean inPatterns( Pattern group, Pattern name, Pattern version )
+	public boolean is( Pattern group, Pattern name, Pattern version )
 	{
 		if( ( group != null ) && !group.matcher( getGroup() ).matches() )
 			return false;
@@ -155,7 +155,7 @@ public class SpecificationOption
 		if( ( object == null ) || ( getClass() != object.getClass() ) )
 			return false;
 		SpecificationOption option = (SpecificationOption) object;
-		return getGroup().equals( option.getGroup() ) && getName().equals( option.getName() ) && getVersion().equals( option.getVersion() );
+		return getGroup().equals( option.getGroup() ) && getName().equals( option.getName() ) && getVersion().equals( option.getVersion() ) && ( isStrict() == option.isStrict() );
 	}
 
 	@Override

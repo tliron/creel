@@ -12,7 +12,11 @@
 package com.threecrickets.creel.downloader.internal;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.threecrickets.creel.downloader.Downloader;
 import com.threecrickets.creel.util.IoUtil;
@@ -20,16 +24,16 @@ import com.threecrickets.creel.util.IoUtil;
 /**
  * @author Tal Liron
  */
-public class DownloadTask extends DownloaderTask implements IoUtil.ProgressListener
+public class DownloadTask extends Task implements IoUtil.ProgressListener
 {
 	//
 	// Construction
 	//
 
-	public DownloadTask( Downloader downloader, Runnable validator, URL url, File file )
+	public DownloadTask( Downloader downloader, ExecutorService executor, Runnable validator, URL sourceUrl, File file )
 	{
-		super( downloader, validator );
-		this.url = url;
+		super( downloader, executor, validator );
+		this.sourceUrl = sourceUrl;
 		this.file = file;
 	}
 
@@ -37,9 +41,9 @@ public class DownloadTask extends DownloaderTask implements IoUtil.ProgressListe
 	// Attributes
 	//
 
-	public URL getUrl()
+	public URL getSourceUrl()
 	{
-		return url;
+		return sourceUrl;
 	}
 
 	public File getFile()
@@ -53,17 +57,66 @@ public class DownloadTask extends DownloaderTask implements IoUtil.ProgressListe
 
 	public void run()
 	{
-		id = getDownloader().getNotifier().begin( "Downloading from " + getUrl() );
+		if( !IoUtil.exists( getSourceUrl() ) )
+		{
+			done( false );
+			return;
+		}
+
+		boolean supportsChunks = false;
+		int streamSize = 0;
+		int chunksPerFile = getDownloader().getChunksPerFile();
+
 		try
 		{
-			IoUtil.copy( getUrl(), getFile(), this );
-			getDownloader().getNotifier().end( id, "Downloaded to " + getFile() );
+			if( chunksPerFile > 1 )
+			{
+				// Make sure the host supports ranges
+				URLConnection connection = getSourceUrl().openConnection();
+				String acceptRanges = connection.getHeaderField( "Accept-Ranges" );
+				supportsChunks = "bytes".equals( acceptRanges );
+				if( supportsChunks )
+				{
+					streamSize = connection.getContentLength();
+					if( streamSize == -1 )
+						supportsChunks = false;
+				}
+			}
 		}
-		catch( Exception x )
+		catch( IOException x )
 		{
-			getDownloader().getNotifier().fail( id, "Could not download from " + getUrl(), x );
+			getDownloader().getNotifier().error( x );
 		}
-		done();
+
+		if( supportsChunks )
+		{
+			// We support chunks, so split into tasks
+			AtomicInteger counter = new AtomicInteger( chunksPerFile );
+			int chunkSize = streamSize / chunksPerFile;
+			for( int chunk = 0; chunk < chunksPerFile; chunk++ )
+			{
+				int start = chunk * chunkSize;
+				int length = chunk < chunksPerFile - 1 ? chunkSize : streamSize - start;
+				getDownloader().getPhaser().register();
+				getExecutor().submit( new DownloadChunkTask( getDownloader(), getExecutor(), getValidator(), getSourceUrl(), getFile(), start, length, chunk + 1, chunksPerFile, counter ) );
+			}
+		}
+		else
+		{
+			// We don't support chunks, so download no
+			id = getDownloader().getNotifier().begin( "Downloading from " + getSourceUrl() );
+			try
+			{
+				IoUtil.copy( getSourceUrl(), getFile(), this );
+				getDownloader().getNotifier().end( id, "Downloaded to " + getFile() );
+			}
+			catch( Exception x )
+			{
+				getDownloader().getNotifier().fail( id, "Could not download from " + getSourceUrl(), x );
+			}
+		}
+
+		done( true );
 	}
 
 	//
@@ -89,7 +142,7 @@ public class DownloadTask extends DownloaderTask implements IoUtil.ProgressListe
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final URL url;
+	private final URL sourceUrl;
 
 	private final File file;
 

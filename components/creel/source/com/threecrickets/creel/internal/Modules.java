@@ -11,11 +11,10 @@
 
 package com.threecrickets.creel.internal;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.threecrickets.creel.Module;
 import com.threecrickets.creel.ModuleIdentifier;
@@ -30,7 +29,7 @@ public class Modules implements Iterable<Module>
 	// Attributes
 	//
 
-	public int size()
+	public synchronized int size()
 	{
 		return modules.size();
 	}
@@ -39,124 +38,76 @@ public class Modules implements Iterable<Module>
 	// Operations
 	//
 
-	public Module get( ModuleIdentifier moduleIdentifier )
+	public synchronized Module get( ModuleIdentifier moduleIdentifier )
 	{
-		lock.lock();
-		try
-		{
-			for( Module module : modules )
-				if( moduleIdentifier.equals( module.getIdentifier() ) )
-					return module;
-		}
-		finally
-		{
-			lock.unlock();
-		}
+		for( Module module : modules )
+			if( moduleIdentifier.equals( module.getIdentifier() ) )
+				return module;
 		return null;
 	}
 
-	public Module get( ModuleSpecification moduleSpecification )
+	public synchronized Module get( ModuleSpecification moduleSpecification )
 	{
-		lock.lock();
-		try
-		{
-			for( Module module : modules )
-				if( moduleSpecification.equals( module.getSpecification() ) )
-					return module;
-		}
-		finally
-		{
-			lock.unlock();
-		}
+		for( Module module : modules )
+			if( moduleSpecification.equals( module.getSpecification() ) )
+				return module;
 		return null;
 	}
 
-	public void addByIdentifier( Module module )
+	public synchronized void addByIdentifier( Module module )
 	{
-		lock.lock();
-		try
-		{
-			boolean found = false;
-			for( Module aModule : modules )
-				if( module.getIdentifier().equals( aModule.getIdentifier() ) )
-				{
-					aModule.mergeSupplicants( module );
-					found = true;
-					break;
-				}
-			if( !found )
-				modules.add( module );
-		}
-		finally
-		{
-			lock.unlock();
-		}
+		boolean found = false;
+		for( Module aModule : modules )
+			if( module.getIdentifier().equals( aModule.getIdentifier() ) )
+			{
+				aModule.mergeSupplicants( module );
+				found = true;
+				break;
+			}
+		if( !found )
+			modules.add( module );
 	}
 
-	public void addBySpecification( Module module )
+	public synchronized void addBySpecification( Module module )
 	{
-		lock.lock();
-		try
-		{
-			boolean found = false;
-			for( Module aModule : modules )
-				if( module.getSpecification().equals( aModule.getSpecification() ) )
-				{
-					aModule.mergeSupplicants( module );
-					found = true;
-					break;
-				}
-			if( !found )
-				modules.add( module );
-		}
-		finally
-		{
-			lock.unlock();
-		}
+		boolean found = false;
+		for( Module aModule : modules )
+			if( module.getSpecification().equals( aModule.getSpecification() ) )
+			{
+				aModule.mergeSupplicants( module );
+				found = true;
+				break;
+			}
+		if( !found )
+			modules.add( module );
 	}
 
-	public void remove( ModuleIdentifier moduleIdentifier )
+	public synchronized void remove( ModuleIdentifier moduleIdentifier )
 	{
-		lock.lock();
-		try
-		{
-			for( Module module : modules )
-				if( moduleIdentifier.equals( module.getIdentifier() ) )
-				{
-					modules.remove( module );
-					break;
-				}
-		}
-		finally
-		{
-			lock.unlock();
-		}
+		for( Module module : modules )
+			if( moduleIdentifier.equals( module.getIdentifier() ) )
+			{
+				modules.remove( module );
+				break;
+			}
 	}
 
-	public void remove( ModuleSpecification moduleSpecification )
+	public synchronized void remove( ModuleSpecification moduleSpecification )
 	{
-		lock.lock();
-		try
-		{
-			for( Module module : modules )
-				if( moduleSpecification.equals( module.getSpecification() ) )
-				{
-					modules.remove( module );
-					break;
-				}
-		}
-		finally
-		{
-			lock.unlock();
-		}
+		for( Module module : modules )
+			if( moduleSpecification.equals( module.getSpecification() ) )
+			{
+				modules.remove( module );
+				break;
+			}
 	}
 
-	public void sortByIdentifiers()
+	public synchronized void sortByIdentifiers()
 	{
 		Collections.sort( modules, ModuleIdentifierComparator.INSTANCE );
 	}
 
-	public void sortBySpecifications()
+	public synchronized void sortBySpecifications()
 	{
 		Collections.sort( modules, ModuleSpecificationComparator.INSTANCE );
 	}
@@ -166,15 +117,13 @@ public class Modules implements Iterable<Module>
 	//
 
 	@Override
-	public Iterator<Module> iterator()
+	public synchronized Iterator<Module> iterator()
 	{
-		return modules.iterator();
+		return Collections.unmodifiableCollection( new ArrayList<Module>( modules ) ).iterator();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final List<Module> modules = new CopyOnWriteArrayList<Module>();
-
-	private final ReentrantLock lock = new ReentrantLock();
+	private final List<Module> modules = new ArrayList<Module>();
 }

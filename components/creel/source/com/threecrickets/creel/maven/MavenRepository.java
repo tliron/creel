@@ -50,12 +50,14 @@ import com.threecrickets.creel.util.IoUtil;
  * (group/name/version), applying version ranges, downloading ".jar" files, and
  * validating against signatures in ".sha1" or ".md5" files.
  * <p>
- * For convenience, we also support the
- * <a href="http://ant.apache.org/ivy/">Ivy</a>-style "+" version range, even
- * though it is not part of the Maven standard.
- * <p>
- * Additionally, pattern matching ("*", "?") is supported, as well as exclusions
- * ("!").
+ * Beyond the Maven spec, extra features are supported:
+ * <ul>
+ * <li><a href="http://ant.apache.org/ivy/">Ivy</a>/
+ * <a href="http://gradle.org/">Gradle</a>-style "+" suffix for version ranges
+ * </li>
+ * <li>Globbing, via the "*" and "?"</li>
+ * <li>Exclusions, via the "!" prefix</li>
+ * </ul>
  * 
  * @author Tal Liron
  */
@@ -297,15 +299,13 @@ public class MavenRepository extends Repository
 	// Repository
 	//
 
-	@Override
 	public boolean hasModule( ModuleIdentifier moduleIdentifier )
 	{
 		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
 		URL url = getUrl( mavenModuleIdentifier, "pom" );
-		return IoUtil.isValid( url );
+		return IoUtil.exists( url );
 	}
 
-	@Override
 	public Module getModule( ModuleIdentifier moduleIdentifier, Notifier notifier )
 	{
 		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
@@ -326,7 +326,6 @@ public class MavenRepository extends Repository
 		return module;
 	}
 
-	@Override
 	public Iterable<ModuleIdentifier> getAllowedModuleIdentifiers( ModuleSpecification moduleSpecification, Notifier notifier )
 	{
 		MavenModuleSpecification mavenModuleSpecification = MavenModuleSpecification.cast( moduleSpecification );
@@ -356,7 +355,6 @@ public class MavenRepository extends Repository
 		return moduleSpecification.filterAllowedModuleIdentifiers( potentialModuleIdentifiers );
 	}
 
-	@Override
 	public void validateFile( ModuleIdentifier moduleIdentifier, File file, Notifier notifier )
 	{
 		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
@@ -395,7 +393,6 @@ public class MavenRepository extends Repository
 		return super.validateFileTask( mavenModuleIdentifier, file, notifier, phaser );
 	}
 
-	@Override
 	public Command applyModuleRule( Module module, Rule rule, Notifier notifier )
 	{
 		if( !"maven".equals( rule.getPlatform() ) )
@@ -410,7 +407,7 @@ public class MavenRepository extends Repository
 			String group = rule.get( "group" );
 			String name = rule.get( "name" );
 			String version = rule.get( "version" );
-			if( moduleSpecification.inPatterns( group, name, version ) )
+			if( moduleSpecification.is( group, name, version ) )
 				return new Command( "excludeModule" );
 			else
 				return new Command( "handled" );
@@ -421,7 +418,7 @@ public class MavenRepository extends Repository
 			String group = rule.get( "group" );
 			String name = rule.get( "name" );
 			String version = rule.get( "version" );
-			if( moduleSpecification.inPatterns( group, name, version ) )
+			if( moduleSpecification.is( group, name, version ) )
 				return new Command( "excludeDependencies" );
 			else
 				return new Command( "handled" );
@@ -456,7 +453,7 @@ public class MavenRepository extends Repository
 			String name = rule.get( "name" );
 			String version = rule.get( "version" );
 			String repositories = rule.get( "repositories" );
-			if( moduleSpecification.inPatterns( group, name, version ) )
+			if( moduleSpecification.is( group, name, version ) )
 			{
 				Command command = new Command( "setRepositories" );
 				command.put( "repositories", Arrays.asList( repositories.split( "," ) ) );
@@ -473,7 +470,6 @@ public class MavenRepository extends Repository
 	// Cloneable
 	//
 
-	@Override
 	public MavenRepository clone()
 	{
 		return new MavenRepository( getId(), isAll(), getUrl(), isCheckSignatures(), isAllowMd5() );
