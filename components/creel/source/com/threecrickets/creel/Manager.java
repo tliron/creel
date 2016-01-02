@@ -190,6 +190,16 @@ public class Manager extends Notifier
 		this.flat = flat;
 	}
 
+	public int getVerbosity()
+	{
+		return verbosity;
+	}
+
+	public void setVerbosity( int verbosity )
+	{
+		this.verbosity = verbosity;
+	}
+
 	public Iterable<Module> getExplicitModules()
 	{
 		return Collections.unmodifiableCollection( explicitModules );
@@ -346,7 +356,7 @@ public class Manager extends Notifier
 
 		// Resolve conflicts
 		conflicts.find( getIdentifiedModules() );
-		conflicts.resolve( getConflictPolicy(), this );
+		conflicts.resolve( getConflictPolicy(), getVerbosity() > 0 ? this : null );
 		for( Conflict conflict : getConflicts() )
 		{
 			for( Module reject : conflict.getRejects() )
@@ -393,12 +403,14 @@ public class Manager extends Notifier
 			// Do command
 			if( "excludeModule".equals( command.getType() ) )
 			{
-				info( "Excluded " + module.getSpecification() );
+				if( getVerbosity() > 0 )
+					info( "Excluded " + module.getSpecification() );
 				context.setExclude( true );
 			}
 			else if( "excludeDependencies".equals( command.getType() ) )
 			{
-				info( "Excluded dependencies for " + module.getSpecification() );
+				if( getVerbosity() > 0 )
+					info( "Excluded dependencies for " + module.getSpecification() );
 				context.setRecursive( false );
 			}
 			else if( "setRepositories".equals( command.getType() ) )
@@ -414,7 +426,7 @@ public class Manager extends Notifier
 								ids.append( ", " );
 							ids.append( id );
 						}
-				if( !context.getRepositories().isEmpty() )
+				if( ( getVerbosity() > 0 ) && !context.getRepositories().isEmpty() )
 					info( "Forced " + module.getSpecification() + " to identify in " + ids + ( context.getRepositories().size() != 1 ? " repositories" : " repository" ) );
 			}
 			else
@@ -529,6 +541,8 @@ public class Manager extends Notifier
 							artifact.copy( null );
 							if( artifact.isVolatile() )
 								artifact.updateDigest();
+							if( getVerbosity() > 1 )
+								info( "Unpacked " + artifact.getFile() );
 							pCount++;
 							count++;
 						}
@@ -585,7 +599,8 @@ public class Manager extends Notifier
 					{
 						if( redundantArtifact.delete( getRootDir() ) )
 						{
-							debug( "Deleted " + redundantArtifact.getFile() );
+							if( getVerbosity() > 1 )
+								info( "Deleted " + redundantArtifact.getFile() );
 							knownArtifacts.removeArtifact( redundantArtifact );
 							deletedCount++;
 						}
@@ -603,7 +618,8 @@ public class Manager extends Notifier
 			try
 			{
 				knownArtifacts.save();
-				info( "Saved state to " + getStateFile() );
+				if( getVerbosity() > 0 )
+					info( "Saved state to " + getStateFile() );
 			}
 			catch( IOException x )
 			{
@@ -667,7 +683,7 @@ public class Manager extends Notifier
 						// Another thread is already in the process of
 						// identifying this specification, so we'll wait for
 						// them to finish
-						final String id = begin( "Waiting for identification of " + module.getSpecification() );
+						final String id = getVerbosity() > 1 ? begin( "Waiting for identification of " + module.getSpecification() ) : null;
 						concurrentContext.onIdentified( module, new IdentifiedModule( module, id ) );
 						return;
 					}
@@ -701,7 +717,8 @@ public class Manager extends Notifier
 			}
 			else
 			{
-				debug( "Already identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
+				if( getVerbosity() > 1 )
+					info( "Already identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
 				identifiedCacheHits.incrementAndGet();
 			}
 
@@ -780,10 +797,13 @@ public class Manager extends Notifier
 		public void run()
 		{
 			Module identifiedModule = identifiedModules.get( module.getSpecification() );
-			if( identifiedModule != null )
-				end( id, "Already identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
-			else
-				fail( id, "Could not identify " + module.getSpecification() );
+			if( id != null )
+			{
+				if( identifiedModule != null )
+					end( id, "Already identified " + identifiedModule.getIdentifier() + " in " + identifiedModule.getIdentifier().getRepository().getId() + " repository" );
+				else
+					fail( id, "Could not identify " + module.getSpecification() );
+			}
 		}
 
 		private final Module module;
@@ -809,6 +829,8 @@ public class Manager extends Notifier
 	private boolean overwrite;
 
 	private boolean flat;
+
+	private int verbosity = 1;
 
 	private final List<Module> explicitModules = new ArrayList<Module>();
 
