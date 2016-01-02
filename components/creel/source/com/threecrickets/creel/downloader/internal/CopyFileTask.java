@@ -61,16 +61,19 @@ public class CopyFileTask extends Task
 		}
 
 		String id = getDownloader().getNotifier().begin( "Copying file from " + getSourceFile() );
+
 		try
 		{
 			IoUtil.copy( getSourceFile(), getFile() );
 			getDownloader().getNotifier().end( id, "Copied file to " + getFile() );
+			done( true );
 		}
 		catch( IOException x )
 		{
+			getDownloader().addException( x );
 			getDownloader().getNotifier().fail( id, "Could not copy file from " + getSourceFile(), x );
+			done( false );
 		}
-		done( true );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

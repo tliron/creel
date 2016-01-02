@@ -18,8 +18,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Phaser;
@@ -77,6 +79,16 @@ public class Downloader implements Closeable
 				executor = existing;
 		}
 		return executor;
+	}
+
+	public Iterable<Throwable> getExceptions()
+	{
+		return Collections.unmodifiableCollection( exceptions );
+	}
+
+	public void addException( Throwable x )
+	{
+		exceptions.add( x );
 	}
 
 	public Notifier getNotifier()
@@ -168,6 +180,8 @@ public class Downloader implements Closeable
 	private final Notifier notifier;
 
 	private final ConcurrentMap<String, ExecutorService> executors = new ConcurrentHashMap<String, ExecutorService>();
+
+	private final Collection<Throwable> exceptions = new CopyOnWriteArrayList<Throwable>();
 
 	private final Phaser phaser = new Phaser( 1 );
 

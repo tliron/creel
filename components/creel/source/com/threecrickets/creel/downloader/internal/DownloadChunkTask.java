@@ -75,20 +75,21 @@ public class DownloadChunkTask extends DownloadTask
 
 	public void run()
 	{
-
 		id = getDownloader().getNotifier().begin( "Downloading from " + getSourceUrl() + " (" + getChunk() + "/" + getChunks() + ")" );
+
 		try
 		{
-			URLConnection connection = getSourceUrl().openConnection();
-			connection.setRequestProperty( "Range", "bytes=" + getStart() + "-" + ( getStart() + getLength() ) );
+			URLConnection connection = IoUtil.openRange( getSourceUrl(), getStart(), getLength() );
 			IoUtil.copy( connection.getInputStream(), getFile(), getStart(), this, getLength() );
 			getDownloader().getNotifier().end( id, "Downloaded to " + getFile() + " (" + getChunk() + "/" + getChunks() + ")" );
+			done( getCounter() );
 		}
 		catch( IOException x )
 		{
+			getDownloader().addException( x );
 			getDownloader().getNotifier().fail( id, "Could not download from " + getSourceUrl() + " (" + getChunk() + "/" + getChunks() + ")", x );
+			done( false );
 		}
-		done( getCounter() );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

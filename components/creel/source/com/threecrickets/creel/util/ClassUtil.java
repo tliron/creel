@@ -13,6 +13,7 @@ package com.threecrickets.creel.util;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
@@ -37,31 +38,91 @@ public abstract class ClassUtil
 		}
 		catch( ClassNotFoundException x )
 		{
-			throw new RuntimeException( x );
+			throw new RuntimeException( "Could not find class: " + className, x );
 		}
 		catch( NoSuchMethodException x )
 		{
-			throw new RuntimeException( x );
+			throw new RuntimeException( "Class does not have a config constructor: " + className, x );
 		}
 		catch( SecurityException x )
 		{
-			throw new RuntimeException( x );
+			throw new RuntimeException( "Could not access class: " + className, x );
 		}
 		catch( InstantiationException x )
 		{
-			throw new RuntimeException( x );
+			throw new RuntimeException( "Class error: " + className, x );
 		}
 		catch( IllegalAccessException x )
 		{
-			throw new RuntimeException( x );
+			throw new RuntimeException( "Could not access class: " + className, x );
 		}
 		catch( IllegalArgumentException x )
 		{
-			throw new RuntimeException( x );
+			throw new RuntimeException( "Class error: " + className, x );
 		}
 		catch( InvocationTargetException x )
 		{
-			throw new RuntimeException( x );
+			throw new RuntimeException( x.getCause().getMessage(), x.getCause() );
+		}
+	}
+
+	/**
+	 * Executes the main() method of the class named by the first argument.
+	 * 
+	 * @param classLoader
+	 *        The class loader
+	 * @param arguments
+	 *        The class name followed by the arguments for main()
+	 */
+	public static void main( ClassLoader classLoader, String[] arguments )
+	{
+		String className = arguments[0];
+		String[] mainArguments = new String[arguments.length - 1];
+		System.arraycopy( arguments, 1, mainArguments, 0, mainArguments.length );
+		main( classLoader, className, mainArguments );
+	}
+
+	/**
+	 * Executes the main() method of a class.
+	 * 
+	 * @param classLoader
+	 *        The class loader
+	 * @param className
+	 *        The class name
+	 * @param arguments
+	 *        The arguments for main()
+	 */
+	public static void main( ClassLoader classLoader, String className, String[] arguments )
+	{
+		try
+		{
+			Class<?> theClass = Class.forName( className, true, classLoader );
+			Method mainMethod = theClass.getMethod( "main", String[].class );
+			mainMethod.invoke( null, (Object) arguments );
+		}
+		catch( ClassNotFoundException x )
+		{
+			throw new RuntimeException( "Could not find class: " + className, x );
+		}
+		catch( SecurityException x )
+		{
+			throw new RuntimeException( "Could not access class: " + className, x );
+		}
+		catch( NoSuchMethodException x )
+		{
+			throw new RuntimeException( "Class does not have a main method: " + className, x );
+		}
+		catch( IllegalArgumentException x )
+		{
+			throw new RuntimeException( "Class error: " + className, x );
+		}
+		catch( IllegalAccessException x )
+		{
+			throw new RuntimeException( "Could not access class: " + className, x );
+		}
+		catch( InvocationTargetException x )
+		{
+			throw new RuntimeException( x.getCause().getMessage(), x.getCause() );
 		}
 	}
 

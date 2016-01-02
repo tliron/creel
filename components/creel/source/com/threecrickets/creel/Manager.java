@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -27,13 +28,13 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.threecrickets.creel.downloader.Downloader;
-import com.threecrickets.creel.downloader.internal.ConcurrentIdentificationContext;
 import com.threecrickets.creel.event.EventHandlers;
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.exception.UnsupportedPlatformException;
 import com.threecrickets.creel.internal.ArtifactDatabase;
 import com.threecrickets.creel.internal.ArtifactsClassLoader;
 import com.threecrickets.creel.internal.Command;
+import com.threecrickets.creel.internal.ConcurrentIdentificationContext;
 import com.threecrickets.creel.internal.Conflicts;
 import com.threecrickets.creel.internal.IdentificationContext;
 import com.threecrickets.creel.internal.Modules;
@@ -67,13 +68,30 @@ import com.threecrickets.creel.util.ConfigHelper;
 public class Manager extends Notifier
 {
 	//
-	// Enums
+	// Constants
 	//
 
 	public enum ConflictPolicy
 	{
 		NEWEST, OLDEST
 	};
+
+	public static final int STAGE_IDENTIFICATION = 1;
+
+	public static final int STAGE_INSTALLATION = 2;
+
+	public static final int STAGE_UNPACKING = 3;
+
+	public static final int STAGE_DELETE_REDUNDANT = 4;
+
+	//
+	// Static operations
+	//
+
+	public static String getVersion()
+	{
+		return Manager.class.getPackage().getImplementationVersion();
+	}
 
 	//
 	// Construction
@@ -200,6 +218,16 @@ public class Manager extends Notifier
 		this.verbosity = verbosity;
 	}
 
+	public int getDelay()
+	{
+		return delay;
+	}
+
+	public void setDelay( int delay )
+	{
+		this.delay = delay;
+	}
+
 	public Iterable<Module> getExplicitModules()
 	{
 		return Collections.unmodifiableCollection( explicitModules );
@@ -322,15 +350,31 @@ public class Manager extends Notifier
 		return newInstance( platform, ModuleSpecification.class.getSimpleName(), config );
 	}
 
+	public Iterable<Artifact> install()
+	{
+		return install( STAGE_DELETE_REDUNDANT );
+	}
+
 	/**
 	 * Goes over explicitModules and identifies them recursively. This is done
 	 * using fork/join parallelism for better efficiency.
 	 * <p>
 	 * When finished, identifiedModules and unidentifiedModules would be filled
 	 * appropriately.
+	 * 
+	 * @param stage
+	 *        The last stage
+	 * @return The installed artifacts
 	 */
-	public void identify()
+	public Iterable<Artifact> install( int stage )
 	{
+		Collection<Artifact> installedArtifacts = new ArrayList<Artifact>();
+
+		// Identification
+
+		if( stage < STAGE_IDENTIFICATION )
+			return Collections.unmodifiableCollection( installedArtifacts );
+
 		String id = begin( "Identifying" );
 
 		if( isMultithreaded() )
@@ -374,90 +418,29 @@ public class Manager extends Notifier
 			end( id, "No modules identified" );
 		else
 			end( id, "Made " + count + ( count != 1 ? " identifications" : " identification" ) );
-	}
 
-	@SuppressWarnings("unchecked")
-	public void applyRules( Module module, IdentificationContext context )
-	{
-		for( Rule rule : getRules() )
-		{
-			Command command = null;
-
-			// Try repositories
-			for( Repository repository : getRepositories() )
-			{
-				command = repository.applyModuleRule( module, rule, this );
-				if( command != null )
-					break;
-			}
-
-			if( command == null )
-			{
-				error( "Unsupported rule: " + rule.getType() );
-				continue;
-			}
-
-			if( "handled".equals( command.getType() ) )
-				continue;
-
-			// Do command
-			if( "excludeModule".equals( command.getType() ) )
-			{
-				if( getVerbosity() > 0 )
-					info( "Excluded " + module.getSpecification() );
-				context.setExclude( true );
-			}
-			else if( "excludeDependencies".equals( command.getType() ) )
-			{
-				if( getVerbosity() > 0 )
-					info( "Excluded dependencies for " + module.getSpecification() );
-				context.setRecursive( false );
-			}
-			else if( "setRepositories".equals( command.getType() ) )
-			{
-				StringBuilder ids = new StringBuilder();
-				context.getRepositories().clear();
-				for( String id : (Iterable<String>) command.get( "repositories" ) )
-					for( Repository repository : getRepositories() )
-						if( id.equals( repository.getId() ) )
-						{
-							context.getRepositories().add( repository );
-							if( ids.length() != 0 )
-								ids.append( ", " );
-							ids.append( id );
-						}
-				if( ( getVerbosity() > 0 ) && !context.getRepositories().isEmpty() )
-					info( "Forced " + module.getSpecification() + " to identify in " + ids + ( context.getRepositories().size() != 1 ? " repositories" : " repository" ) );
-			}
-			else
-				error( "Unsupported command: " + command.getType() );
-		}
-	}
-
-	public Iterable<Artifact> install()
-	{
 		if( getUnidentifiedModules().iterator().hasNext() )
 			throw new RuntimeException( "Cannot install because could not identify all modules" );
 
-		String id = begin( "Installing" );
-		Collection<Artifact> installedArtifacts = new ArrayList<Artifact>();
+		// Installation
 
-		// Install modules
+		if( stage < STAGE_INSTALLATION )
+			return Collections.unmodifiableCollection( installedArtifacts );
 
-		int count;
+		id = begin( "Installing" );
+
 		int threadsPerHost = isMultithreaded() ? 4 : 1;
 		int chunksPerFile = isMultithreaded() ? 4 : 1;
 		Downloader downloader = new Downloader( threadsPerHost, chunksPerFile, this );
 		try
 		{
-			// downloader.setDelay( 100 );
+			downloader.setDelay( getDelay() );
 			for( Module module : identifiedModules )
 			{
 				for( Artifact artifact : module.getIdentifier().getArtifacts( getRootDir(), isFlat() ) )
 				{
 					if( isOverwrite() || !artifact.getFile().exists() )
-						downloader.submit( artifact.getSourceUrl(), artifact.getFile(),
-							module.getIdentifier().getRepository().validateFileTask( module.getIdentifier(), artifact.getFile(), this, downloader.getPhaser() ) );
+						downloader.submit( artifact.getSourceUrl(), artifact.getFile(), module.getIdentifier().getRepository().validateFileTask( module.getIdentifier(), artifact.getFile(), this ) );
 					else
 						// Only validate
 						module.getIdentifier().getRepository().validateFile( module.getIdentifier(), artifact.getFile(), this );
@@ -469,10 +452,25 @@ public class Manager extends Notifier
 		finally
 		{
 			downloader.close();
-			count = downloader.getCount();
 		}
 
-		// Unpack packages
+		count = 0;
+		for( Iterator<Throwable> i = downloader.getExceptions().iterator(); i.hasNext(); i.next() )
+			count++;
+
+		if( count > 0 )
+		{
+			String message = "Had " + ( count != 1 ? " errors during installation" : " error during installation" );
+			fail( id, message );
+			throw new RuntimeException( message );
+		}
+
+		count = downloader.getCount();
+
+		// Unpacking
+
+		if( stage < STAGE_UNPACKING )
+			return Collections.unmodifiableCollection( installedArtifacts );
 
 		ArtifactDatabase knownArtifacts = null;
 		try
@@ -560,6 +558,26 @@ public class Manager extends Notifier
 					fail( pId, "Could not unpack " + thePackage.getSourceFile(), x );
 				}
 			}
+
+			// Run installers
+
+			for( Package thePackage : packages )
+			{
+				String installer = thePackage.getInstaller();
+				if( installer != null )
+				{
+					try
+					{
+						ClassUtil.main( classLoader, installer.split( " " ) );
+					}
+					catch( Throwable x )
+					{
+						error( "Could not run installer: " + installer, x );
+					}
+				}
+			}
+
+			// TODO: uninstallers?
 		}
 
 		if( count == 0 )
@@ -568,6 +586,9 @@ public class Manager extends Notifier
 			end( id, "Installed " + count + ( count != 1 ? " new artifacts" : " new artifact" ) );
 
 		// Delete redundant
+
+		if( stage < STAGE_DELETE_REDUNDANT )
+			return Collections.unmodifiableCollection( installedArtifacts );
 
 		if( knownArtifacts != null )
 		{
@@ -628,7 +649,6 @@ public class Manager extends Notifier
 		}
 
 		return Collections.unmodifiableCollection( installedArtifacts );
-
 	}
 
 	/**
@@ -753,6 +773,64 @@ public class Manager extends Notifier
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	public void applyRules( Module module, IdentificationContext context )
+	{
+		for( Rule rule : getRules() )
+		{
+			Command command = null;
+
+			// Try repositories
+			for( Repository repository : getRepositories() )
+			{
+				command = repository.applyModuleRule( module, rule, this );
+				if( command != null )
+					break;
+			}
+
+			if( command == null )
+			{
+				error( "Unsupported rule: " + rule.getType() );
+				continue;
+			}
+
+			if( "handled".equals( command.getType() ) )
+				continue;
+
+			// Do command
+			if( "excludeModule".equals( command.getType() ) )
+			{
+				if( getVerbosity() > 0 )
+					info( "Excluded " + module.getSpecification() );
+				context.setExclude( true );
+			}
+			else if( "excludeDependencies".equals( command.getType() ) )
+			{
+				if( getVerbosity() > 0 )
+					info( "Excluded dependencies for " + module.getSpecification() );
+				context.setRecursive( false );
+			}
+			else if( "setRepositories".equals( command.getType() ) )
+			{
+				StringBuilder ids = new StringBuilder();
+				context.getRepositories().clear();
+				for( String id : (Iterable<String>) command.get( "repositories" ) )
+					for( Repository repository : getRepositories() )
+						if( id.equals( repository.getId() ) )
+						{
+							context.getRepositories().add( repository );
+							if( ids.length() != 0 )
+								ids.append( ", " );
+							ids.append( id );
+						}
+				if( ( getVerbosity() > 0 ) && !context.getRepositories().isEmpty() )
+					info( "Forced " + module.getSpecification() + " to identify in " + ids + ( context.getRepositories().size() != 1 ? " repositories" : " repository" ) );
+			}
+			else
+				error( "Unsupported command: " + command.getType() );
+		}
+	}
+
 	//
 	// Classes
 	//
@@ -831,6 +909,8 @@ public class Manager extends Notifier
 	private boolean flat;
 
 	private int verbosity = 1;
+
+	private int delay;
 
 	private final List<Module> explicitModules = new ArrayList<Module>();
 

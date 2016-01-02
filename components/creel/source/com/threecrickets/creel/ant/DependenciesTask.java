@@ -164,7 +164,7 @@ public class DependenciesTask extends Task
 		manager.setMultithreaded( multithreaded );
 
 		if( !quiet )
-			( (EventHandlers) manager.getEventHandler() ).add( new ConsoleEventHandler( false ) );
+			( (EventHandlers) manager.getEventHandler() ).add( new ConsoleEventHandler() );
 
 		if( properties != null )
 		{
@@ -195,8 +195,6 @@ public class DependenciesTask extends Task
 		manager.setExplicitModules( modules );
 		manager.setRepositories( repositories );
 		manager.setRules( rules );
-
-		manager.identify();
 
 		Iterable<Artifact> artifacts = manager.install();
 

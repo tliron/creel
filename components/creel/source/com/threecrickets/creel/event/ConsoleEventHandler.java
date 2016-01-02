@@ -23,20 +23,26 @@ public class ConsoleEventHandler extends OngoingEventHandler
 	// Construction
 	//
 
-	public ConsoleEventHandler( boolean ansi )
+	public ConsoleEventHandler()
 	{
-		this( System.out, ansi );
+		this( false, false );
 	}
 
-	public ConsoleEventHandler( OutputStream out, boolean ansi )
+	public ConsoleEventHandler( boolean ansi, boolean stacktrace )
 	{
-		this( new PrintWriter( out ), ansi );
+		this( System.out, ansi, stacktrace );
 	}
 
-	public ConsoleEventHandler( PrintWriter out, boolean ansi )
+	public ConsoleEventHandler( OutputStream out, boolean ansi, boolean stacktrace )
+	{
+		this( new PrintWriter( out ), ansi, stacktrace );
+	}
+
+	public ConsoleEventHandler( PrintWriter out, boolean ansi, boolean stacktrace )
 	{
 		this.out = out;
 		this.ansi = ansi;
+		this.stacktrace = stacktrace;
 	}
 
 	//
@@ -46,6 +52,11 @@ public class ConsoleEventHandler extends OngoingEventHandler
 	public boolean isAnsi()
 	{
 		return ansi;
+	}
+
+	public boolean isStacktrace()
+	{
+		return stacktrace;
 	}
 
 	public PrintWriter getOut()
@@ -243,12 +254,15 @@ public class ConsoleEventHandler extends OngoingEventHandler
 		}
 
 		// Exception stack trace
-		Throwable exception = event.getException();
-		if( exception != null )
+		if( isStacktrace() )
 		{
-			controlSequence( getErrorGraphics() + 'm' );
-			exception.printStackTrace( getOut() );
-			controlSequence( "0m" );
+			Throwable exception = event.getException();
+			if( exception != null )
+			{
+				controlSequence( getErrorGraphics() + 'm' );
+				exception.printStackTrace( getOut() );
+				controlSequence( "0m" );
+			}
 		}
 	}
 
@@ -274,6 +288,8 @@ public class ConsoleEventHandler extends OngoingEventHandler
 	private final PrintWriter out;
 
 	private final boolean ansi;
+
+	private final boolean stacktrace;
 
 	private volatile String endGraphics = "32";
 

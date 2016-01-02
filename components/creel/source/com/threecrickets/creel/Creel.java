@@ -74,6 +74,9 @@ public class Creel
 			boolean quiet = properties.getBoolean( "quiet", false );
 			quiet = quiet || argumentsHelper.hasSwitch( "quiet", "q" );
 
+			int verbosity = properties.getInteger( "verbosity", 1 );
+			verbosity = argumentsHelper.getInt( "verbosity", "v", verbosity );
+
 			boolean ansi = properties.getBoolean( "ansi", false );
 			ansi = ansi || argumentsHelper.hasSwitch( "ansi", "a" );
 
@@ -88,13 +91,14 @@ public class Creel
 
 			manager = new Manager();
 			if( !quiet )
-				( (EventHandlers) manager.getEventHandler() ).add( new ConsoleEventHandler( ansi ) );
+				( (EventHandlers) manager.getEventHandler() ).add( new ConsoleEventHandler( ansi, verbosity > 1 ) );
 
 			manager.info( "Using " + propertiesFile );
 
 			manager.setRootDir( destinationPath );
 			manager.setStateFile( statePath );
 			manager.setDefaultPlatform( defaultPlatform );
+			manager.setVerbosity( verbosity );
 			manager.setOverwrite( overwrite );
 			manager.setFlat( flat );
 			manager.setMultithreaded( multithreaded );
@@ -102,11 +106,7 @@ public class Creel
 			manager.setRepositories( properties.getRepositoryConfigs() );
 			manager.setRules( properties.getRuleConfigs() );
 
-			if( end > 0 )
-				manager.identify();
-
-			if( end > 1 )
-				manager.install();
+			manager.install( end );
 		}
 		catch( Throwable x )
 		{
@@ -131,9 +131,10 @@ public class Creel
 		out.println( "  --properties=, -p       Use properties file (default: creel.properties)" );
 		out.println( "  --destination=, -d      Download to directory (default: lib)" );
 		out.println( "  --state=, -s            State file (default: [destination]/.creel)" );
-		out.println( "  --end=, -e              Where to end: 1=identify, 2=install, 3=unpack, 4=delete redundant (default: 4)" );
+		out.println( "  --end=, -e              At which stage to end: 1=identify, 2=install, 3=unpack, 4=delete redundant (default: 4)" );
 		out.println( "  --platform=, -l         Set default platform (default: maven)" );
 		out.println( "  --quiet, -q             Quiet mode: don't output anything" );
+		out.println( "  --verbosity=, -v        Output verbosity (default: 1)" );
 		out.println( "  --ansi, -a              ANSI terminal output: pretty colors and animations" );
 		out.println( "  --overwrite, -o         Overwrite files if they already exist" );
 		out.println( "  --flat, -f              Flat file structure (no subdirectories)" );

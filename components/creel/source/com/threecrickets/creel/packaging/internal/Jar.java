@@ -36,7 +36,7 @@ public class Jar
 
 	public Jar( URL manifestUrl, File rootDir, String errorMessage )
 	{
-		if( !"jar".equals( manifestUrl.getProtocol() ) )
+		if( !"jar".equalsIgnoreCase( manifestUrl.getProtocol() ) )
 			throw new RuntimeException( errorMessage + " is not in a jar file: " + manifestUrl );
 
 		JarURLConnection connection;

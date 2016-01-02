@@ -8,7 +8,7 @@ It can be run as a command line tool, via an [Ant](http://ant.apache.org/) task,
 
 Features:
 
-* _No dependencies._ Just one tiny jar. Requires JVM 7+.
+* _No dependencies._ Just one tiny jar. Requires just JVM 7+.
 * Very fast multi-threaded, multi-part downloads. (The downloader class is general purpose and you can use it independently of Creel.)
 * Optimizes even further when using a filesystem-based ("file:" URL) repository, using fast copies and memory-mapped loading.
 * Resolves version conflicts according to policy, your choice of newest (cutting-edge) or oldest (conservative).
@@ -17,7 +17,7 @@ Features:
 * Supports Maven-style ("m2" a.k.a. "ibiblio") repositories out of the box, but is easily extensible if you'd like to support others. (Ivy, or your own custom technology.)
 * SHA-1 and MD5 validation of all downloaded files (and also pom.xml and maven-metadata.xml while processing them).
 * Extends the Maven spec with convenient pattern globbing ("*" and "?") and also supports Ivy's "+" suffix.
-* Supports an innovative, straightforward [packaging format](PACKAGE.md) that allows you to easily distribute arbitrary files (not just JVM jars) in a Maven repo.
+* Supports an innovative, straightforward [packaging format](PACKAGE.md) that allows you to easily distribute arbitrary files (not just Jars) in a Maven repo.
 * Colorful, animated ANSI terminal feedback where supported. See your downloads woosh!
 
 How does Creel compare to [Gradle](http://gradle.org/)? Well, Creel is _much_ lighter and _much_ faster, but it's also a one-trick pony designed only for resolving and downloading dependencies, while Gradle can be used for complete project development and management. Note that Creel could be a great choice as a library with which to build your own Gradle-like tool.
@@ -35,7 +35,7 @@ It's easy to embed Creel into your Java (or Groovy, Clojure, Scala, etc.) applic
 Here's a simple example in JavaScript, `creel.js`, using the excellent Nashorn engine that comes with JVM 8: 
 
     var manager = new com.threecrickets.creel.Manager()
-    manager.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true))
+    manager.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true, false))
     
     manager.modules = [
         {group: 'com.github.sommeri', name: 'less4j', version: '(,1.15.2)'},
@@ -57,7 +57,6 @@ Here's a simple example in JavaScript, `creel.js`, using the excellent Nashorn e
         {type: 'repositories', group: 'jsslutils', repositories: 'restlet'}]
     
     manager.rootDir = 'lib'
-    manager.identify()
     manager.install()
 
 To run it:
@@ -97,7 +96,7 @@ Note that the properties file can define all of the same attributes we used in t
 Ant Task
 --------
 
-Use Creel to download your dependency jars and include them in the classpath. Here's a complete Ant `build.xml`:
+Use Creel to download your dependency Jars and include them in the classpath. Here's a complete Ant `build.xml`:
 
     <?xml version="1.0"?>
     <project name="Testing Creel" default="compile" xmlns:creel="antlib:com.threecrickets.creel.ant">

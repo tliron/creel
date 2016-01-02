@@ -11,7 +11,7 @@
 
 package com.threecrickets.creel.downloader.internal;
 
-import java.util.concurrent.Phaser;
+import com.threecrickets.creel.downloader.Downloader;
 
 /**
  * @author Tal Liron
@@ -22,10 +22,10 @@ public class WrappedTask implements Runnable
 	// Construction
 	//
 
-	public WrappedTask( Runnable runnable, Phaser phaser )
+	public WrappedTask( Runnable runnable, Downloader downloader )
 	{
 		this.runnable = runnable;
-		this.phaser = phaser;
+		this.downloader = downloader;
 	}
 
 	//
@@ -37,9 +37,9 @@ public class WrappedTask implements Runnable
 		return runnable;
 	}
 
-	public Phaser getPhaser()
+	public Downloader getDownloader()
 	{
-		return phaser;
+		return downloader;
 	}
 
 	//
@@ -48,8 +48,15 @@ public class WrappedTask implements Runnable
 
 	public void run()
 	{
-		getRunnable().run();
-		getPhaser().arriveAndDeregister();
+		try
+		{
+			getRunnable().run();
+		}
+		catch( Throwable x )
+		{
+			getDownloader().addException( x );
+		}
+		getDownloader().getPhaser().arriveAndDeregister();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -57,5 +64,5 @@ public class WrappedTask implements Runnable
 
 	private final Runnable runnable;
 
-	private final Phaser phaser;
+	private final Downloader downloader;
 }

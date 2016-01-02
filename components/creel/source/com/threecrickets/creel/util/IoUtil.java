@@ -44,6 +44,18 @@ public abstract class IoUtil
 
 	public static final int BUFFER_SIZE = 16 * 1024;
 
+	//
+	// Static attributes
+	//
+
+	public static volatile int timeout = 5000;
+
+	public static volatile String userAgent = "Creel";
+
+	//
+	// Interfaces
+	//
+
 	public interface ProgressListener
 	{
 		public void onProgress( int position, int length );
@@ -77,6 +89,31 @@ public abstract class IoUtil
 	}
 
 	/**
+	 * Opens a URL connection with sensible defaults.
+	 * 
+	 * @param url
+	 *        The URL
+	 * @return The connection
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
+	public static URLConnection open( URL url ) throws IOException
+	{
+		URLConnection connection = url.openConnection();
+		connection.setConnectTimeout( timeout );
+		connection.setReadTimeout( timeout );
+		connection.addRequestProperty( "User-Agent", userAgent );
+		return connection;
+	}
+
+	public static URLConnection openRange( URL url, int start, int length ) throws IOException
+	{
+		URLConnection connection = open( url );
+		connection.setRequestProperty( "Range", "bytes=" + start + "-" + ( start + length ) );
+		return connection;
+	}
+
+	/**
 	 * True if the URL points to a reachable resource.
 	 * 
 	 * @param url
@@ -91,7 +128,7 @@ public abstract class IoUtil
 
 		try
 		{
-			URLConnection connection = url.openConnection();
+			URLConnection connection = open( url );
 			if( connection instanceof HttpURLConnection )
 			{
 				HttpURLConnection httpConnection = (HttpURLConnection) connection;
@@ -108,6 +145,25 @@ public abstract class IoUtil
 		{
 			return false;
 		}
+	}
+
+	/**
+	 * Checks if the URL supports ranges.
+	 * 
+	 * @param url
+	 *        The URL
+	 * @return Stream size in bytes if supports ranges, -1 otherwise
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
+	public static int supportsRanges( URL url ) throws IOException
+	{
+		// Make sure the host supports ranges
+		URLConnection connection = open( url );
+		String acceptRanges = connection.getHeaderField( "Accept-Ranges" );
+		if( "bytes".equals( acceptRanges ) )
+			return connection.getContentLength();
+		return -1;
 	}
 
 	public static boolean deleteWithParentDirectories( File file, File root )
@@ -250,14 +306,15 @@ public abstract class IoUtil
 			return;
 		}
 
-		InputStream in = source.openStream();
+		URLConnection connection = open( source );
+		InputStream in = connection.getInputStream();
 		try
 		{
 			Files.createDirectories( target.toPath().getParent() );
 			OutputStream out = new FileOutputStream( target );
 			try
 			{
-				copy( in, out, progressListener, source.openConnection().getContentLength() );
+				copy( in, out, progressListener, connection.getContentLength() );
 			}
 			finally
 			{
@@ -309,12 +366,13 @@ public abstract class IoUtil
 			// (because we know the buffer size in advance)
 			return readBytes( file );
 
-		ReadableByteChannel fromChannel = Channels.newChannel( url.openStream() );
+		URLConnection connection = open( url );
+		ReadableByteChannel fromChannel = Channels.newChannel( connection.getInputStream() );
 		try
 		{
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream( BUFFER_SIZE );
 			WritableByteChannel toChannel = Channels.newChannel( buffer );
-			copy( fromChannel, toChannel, progressListener, url.openConnection().getContentLength() );
+			copy( fromChannel, toChannel, progressListener, connection.getContentLength() );
 			return buffer.toByteArray();
 		}
 		finally

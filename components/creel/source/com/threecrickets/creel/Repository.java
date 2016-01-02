@@ -14,7 +14,6 @@ package com.threecrickets.creel;
 import java.io.File;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Phaser;
 
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.internal.Command;
@@ -58,43 +57,6 @@ import com.threecrickets.creel.util.ConfigHelper;
  */
 public abstract class Repository implements Cloneable
 {
-	//
-	// Classes
-	//
-
-	public class ValidateFile implements Runnable
-	{
-		public ValidateFile( ModuleIdentifier moduleIdentifier, File file, Notifier notifier, Phaser phaser )
-		{
-			this.moduleIdentifier = moduleIdentifier;
-			this.file = file;
-			this.notifier = notifier;
-			this.phaser = phaser;
-		}
-
-		public void run()
-		{
-			try
-			{
-				validateFile( moduleIdentifier, file, notifier );
-			}
-			catch( Throwable x )
-			{
-				notifier.error( "Validation error for " + moduleIdentifier.toString() + ": " + x.getMessage(), x );
-			}
-			if( phaser != null )
-				phaser.arriveAndDeregister();
-		}
-
-		final ModuleIdentifier moduleIdentifier;
-
-		final File file;
-
-		final Notifier notifier;
-
-		final Phaser phaser;
-	}
-
 	//
 	// Construction
 	//
@@ -147,9 +109,9 @@ public abstract class Repository implements Cloneable
 
 	public abstract void validateFile( ModuleIdentifier moduleIdentifier, File file, Notifier notifier );
 
-	public ValidateFile validateFileTask( ModuleIdentifier moduleIdentifier, File file, Notifier notifier, Phaser phaser )
+	public ValidateFile validateFileTask( ModuleIdentifier moduleIdentifier, File file, Notifier notifier )
 	{
-		return new ValidateFile( moduleIdentifier, file, notifier, phaser );
+		return new ValidateFile( moduleIdentifier, file, notifier );
 	}
 
 	public abstract Command applyModuleRule( Module module, Rule rule, Notifier notifier );
@@ -184,6 +146,31 @@ public abstract class Repository implements Cloneable
 	public String toString()
 	{
 		return "id=" + getId();
+	}
+
+	//
+	// Classes
+	//
+
+	public class ValidateFile implements Runnable
+	{
+		public ValidateFile( ModuleIdentifier moduleIdentifier, File file, Notifier notifier )
+		{
+			this.moduleIdentifier = moduleIdentifier;
+			this.file = file;
+			this.notifier = notifier;
+		}
+
+		public void run()
+		{
+			validateFile( moduleIdentifier, file, notifier );
+		}
+
+		final ModuleIdentifier moduleIdentifier;
+
+		final File file;
+
+		final Notifier notifier;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

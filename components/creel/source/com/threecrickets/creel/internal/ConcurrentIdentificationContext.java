@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.creel.downloader.internal;
+package com.threecrickets.creel.internal;
 
 import java.io.Closeable;
 import java.util.concurrent.ExecutorService;
@@ -18,7 +18,6 @@ import java.util.concurrent.Phaser;
 
 import com.threecrickets.creel.Manager;
 import com.threecrickets.creel.Module;
-import com.threecrickets.creel.internal.DaemonThreadFactory;
 import com.threecrickets.creel.util.Jobs;
 
 /**

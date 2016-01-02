@@ -22,7 +22,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Phaser;
 
 import com.threecrickets.creel.Module;
 import com.threecrickets.creel.ModuleIdentifier;
@@ -31,8 +30,8 @@ import com.threecrickets.creel.Repository;
 import com.threecrickets.creel.Rule;
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.exception.IncompatiblePlatformException;
+import com.threecrickets.creel.exception.InvalidSignatureException;
 import com.threecrickets.creel.internal.Command;
-import com.threecrickets.creel.maven.internal.InvalidSignatureException;
 import com.threecrickets.creel.maven.internal.MetaData;
 import com.threecrickets.creel.maven.internal.POM;
 import com.threecrickets.creel.maven.internal.Signature;
@@ -371,9 +370,9 @@ public class MavenRepository extends Repository
 			Signature signature = new Signature( url, allowMd5 );
 			if( !signature.validate( file ) )
 			{
-				notifier.error( "Invalid signatire for file: " + file );
-				file.delete();
-				throw new RuntimeException();
+				notifier.error( "Invalid signature for " + file );
+				// IoUtil.deleteWithParentDirectories( file, root );
+				throw new InvalidSignatureException( file );
 			}
 		}
 		catch( IOException x )
@@ -383,14 +382,14 @@ public class MavenRepository extends Repository
 	}
 
 	@Override
-	public ValidateFile validateFileTask( final ModuleIdentifier moduleIdentifier, final File file, final Notifier notifier, final Phaser phaser )
+	public ValidateFile validateFileTask( final ModuleIdentifier moduleIdentifier, final File file, final Notifier notifier )
 	{
 		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
 
 		if( !isCheckSignatures() )
 			return null;
 
-		return super.validateFileTask( mavenModuleIdentifier, file, notifier, phaser );
+		return super.validateFileTask( mavenModuleIdentifier, file, notifier );
 	}
 
 	public Command applyModuleRule( Module module, Rule rule, Notifier notifier )

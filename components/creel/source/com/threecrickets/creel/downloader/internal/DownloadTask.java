@@ -14,7 +14,6 @@ package com.threecrickets.creel.downloader.internal;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -63,60 +62,53 @@ public class DownloadTask extends Task implements IoUtil.ProgressListener
 			return;
 		}
 
-		boolean supportsChunks = false;
-		int streamSize = 0;
+		int chunksStreamSize = -1;
 		int chunksPerFile = getDownloader().getChunksPerFile();
 
 		try
 		{
 			if( chunksPerFile > 1 )
-			{
-				// Make sure the host supports ranges
-				URLConnection connection = getSourceUrl().openConnection();
-				String acceptRanges = connection.getHeaderField( "Accept-Ranges" );
-				supportsChunks = "bytes".equals( acceptRanges );
-				if( supportsChunks )
-				{
-					streamSize = connection.getContentLength();
-					if( streamSize == -1 )
-						supportsChunks = false;
-				}
-			}
+				chunksStreamSize = IoUtil.supportsRanges( getSourceUrl() );
 		}
 		catch( IOException x )
 		{
-			getDownloader().getNotifier().error( x );
+			getDownloader().addException( x );
+			getDownloader().getNotifier().error( "Could not access " + getSourceUrl(), x );
+			done( false );
+			return;
 		}
 
-		if( supportsChunks )
+		if( chunksStreamSize != -1 )
 		{
 			// We support chunks, so split into tasks
 			AtomicInteger counter = new AtomicInteger( chunksPerFile );
-			int chunkSize = streamSize / chunksPerFile;
+			int chunkSize = chunksStreamSize / chunksPerFile;
 			for( int chunk = 0; chunk < chunksPerFile; chunk++ )
 			{
 				int start = chunk * chunkSize;
-				int length = chunk < chunksPerFile - 1 ? chunkSize : streamSize - start;
+				int length = chunk < chunksPerFile - 1 ? chunkSize : chunksStreamSize - start;
 				getDownloader().getPhaser().register();
 				getExecutor().submit( new DownloadChunkTask( getDownloader(), getExecutor(), getValidator(), getSourceUrl(), getFile(), start, length, chunk + 1, chunksPerFile, counter ) );
 			}
+			done( false );
 		}
 		else
 		{
-			// We don't support chunks, so download no
+			// We don't support chunks, so download now
 			id = getDownloader().getNotifier().begin( "Downloading from " + getSourceUrl() );
 			try
 			{
 				IoUtil.copy( getSourceUrl(), getFile(), this );
 				getDownloader().getNotifier().end( id, "Downloaded to " + getFile() );
+				done( true );
 			}
-			catch( Exception x )
+			catch( IOException x )
 			{
+				getDownloader().addException( x );
 				getDownloader().getNotifier().fail( id, "Could not download from " + getSourceUrl(), x );
+				done( false );
 			}
 		}
-
-		done( true );
 	}
 
 	//

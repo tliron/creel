@@ -61,7 +61,7 @@ public abstract class Task implements Runnable
 			if( getValidator() != null )
 			{
 				getDownloader().getPhaser().register();
-				getExecutor().submit( new WrappedTask( getValidator(), getDownloader().getPhaser() ) );
+				getExecutor().submit( new WrappedTask( getValidator(), getDownloader() ) );
 			}
 			getDownloader().incrementCount();
 		}

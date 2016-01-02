@@ -89,6 +89,7 @@ public class Module
 	 */
 	public void addSupplicant( Module supplicant )
 	{
+		// TODO
 	}
 
 	/**
@@ -99,6 +100,7 @@ public class Module
 	 */
 	public void removeSupplicant( Module supplicant )
 	{
+		// TODO
 	}
 
 	/**

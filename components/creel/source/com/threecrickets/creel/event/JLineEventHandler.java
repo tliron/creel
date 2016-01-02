@@ -23,25 +23,25 @@ public class JLineEventHandler extends ConsoleEventHandler
 	// Construction
 	//
 
-	public JLineEventHandler()
+	public JLineEventHandler( boolean stacktrace )
 	{
-		this( TerminalFactory.get() );
+		this( TerminalFactory.get(), stacktrace );
 	}
 
-	public JLineEventHandler( Terminal terminal )
+	public JLineEventHandler( Terminal terminal, boolean stacktrace )
 	{
-		super( terminal.isAnsiSupported() );
+		super( terminal.isAnsiSupported(), stacktrace );
 		this.terminal = terminal;
 	}
 
-	public JLineEventHandler( boolean ansi )
+	public JLineEventHandler( boolean ansi, boolean stacktrace )
 	{
-		this( TerminalFactory.get(), ansi );
+		this( TerminalFactory.get(), ansi, stacktrace );
 	}
 
-	public JLineEventHandler( Terminal terminal, boolean ansi )
+	public JLineEventHandler( Terminal terminal, boolean ansi, boolean stacktrace )
 	{
-		super( ansi );
+		super( ansi, stacktrace );
 		this.terminal = terminal;
 	}
 
