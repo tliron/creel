@@ -138,9 +138,9 @@ public class SpecificationOption
 		}
 	}
 
-	public MavenModuleIdentifier toModuleIdentifier( MavenRepository repository )
+	public MavenModuleIdentifier toTrivialModuleIdentifier( MavenRepository repository )
 	{
-		if( getParsedVersionSpecfication().isTrivial() )
+		if( getParsedVersionSpecfication().isTrivial() && !GlobUtil.hasWildcards( getGroup() ) && !GlobUtil.hasWildcards( getName() ) )
 			return new MavenModuleIdentifier( repository, getGroup(), getName(), getVersion() );
 		return null;
 	}

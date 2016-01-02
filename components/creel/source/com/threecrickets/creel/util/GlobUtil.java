@@ -99,6 +99,28 @@ public abstract class GlobUtil
 		return regex.toString();
 	}
 
+	/**
+	 * Checks if the pattern has wildcards.
+	 * 
+	 * @param pattern
+	 *        The pattern
+	 * @return True if the pattern has wildcards
+	 */
+	public static boolean hasWildcards( String pattern )
+	{
+		int length = pattern.length();
+		char lastC = 0;
+		for( int i = 0; i < length; i++ )
+		{
+			char c = pattern.charAt( i );
+			if( ( ( c == '*' ) || ( c == '?' ) ) && ( lastC != '\\' ) )
+				return true;
+			lastC = c;
+		}
+
+		return false;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

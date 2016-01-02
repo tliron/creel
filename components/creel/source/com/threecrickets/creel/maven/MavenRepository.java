@@ -335,13 +335,13 @@ public class MavenRepository extends Repository
 		Set<ModuleIdentifier> potentialModuleIdentifiers = new LinkedHashSet<ModuleIdentifier>();
 		for( SpecificationOption option : mavenModuleSpecification.getOptions() )
 		{
-			if( option.getParsedVersionSpecfication().isTrivial() )
+			MavenModuleIdentifier trivialModuleIdentifier = option.toTrivialModuleIdentifier( this );
+			if( trivialModuleIdentifier != null )
 			{
 				// When the version is trivial, we can skip the metadata and
 				// just check directly against the POM
-				MavenModuleIdentifier moduleIdentifier = option.toModuleIdentifier( this );
-				if( hasModule( moduleIdentifier ) )
-					potentialModuleIdentifiers.add( moduleIdentifier );
+				if( hasModule( trivialModuleIdentifier ) )
+					potentialModuleIdentifiers.add( trivialModuleIdentifier );
 			}
 			else
 			{
