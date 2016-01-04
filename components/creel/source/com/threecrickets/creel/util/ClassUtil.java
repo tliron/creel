@@ -27,6 +27,17 @@ public abstract class ClassUtil
 	// Static operations
 	//
 
+	/**
+	 * Creates an instance of a class with a config constructor.
+	 * 
+	 * @param <T>
+	 *        The instance type
+	 * @param className
+	 *        The class name
+	 * @param config
+	 *        The config
+	 * @return The new instance
+	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T newInstance( String className, Map<String, ?> config )
 	{
@@ -126,6 +137,18 @@ public abstract class ClassUtil
 		}
 	}
 
+	/**
+	 * Transforms a string into an enum value by looking up the enum name.
+	 * Ignores case and removes any "_" in the enum name.
+	 * 
+	 * @param <T>
+	 *        The enum type
+	 * @param enumeration
+	 *        The enum class
+	 * @param value
+	 *        The string
+	 * @return The enum value
+	 */
 	public static <T extends Enum<?>> T valueOfNonStrict( Class<T> enumeration, String value )
 	{
 		for( T e : enumeration.getEnumConstants() )

@@ -19,6 +19,8 @@ import com.threecrickets.creel.maven.MavenRepository;
 import com.threecrickets.creel.util.GlobUtil;
 
 /**
+ * Maven module specification option.
+ * 
  * @author Tal Liron
  */
 public class SpecificationOption
@@ -27,6 +29,18 @@ public class SpecificationOption
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param group
+	 *        The group specification (glob pattern in non-strict mode)
+	 * @param name
+	 *        The name specification (glob pattern in non-strict mode)
+	 * @param version
+	 *        The version specification (exclusions start with "!" prefix)
+	 * @param strict
+	 *        Whether we are in strict Maven mode
+	 */
 	public SpecificationOption( String group, String name, String version, boolean strict )
 	{
 		group = group == null ? "" : group.trim();
@@ -43,45 +57,85 @@ public class SpecificationOption
 	// Attributes
 	//
 
+	/**
+	 * The group specification (glob pattern in non-strict mode).
+	 * 
+	 * @return The group specification
+	 */
 	public String getGroup()
 	{
 		return group;
 	}
 
+	/**
+	 * The name specification (glob pattern in non-strict mode).
+	 * 
+	 * @return The name specification
+	 */
 	public String getName()
 	{
 		return name;
 	}
 
+	/**
+	 * The version specification.
+	 * 
+	 * @return The version specification
+	 */
 	public String getVersion()
 	{
 		return version;
 	}
 
+	/**
+	 * Whether we are in strict Maven mode.
+	 * 
+	 * @return True if strict
+	 */
 	public boolean isStrict()
 	{
 		return strict;
 	}
 
+	/**
+	 * Whether this is an exclusion option.
+	 * 
+	 * @return True to exclude
+	 */
 	public boolean isExclude()
 	{
 		return exclude;
 	}
 
+	/**
+	 * The compiled group specification pattern.
+	 * 
+	 * @return The group specification pattern
+	 */
 	public Pattern getGroupPattern()
 	{
 		if( groupPattern == null )
-			groupPattern = GlobUtil.toPattern( getGroup() );
+			groupPattern = GlobUtil.compile( getGroup() );
 		return groupPattern;
 	}
 
+	/**
+	 * The compiled name specification pattern.
+	 * 
+	 * @return The name specification pattern
+	 */
 	public Pattern getNamePattern()
 	{
 		if( namePattern == null )
-			namePattern = GlobUtil.toPattern( getName() );
+			namePattern = GlobUtil.compile( getName() );
 		return namePattern;
 	}
 
+	/**
+	 * The parsed version specification.
+	 * 
+	 * @return The version specification
+	 */
 	public VersionSpecification getParsedVersionSpecfication()
 	{
 		if( parsedVersionSpecification == null )
@@ -96,33 +150,82 @@ public class SpecificationOption
 	// Operations
 	//
 
+	/**
+	 * Checks whether a module identifier matches this option.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 * @return True if matches
+	 */
 	public boolean matches( MavenModuleIdentifier moduleIdentifier )
 	{
 		return matches( moduleIdentifier.getGroup(), moduleIdentifier.getName(), moduleIdentifier.getParsedVersion() );
 	}
 
+	/**
+	 * Checks if the values match this option.
+	 * 
+	 * @param group
+	 *        The group
+	 * @param name
+	 *        The name
+	 * @param version
+	 *        The version
+	 * @return True if matches
+	 */
 	public boolean matches( String group, String name, Version version )
 	{
-		if( !getGroupPattern().matcher( group ).matches() )
-			return false;
-		if( !getNamePattern().matcher( name ).matches() )
-			return false;
+		if( isStrict() )
+		{
+			if( !getGroup().equals( group ) )
+				return false;
+			if( !getName().equals( name ) )
+				return false;
+		}
+		else
+		{
+			if( !getGroupPattern().matcher( group ).matches() )
+				return false;
+			if( !getNamePattern().matcher( name ).matches() )
+				return false;
+		}
 		if( !getParsedVersionSpecfication().allows( version ) )
 			return false;
 		return true;
 	}
 
-	public boolean is( Pattern group, Pattern name, Pattern version )
+	/**
+	 * Checks if this option matches the patterns.
+	 * 
+	 * @param groupPattern
+	 *        The group pattern
+	 * @param namePattern
+	 *        The name pattern
+	 * @param versionPattern
+	 *        The version pattern
+	 * @return True if matches
+	 */
+	public boolean is( Pattern groupPattern, Pattern namePattern, Pattern versionPattern )
 	{
-		if( ( group != null ) && !group.matcher( getGroup() ).matches() )
+		if( ( groupPattern != null ) && !groupPattern.matcher( getGroup() ).matches() )
 			return false;
-		if( ( name != null ) && !name.matcher( getName() ).matches() )
+		if( ( namePattern != null ) && !namePattern.matcher( getName() ).matches() )
 			return false;
-		if( ( version != null ) && !name.matcher( getVersion() ).matches() )
+		if( ( versionPattern != null ) && !namePattern.matcher( getVersion() ).matches() )
 			return false;
 		return true;
 	}
 
+	/**
+	 * Rewrites the option.
+	 * 
+	 * @param group
+	 *        The new group or null
+	 * @param name
+	 *        The new name or null
+	 * @param version
+	 *        The new version or null
+	 */
 	public void rewrite( String group, String name, String version )
 	{
 		if( group != null )
@@ -138,6 +241,14 @@ public class SpecificationOption
 		}
 	}
 
+	/**
+	 * If the version is trivial (no ranges), transforms the option into a
+	 * module identifier.
+	 * 
+	 * @param repository
+	 *        The repository
+	 * @return The module identifier
+	 */
 	public MavenModuleIdentifier toTrivialModuleIdentifier( MavenRepository repository )
 	{
 		if( getParsedVersionSpecfication().isTrivial() && !GlobUtil.hasWildcards( getGroup() ) && !GlobUtil.hasWildcards( getName() ) )

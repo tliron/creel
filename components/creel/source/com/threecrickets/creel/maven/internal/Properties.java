@@ -20,6 +20,8 @@ import org.w3c.dom.Element;
 import com.threecrickets.creel.util.XmlUtil;
 
 /**
+ * Parsed Maven pom.xml properties.
+ * 
  * @author Tal Liron
  */
 public class Properties extends HashMap<String, String>
@@ -28,6 +30,12 @@ public class Properties extends HashMap<String, String>
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param element
+	 *        The XML element
+	 */
 	public Properties( Element element )
 	{
 		if( element != null )
@@ -43,6 +51,14 @@ public class Properties extends HashMap<String, String>
 	// Operations
 	//
 
+	/**
+	 * Interpolates a string, replacing "${key}" patterns with their property
+	 * values.
+	 * 
+	 * @param string
+	 *        The string
+	 * @return The interpolated string
+	 */
 	public String interpolate( String string )
 	{
 		if( string == null )
@@ -62,6 +78,16 @@ public class Properties extends HashMap<String, String>
 		return r.toString();
 	}
 
+	/**
+	 * Interpolates a string, replacing "${key}" patterns with their property
+	 * values, and then sets the result as a new property.
+	 * 
+	 * @param string
+	 *        The string
+	 * @param key
+	 *        The property key
+	 * @return The interpolated string
+	 */
 	public String interpolate( String string, String key )
 	{
 		string = interpolate( string );

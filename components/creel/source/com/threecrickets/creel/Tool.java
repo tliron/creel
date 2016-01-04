@@ -70,7 +70,7 @@ public class Tool
 			statePath = argumentsHelper.getString( "state", "s", statePath );
 
 			int end = properties.getInteger( "end", 4 );
-			end = argumentsHelper.getInt( "end", "e", end );
+			end = argumentsHelper.getInteger( "end", "e", end );
 
 			String defaultPlatform = properties.getProperty( "platform", "mvn" );
 			defaultPlatform = argumentsHelper.getString( "platform", "l", defaultPlatform );
@@ -79,7 +79,7 @@ public class Tool
 			quiet = quiet || argumentsHelper.hasSwitch( "quiet", "q" );
 
 			int verbosity = properties.getInteger( "verbosity", 1 );
-			verbosity = argumentsHelper.getInt( "verbosity", "v", verbosity );
+			verbosity = argumentsHelper.getInteger( "verbosity", "v", verbosity );
 
 			boolean ansi = properties.getBoolean( "ansi", false );
 			ansi = ansi || argumentsHelper.hasSwitch( "ansi", "a" );

@@ -52,13 +52,13 @@ public abstract class GlobUtil
 	 *        The pattern
 	 * @return The compiled regular expression.
 	 */
-	public static Pattern toPattern( String pattern )
+	public static Pattern compile( String pattern )
 	{
 		return Pattern.compile( toRegEx( pattern ) );
 	}
 
 	/**
-	 * Transforms a glob pattern into a regular expression.
+	 * Transforms a glob pattern into a regular expression pattern.
 	 * <p>
 	 * The pattern may contain any number of '*' or '?' wildcards. Escape '*' or
 	 * '?' using a preceding '\'.

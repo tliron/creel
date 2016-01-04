@@ -40,10 +40,12 @@ import com.threecrickets.creel.util.GlobUtil;
  * match via a logical or, <i>unless</i> the option has a version beginning with
  * a "!". That signifies an exclusion, which will always take precedence. For
  * example, "!1.1" will explicitly reject "1.1", even if "1.1" is matched by
- * other options.
+ * other options. This is very useful for easily excluding undesired versions
+ * while still specifying broad ranges. Note that the exclusion can itself be a
+ * version range.
  * <p>
- * In non-strict mode, will also support the
- * <a href="http://ant.apache.org/ivy/">Ivy</a>/
+ * In non-strict mode, will also support wildcards ("*" and "?") in groups and
+ * names, and the <a href="http://ant.apache.org/ivy/">Ivy</a>/
  * <a href="http://gradle.org/">Gradle</a>-style "+" suffix for versions. For
  * example, "1.0+" will translate to the "[1.0,)" Maven range.
  * 
@@ -80,11 +82,11 @@ public class MavenModuleSpecification extends ModuleSpecification
 	 * Constructor for a single option.
 	 * 
 	 * @param group
-	 *        The group specification
+	 *        The group specification (glob pattern in non-strict mode)
 	 * @param name
-	 *        The name specification
+	 *        The name specification (glob pattern in non-strict mode)
 	 * @param version
-	 *        The version specification
+	 *        The version specification (exclusions start with "!" prefix)
 	 * @param strict
 	 *        Whether we are in strict Maven mode
 	 */
@@ -141,7 +143,7 @@ public class MavenModuleSpecification extends ModuleSpecification
 	}
 
 	/**
-	 * Whether we are in strict Maven mode
+	 * Whether we are in strict Maven mode.
 	 * 
 	 * @return True if strict
 	 */
@@ -168,9 +170,9 @@ public class MavenModuleSpecification extends ModuleSpecification
 	 */
 	public boolean is( String group, String name, String version )
 	{
-		Pattern groupPattern = group != null ? GlobUtil.toPattern( group ) : null;
-		Pattern namePattern = name != null ? GlobUtil.toPattern( name ) : null;
-		Pattern versionPattern = version != null ? GlobUtil.toPattern( version ) : null;
+		Pattern groupPattern = group != null ? GlobUtil.compile( group ) : null;
+		Pattern namePattern = name != null ? GlobUtil.compile( name ) : null;
+		Pattern versionPattern = version != null ? GlobUtil.compile( version ) : null;
 		for( SpecificationOption option : getOptions() )
 			if( option.is( groupPattern, namePattern, versionPattern ) )
 				return true;
@@ -195,9 +197,9 @@ public class MavenModuleSpecification extends ModuleSpecification
 	 */
 	public boolean rewrite( String group, String name, String version, String newGroup, String newName )
 	{
-		Pattern groupPattern = group != null ? GlobUtil.toPattern( group ) : null;
-		Pattern namePattern = name != null ? GlobUtil.toPattern( name ) : null;
-		Pattern versionPattern = version != null ? GlobUtil.toPattern( version ) : null;
+		Pattern groupPattern = group != null ? GlobUtil.compile( group ) : null;
+		Pattern namePattern = name != null ? GlobUtil.compile( name ) : null;
+		Pattern versionPattern = version != null ? GlobUtil.compile( version ) : null;
 		for( SpecificationOption option : getOptions() )
 			if( option.is( groupPattern, namePattern, versionPattern ) )
 			{
@@ -223,9 +225,9 @@ public class MavenModuleSpecification extends ModuleSpecification
 	 */
 	public boolean rewriteVersion( String group, String name, String version, String newVersion )
 	{
-		Pattern groupPattern = group != null ? GlobUtil.toPattern( group ) : null;
-		Pattern namePattern = name != null ? GlobUtil.toPattern( name ) : null;
-		Pattern versionPattern = version != null ? GlobUtil.toPattern( version ) : null;
+		Pattern groupPattern = group != null ? GlobUtil.compile( group ) : null;
+		Pattern namePattern = name != null ? GlobUtil.compile( name ) : null;
+		Pattern versionPattern = version != null ? GlobUtil.compile( version ) : null;
 		for( SpecificationOption option : getOptions() )
 			if( option.is( groupPattern, namePattern, versionPattern ) )
 			{

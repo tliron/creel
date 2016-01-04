@@ -20,6 +20,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
+ * Utilities for cryptographic digests.
+ * 
  * @author Tal Liron
  */
 public abstract class DigestUtil

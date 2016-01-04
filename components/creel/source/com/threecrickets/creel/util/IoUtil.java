@@ -42,10 +42,19 @@ public abstract class IoUtil
 	// Static attributes
 	//
 
+	/**
+	 * The timeout for operations in milliseconds. Defaults to 5000.
+	 */
 	public static volatile int timeout = 5000;
 
+	/**
+	 * The buffer size in bytes. Defaults to 16Kb.
+	 */
 	public static volatile int bufferSize = 16 * 1024;
 
+	/**
+	 * The user agent string for URL connections. Defaults to "Creel".
+	 */
 	public static volatile String userAgent = "Creel";
 
 	//

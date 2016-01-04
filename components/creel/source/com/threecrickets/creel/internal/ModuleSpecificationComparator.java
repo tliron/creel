@@ -16,7 +16,7 @@ import java.util.Comparator;
 import com.threecrickets.creel.Module;
 
 /**
- * Compares module according to their specifications as strings.
+ * Compares modules according to their specifications as strings.
  * 
  * @author Tal Liron
  */

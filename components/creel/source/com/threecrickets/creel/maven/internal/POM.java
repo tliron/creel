@@ -32,7 +32,7 @@ import com.threecrickets.creel.util.IoUtil;
 import com.threecrickets.creel.util.XmlUtil;
 
 /**
- * Represents a <a href="https://maven.apache.org/pom.html">Maven pom.xml</a>.
+ * Parsed <a href="https://maven.apache.org/pom.html">Maven "pom.xml"</a>.
  * 
  * @author Tal Liron
  */
@@ -109,56 +109,113 @@ public class POM
 	// Attributes
 	//
 
+	/**
+	 * The properties.
+	 * 
+	 * @return The properties
+	 */
 	public Map<String, String> getProperties()
 	{
 		return Collections.unmodifiableMap( properties );
 	}
 
+	/**
+	 * The parent group ID.
+	 * 
+	 * @return The parent group ID
+	 */
 	public String getParentGroupId()
 	{
 		return parentGroupId;
 	}
 
+	/**
+	 * The parent version.
+	 * 
+	 * @return The parent version
+	 */
 	public String getParentVersion()
 	{
 		return parentVersion;
 	}
 
+	/**
+	 * The group ID.
+	 * 
+	 * @return The group ID
+	 */
 	public String getGroupId()
 	{
 		return groupId;
 	}
 
+	/**
+	 * The artifact ID.
+	 * 
+	 * @return The artifact ID
+	 */
 	public String getArtifactId()
 	{
 		return artifactId;
 	}
 
+	/**
+	 * The version.
+	 * 
+	 * @return The version
+	 */
 	public String getVersion()
 	{
 		return version;
 	}
 
+	/**
+	 * The name.
+	 * 
+	 * @return The name
+	 */
 	public String getName()
 	{
 		return name;
 	}
 
+	/**
+	 * The description.
+	 * 
+	 * @return The description
+	 */
 	public String getDescription()
 	{
 		return description;
 	}
 
+	/**
+	 * The dependencies.
+	 * 
+	 * @return The dependencies
+	 */
 	public Iterable<Dependency> getDependencies()
 	{
 		return Collections.unmodifiableCollection( dependencies );
 	}
 
+	/**
+	 * As a module identifier.
+	 * 
+	 * @param repository
+	 *        The repository
+	 * @return The module identifier
+	 */
 	public MavenModuleIdentifier getModuleIdentifier( MavenRepository repository )
 	{
 		return new MavenModuleIdentifier( repository, getGroupId() != null ? getGroupId() : getParentGroupId(), getArtifactId(), getVersion() != null ? getVersion() : getParentVersion() );
 	}
 
+	/**
+	 * The dependencies as module specifications.
+	 * 
+	 * @return The module specifications
+	 */
 	public Iterable<MavenModuleSpecification> getDependencyModuleSpecifications()
 	{
 		Collection<MavenModuleSpecification> moduleSpecifications = new ArrayList<MavenModuleSpecification>();

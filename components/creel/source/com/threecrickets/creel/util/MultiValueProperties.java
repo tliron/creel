@@ -16,6 +16,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Sorted JVM properties with support for a special two-part dot notation for
+ * multiple value configs.
+ * <p>
+ * The first part is a running integer of the instance index, and the second
+ * part is the config key. For example:
+ * 
+ * <pre>
+ * {@code
+ * 1.firstName=value1
+ * 1.lastName=value2
+ * 2.firstName=value3
+ * 2.lastName=value4
+ * }
+ * </pre>
+ * 
+ * Actually the index number does not have to be in sequence: it just has to be
+ * unique, and is used for sorting.
+ * 
  * @author Tal Liron
  */
 public class MultiValueProperties extends SortedProperties
@@ -24,6 +42,9 @@ public class MultiValueProperties extends SortedProperties
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 */
 	public MultiValueProperties()
 	{
 		super( new DotSeparatedStringComparator<Object>() );
@@ -33,17 +54,41 @@ public class MultiValueProperties extends SortedProperties
 	// Operations
 	//
 
+	/**
+	 * Puts a value using the two-part dot notation.
+	 * 
+	 * @param index
+	 *        The instance index
+	 * @param key
+	 *        The key
+	 * @param value
+	 *        The value
+	 * @return True if the key did not already exist
+	 */
 	public Object put( int index, Object key, Object value )
 	{
 		return put( Integer.toString( index ) + '.' + key, value.toString() );
 	}
 
+	/**
+	 * Puts an entire map's keys and values using the two-part dot notation.
+	 * 
+	 * @param index
+	 *        The instance index
+	 * @param map
+	 *        The map
+	 */
 	public void putMap( int index, Map<String, Object> map )
 	{
 		for( Map.Entry<String, Object> entry : map.entrySet() )
 			put( index, entry.getKey(), entry.getValue() );
 	}
 
+	/**
+	 * Converts two-part dot notation properties to maps.
+	 * 
+	 * @return The maps
+	 */
 	public Iterable<Map<String, String>> toMaps()
 	{
 		Map<Integer, Map<String, String>> configs = new HashMap<Integer, Map<String, String>>();

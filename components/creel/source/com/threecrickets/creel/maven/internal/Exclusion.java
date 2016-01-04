@@ -16,6 +16,8 @@ import org.w3c.dom.Element;
 import com.threecrickets.creel.util.XmlUtil;
 
 /**
+ * Parsed Maven pom.xml exclusion.
+ * 
  * @author Tal Liron
  */
 public class Exclusion
@@ -24,6 +26,14 @@ public class Exclusion
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param element
+	 *        The XML element
+	 * @param properties
+	 *        The parsed Maven properties
+	 */
 	public Exclusion( Element element, Properties properties )
 	{
 		groupId = properties.interpolate( XmlUtil.getFirstElementText( element, "groupId" ) );
@@ -34,11 +44,21 @@ public class Exclusion
 	// Attributes
 	//
 
+	/**
+	 * The group ID.
+	 * 
+	 * @return The group ID
+	 */
 	public String getGroupId()
 	{
 		return groupId;
 	}
 
+	/**
+	 * The artifact ID.
+	 * 
+	 * @return The artifact ID
+	 */
 	public String getArtifactId()
 	{
 		return artifactId;

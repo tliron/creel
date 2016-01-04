@@ -15,6 +15,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 /**
+ * Help with parsing Unix-style (long- and short-form) command line arguments.
+ * 
  * @author Tal Liron
  */
 public class ArgumentsHelper
@@ -23,6 +25,12 @@ public class ArgumentsHelper
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param arguments
+	 *        The raw command line arguments
+	 */
 	public ArgumentsHelper( String[] arguments )
 	{
 		this.arguments = arguments;
@@ -32,6 +40,15 @@ public class ArgumentsHelper
 	// Attributes
 	//
 
+	/**
+	 * Checks if we have a switch.
+	 * 
+	 * @param longForm
+	 *        The long form
+	 * @param shortForm
+	 *        The short form
+	 * @return True if we have the switch
+	 */
 	public boolean hasSwitch( String longForm, String shortForm )
 	{
 		longForm = "--" + longForm;
@@ -42,6 +59,17 @@ public class ArgumentsHelper
 		return false;
 	}
 
+	/**
+	 * Gets a string option.
+	 * 
+	 * @param longForm
+	 *        The long form
+	 * @param shortForm
+	 *        The short form
+	 * @param defaultValue
+	 *        The default value to return if not found
+	 * @return The value
+	 */
 	public String getString( String longForm, String shortForm, String defaultValue )
 	{
 		longForm = "--" + longForm + "=";
@@ -58,12 +86,34 @@ public class ArgumentsHelper
 		return defaultValue;
 	}
 
-	public Integer getInt( String longForm, String shortForm, Integer defaultValue )
+	/**
+	 * Gets an integer option.
+	 * 
+	 * @param longForm
+	 *        The long form
+	 * @param shortForm
+	 *        The short form
+	 * @param defaultValue
+	 *        The default value to return if not found
+	 * @return The value
+	 */
+	public Integer getInteger( String longForm, String shortForm, Integer defaultValue )
 	{
 		String value = getString( longForm, shortForm, null );
 		return value != null ? new Integer( value ) : defaultValue;
 	}
 
+	/**
+	 * Gets a boolean option.
+	 * 
+	 * @param longForm
+	 *        The long form
+	 * @param shortForm
+	 *        The short form
+	 * @param defaultValue
+	 *        The default value to return if not found
+	 * @return The value
+	 */
 	public Boolean getBoolean( String longForm, String shortForm, Boolean defaultValue )
 	{
 		String value = getString( longForm, shortForm, null );

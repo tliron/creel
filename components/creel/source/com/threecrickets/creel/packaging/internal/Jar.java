@@ -34,6 +34,16 @@ public class Jar
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param manifestUrl
+	 *        The manifest URL
+	 * @param rootDir
+	 *        The root directory
+	 * @param errorMessage
+	 *        The error message prefix
+	 */
 	public Jar( URL manifestUrl, File rootDir, String errorMessage )
 	{
 		if( !"jar".equalsIgnoreCase( manifestUrl.getProtocol() ) )
@@ -80,16 +90,31 @@ public class Jar
 	// Attributes
 	//
 
+	/**
+	 * The Jar URL.
+	 * 
+	 * @return The Jar URL
+	 */
 	public URL getUrl()
 	{
 		return url;
 	}
 
+	/**
+	 * The Jar file.
+	 * 
+	 * @return The Jar file
+	 */
 	public File getFile()
 	{
 		return file;
 	}
 
+	/**
+	 * The Jar file entries.
+	 * 
+	 * @return The Jar file entries
+	 */
 	public Iterable<JarEntry> getEntries()
 	{
 		return Collections.unmodifiableCollection( entries );

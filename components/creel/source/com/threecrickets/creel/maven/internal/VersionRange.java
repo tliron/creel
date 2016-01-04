@@ -12,6 +12,8 @@
 package com.threecrickets.creel.maven.internal;
 
 /**
+ * Parsed Maven version range.
+ * 
  * @author Tal Liron
  */
 public class VersionRange
@@ -20,6 +22,18 @@ public class VersionRange
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param start
+	 *        Start version
+	 * @param end
+	 *        End version
+	 * @param includeStart
+	 *        Whether to include the start version in the range
+	 * @param includeEnd
+	 *        Whether to include the end version in the range
+	 */
 	public VersionRange( String start, String end, boolean includeStart, boolean includeEnd )
 	{
 		this.start = new Version( start );
@@ -28,6 +42,18 @@ public class VersionRange
 		this.includeEnd = includeEnd;
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param start
+	 *        Start version
+	 * @param end
+	 *        End version
+	 * @param includeStart
+	 *        Whether to include the start version in the range
+	 * @param includeEnd
+	 *        Whether to include the end version in the range
+	 */
 	public VersionRange( Version start, Version end, boolean includeStart, boolean includeEnd )
 	{
 		this.start = start;
@@ -40,21 +66,41 @@ public class VersionRange
 	// Attributes
 	//
 
+	/**
+	 * The start version.
+	 * 
+	 * @return The start version
+	 */
 	public Version getStart()
 	{
 		return start;
 	}
 
+	/**
+	 * The end version.
+	 * 
+	 * @return The end version
+	 */
 	public Version getEnd()
 	{
 		return end;
 	}
 
+	/**
+	 * Whether to include the start version in the range.
+	 * 
+	 * @return True if included
+	 */
 	public boolean isIncludeStart()
 	{
 		return includeStart;
 	}
 
+	/**
+	 * Whether to include the end version in the range.
+	 * 
+	 * @return True if included
+	 */
 	public boolean isIncludeEnd()
 	{
 		return includeEnd;
@@ -64,7 +110,14 @@ public class VersionRange
 	// Operations
 	//
 
-	public boolean allows( Version version )
+	/**
+	 * Checks whether the version is in the range.
+	 * 
+	 * @param version
+	 *        The version
+	 * @return True if in range
+	 */
+	public boolean in( Version version )
 	{
 		int compareStart = !getStart().isNull() ? version.compareTo( getStart() ) : 1;
 		int compareEnd = !getEnd().isNull() ? getEnd().compareTo( version ) : 1;

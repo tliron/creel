@@ -19,6 +19,8 @@ import java.util.concurrent.Phaser;
 import com.threecrickets.creel.util.internal.Job;
 
 /**
+ * Powerful utility to avoid repeating concurrent identical jobs.
+ * 
  * @author Tal Liron
  */
 public class Jobs
@@ -27,13 +29,27 @@ public class Jobs
 	// Operations
 	//
 
-	public synchronized boolean beginIfNotBegun( int token, ExecutorService executor, Phaser phaser, Runnable onEnd )
+	/**
+	 * Checks if we are already doing the job. If we are not, then mark that we
+	 * have begun it. If we are, then hook a task to run when that job finishes.
+	 * 
+	 * @param id
+	 *        The job ID
+	 * @param executor
+	 *        The executor
+	 * @param phaser
+	 *        The phaser or null
+	 * @param onEnd
+	 *        The task to submit or run when the job finishes
+	 * @return True if not already doing the job
+	 */
+	public synchronized boolean beginIfNotBegun( int id, ExecutorService executor, Phaser phaser, Runnable onEnd )
 	{
-		Job job = jobs.get( token );
+		Job job = jobs.get( id );
 		if( job == null )
 		{
 			// New job
-			jobs.put( token, new Job( executor ) );
+			jobs.put( id, new Job( executor ) );
 			return true;
 		}
 		else
@@ -47,9 +63,16 @@ public class Jobs
 		}
 	}
 
-	public synchronized boolean notifyEnd( int token )
+	/**
+	 * Mark the job finished, which may trigger tasks to be submitted.
+	 * 
+	 * @param id
+	 *        The job ID
+	 * @return True if the job existed
+	 */
+	public synchronized boolean notifyEnd( int id )
 	{
-		Job job = jobs.remove( token );
+		Job job = jobs.remove( id );
 		if( job != null )
 		{
 			job.end();
@@ -59,9 +82,18 @@ public class Jobs
 			return false;
 	}
 
-	public synchronized void onEnd( int token, Runnable onEnd )
+	/**
+	 * Submits the task to run when the job finishes. If already finished, runs
+	 * the task now.
+	 * 
+	 * @param id
+	 *        The job ID
+	 * @param onEnd
+	 *        The task
+	 */
+	public synchronized void onEnd( int id, Runnable onEnd )
 	{
-		Job job = jobs.get( token );
+		Job job = jobs.get( id );
 		if( job != null )
 			// Do later
 			job.onEnd( onEnd );

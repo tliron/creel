@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Versions should have forms such as '1.0' or '2.4.1-beta1'.
+ * Parsed Maven version.
  * <p>
  * When comparing them, we first take into account the dot-separated integer
  * parts. In case both versions are identical on those terms, then the postfix
@@ -33,6 +33,9 @@ public class Version implements Comparable<Version>
 	// Constants
 	//
 
+	/**
+	 * Map of postfixes to their semantic value.
+	 */
 	public static final Map<String, Double> POSTFIXES;
 
 	static
@@ -53,6 +56,12 @@ public class Version implements Comparable<Version>
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param version
+	 *        The version
+	 */
 	public Version( String version )
 	{
 		version = version == null ? "" : version.trim();
@@ -149,26 +158,51 @@ public class Version implements Comparable<Version>
 	// Attributes
 	//
 
+	/**
+	 * Whether this is a null version.
+	 * 
+	 * @return True if null
+	 */
 	public boolean isNull()
 	{
 		return isNull;
 	}
 
+	/**
+	 * The original unparsed version.
+	 * 
+	 * @return The unparsed version
+	 */
 	public String getText()
 	{
 		return text;
 	}
 
+	/**
+	 * Whether we could successfully parse the version.
+	 * 
+	 * @return True if parsed
+	 */
 	public boolean isParsed()
 	{
 		return parsed;
 	}
 
+	/**
+	 * The parsed version parts.
+	 * 
+	 * @return The version parts
+	 */
 	public int[] getParts()
 	{
 		return parts;
 	}
 
+	/**
+	 * The parsed extra value of the postfix.
+	 * 
+	 * @return The extra value
+	 */
 	public double getExtra()
 	{
 		return extra;

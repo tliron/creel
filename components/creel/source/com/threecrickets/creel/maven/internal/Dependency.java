@@ -20,6 +20,8 @@ import org.w3c.dom.Element;
 import com.threecrickets.creel.util.XmlUtil;
 
 /**
+ * Parsed Maven pom.xml dependency.
+ * 
  * @author Tal Liron
  */
 public class Dependency
@@ -28,6 +30,14 @@ public class Dependency
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param element
+	 *        The XML element
+	 * @param properties
+	 *        The parsed Maven properties
+	 */
 	public Dependency( Element element, Properties properties )
 	{
 		groupId = properties.interpolate( XmlUtil.getFirstElementText( element, "groupId" ) );
@@ -37,7 +47,7 @@ public class Dependency
 		scope = properties.interpolate( XmlUtil.getFirstElementText( element, "scope" ) );
 		optional = "true".equals( properties.interpolate( XmlUtil.getFirstElementText( element, "optional" ) ) );
 
-		// <exclusions>, <excluision>
+		// <exclusions>, <exclusion>
 		for( Element exclusion : new XmlUtil.Elements( XmlUtil.getFirstElement( element, "exclusions" ), "exclusion" ) )
 			this.exclusions.add( new Exclusion( exclusion, properties ) );
 	}
@@ -46,41 +56,82 @@ public class Dependency
 	// Attributes
 	//
 
+	/**
+	 * The group ID.
+	 * 
+	 * @return The group ID
+	 */
 	public String getGroupId()
 	{
 		return groupId;
 	}
 
+	/**
+	 * The artifact ID.
+	 * 
+	 * @return The artifact ID
+	 */
 	public String getArtifactId()
 	{
 		return artifactId;
 	}
 
+	/**
+	 * The version.
+	 * 
+	 * @return The version
+	 */
 	public String getVersion()
 	{
 		return version;
 	}
 
+	/**
+	 * The type.
+	 * 
+	 * @return The type
+	 */
 	public String getType()
 	{
 		return type;
 	}
 
+	/**
+	 * The scope.
+	 * 
+	 * @return The scope
+	 */
 	public String getScope()
 	{
 		return scope;
 	}
 
+	/**
+	 * Whether the dependency is optional.
+	 * 
+	 * @return True if optional
+	 */
 	public boolean isOptional()
 	{
 		return optional;
 	}
 
+	/**
+	 * The exclusions.
+	 * 
+	 * @return The exclusions
+	 */
 	public Iterable<Exclusion> getExclusions()
 	{
 		return Collections.unmodifiableCollection( exclusions );
 	}
 
+	/**
+	 * True if should be omitted: optional, or in the "provided", "system", or
+	 * "test" scopes.
+	 * 
+	 * @return True if omitted
+	 */
 	public boolean isOmitted()
 	{
 		return optional || "provided".equals( scope ) || "system".equals( scope ) || "test".equals( scope );

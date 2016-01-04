@@ -29,11 +29,11 @@
 	<taskdef resource="com/threecrickets/creel/ant/antlib.xml" uri="antlib:com.threecrickets.creel.ant" classpath="${dependencies}/libraries/jars/com.threecrickets.creel/creel/${creel.version}/creel.jar" />
 
 	<target name="dependencies" description="Resolve dependencies">
-		<creel:dependencies pathId="dependencies" destDir="cache/creel">
+		<creel:run pathId="dependencies" destDir="cache/creel">
 			<module group="org.apache.ant" name="ant" version="1.9.6+" />
 			<module group="jline" name="jline" version="2.13+" />
 			<repository id="repo" url="${dependencies.repo}" />
-		</creel:dependencies>
+		</creel:run>
 	</target>
 
 	<target name="classes" depends="dependencies" description="Compile Java code">

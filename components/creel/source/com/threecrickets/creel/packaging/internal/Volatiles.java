@@ -13,7 +13,7 @@ package com.threecrickets.creel.packaging.internal;
 
 import java.util.jar.Attributes;
 
-import com.threecrickets.creel.packaging.Packaging;
+import com.threecrickets.creel.packaging.PackagingUtil;
 
 /**
  * Manages volatile entries within a package.
@@ -22,10 +22,20 @@ import com.threecrickets.creel.packaging.Packaging;
  */
 public class Volatiles
 {
+	//
+	// Construction
+	//
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param manifest
+	 *        The manifest attributes
+	 */
 	public Volatiles( Attributes manifest )
 	{
 		// Volatile folders
-		Object packageVolatileFolders = manifest.getValue( Packaging.PACKAGE_VOLATILE_FOLDERS );
+		Object packageVolatileFolders = manifest.getValue( PackagingUtil.PACKAGE_VOLATILE_FOLDERS );
 		folders = packageVolatileFolders != null ? packageVolatileFolders.toString().split( "," ) : null;
 
 		// Make sure we have a trailing slash
@@ -35,7 +45,7 @@ public class Volatiles
 					folders[i] += "/";
 
 		// Volatile files
-		Object packageVolatileFiles = manifest.getValue( Packaging.PACKAGE_VOLATILE_FILES );
+		Object packageVolatileFiles = manifest.getValue( PackagingUtil.PACKAGE_VOLATILE_FILES );
 		files = packageVolatileFiles != null ? packageVolatileFiles.toString().split( "," ) : null;
 	}
 
@@ -43,15 +53,22 @@ public class Volatiles
 	// Operations
 	//
 
-	public boolean contains( String name )
+	/**
+	 * Checks if the filename is marked volatile.
+	 * 
+	 * @param filename
+	 *        The filename
+	 * @return True if volatile
+	 */
+	public boolean contains( String filename )
 	{
 		if( folders != null )
 			for( String folder : folders )
-				if( name.startsWith( folder ) )
+				if( filename.startsWith( folder ) )
 					return true;
 		if( files != null )
 			for( String file : files )
-				if( name.equals( file ) )
+				if( filename.equals( file ) )
 					return true;
 		return false;
 	}

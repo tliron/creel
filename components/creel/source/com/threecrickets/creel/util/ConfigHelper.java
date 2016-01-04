@@ -14,6 +14,8 @@ package com.threecrickets.creel.util;
 import java.util.Map;
 
 /**
+ * Help with parsing configs.
+ * 
  * @author Tal Liron
  */
 public class ConfigHelper
@@ -22,6 +24,12 @@ public class ConfigHelper
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param config
+	 *        The config
+	 */
 	public ConfigHelper( Map<String, ?> config )
 	{
 		this.config = config;
@@ -31,22 +39,56 @@ public class ConfigHelper
 	// Attributes
 	//
 
+	/**
+	 * Gets a string value.
+	 * 
+	 * @param key
+	 *        The key
+	 * @return The value or null if not found
+	 */
 	public String getString( String key )
 	{
 		return getString( key, null );
 	}
 
+	/**
+	 * Gets a string value.
+	 * 
+	 * @param key
+	 *        The key
+	 * @param defaultValue
+	 *        The default value to return if not found
+	 * @return The value
+	 */
 	public String getString( String key, String defaultValue )
 	{
 		Object value = config.get( key );
 		return value != null ? value.toString() : defaultValue;
 	}
 
+	/**
+	 * Gets an int value. Supports both {@link Number} and {@link String}
+	 * instances.
+	 * 
+	 * @param key
+	 *        The key
+	 * @return The value or 0 if not found
+	 */
 	public int getInt( String key )
 	{
 		return getInt( key, 0 );
 	}
 
+	/**
+	 * Gets an int value. Supports both {@link Number} and {@link String}
+	 * instances.
+	 * 
+	 * @param key
+	 *        The key
+	 * @param defaultValue
+	 *        The default value to return if not found
+	 * @return The value
+	 */
 	public int getInt( String key, int defaultValue )
 	{
 		Object value = config.get( key );
@@ -55,11 +97,29 @@ public class ConfigHelper
 		return value != null ? Integer.parseInt( value.toString() ) : defaultValue;
 	}
 
+	/**
+	 * Gets a boolean value. Supports {@link Boolean}, {@link Number} (non-0 for
+	 * true), and {@link String} instances.
+	 * 
+	 * @param key
+	 *        The key
+	 * @return The value or false if not found
+	 */
 	public boolean getBoolean( String key )
 	{
 		return getBoolean( key, false );
 	}
 
+	/**
+	 * Gets a boolean value. Supports {@link Boolean}, {@link Number} (non-0 for
+	 * true), and {@link String} instances.
+	 * 
+	 * @param key
+	 *        The key
+	 * @param defaultValue
+	 *        The default value to return if not found
+	 * @return The value
+	 */
 	public boolean getBoolean( String key, boolean defaultValue )
 	{
 		Object value = config.get( key );

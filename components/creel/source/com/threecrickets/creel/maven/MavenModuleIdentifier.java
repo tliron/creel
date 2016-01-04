@@ -31,7 +31,7 @@ import com.threecrickets.creel.maven.internal.Version;
  * Maven identifiers have a group, name, and version.
  * <p>
  * Version comparison (see {@link MavenModuleIdentifier#getParsedVersion()})
- * follows dot-notation rules and semantic values of alphanumeric suffixes. For
+ * follows dot notation rules and semantic values of alphanumeric suffixes. For
  * example, "1.0-alpha2" is greater than "1.0-alpha1", but lesser than
  * "1.0-beta1".
  * 

@@ -31,6 +31,10 @@ import com.threecrickets.creel.util.IoUtil;
 import com.threecrickets.creel.util.XmlUtil;
 
 /**
+ * Parsed <a href=
+ * "http://maven.apache.org/components/ref/3.2.5/maven-repository-metadata/">
+ * Maven "maven-metadata.xml"</a>.
+ * 
  * @author Tal Liron
  */
 public class MetaData
@@ -39,6 +43,17 @@ public class MetaData
 	// Construction
 	//
 
+	/**
+	 * Constructor. Loads the metadata from the URL, optionally validates it
+	 * against a signature, and parses it.
+	 * 
+	 * @param url
+	 *        The source URL
+	 * @param signature
+	 *        The signature or null
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
 	public MetaData( URL url, Signature signature ) throws IOException
 	{
 		Document document;
@@ -89,31 +104,65 @@ public class MetaData
 	// Attributes
 	//
 
+	/**
+	 * The group ID.
+	 * 
+	 * @return The group ID
+	 */
 	public String getGroupId()
 	{
 		return groupId;
 	}
 
+	/**
+	 * The artifact ID.
+	 * 
+	 * @return The artifact ID
+	 */
 	public String getArtifactId()
 	{
 		return artifactId;
 	}
 
+	/**
+	 * The release version.
+	 * 
+	 * @return The release version
+	 */
 	public String getRelease()
 	{
 		return release;
 	}
 
+	/**
+	 * The versions.
+	 * 
+	 * @return The versions
+	 */
 	public Iterable<String> getVersions()
 	{
 		return Collections.unmodifiableCollection( versions );
 	}
 
+	/**
+	 * The release as a module identifier.
+	 * 
+	 * @param repository
+	 *        The repository
+	 * @return The release module identifier
+	 */
 	public MavenModuleIdentifier getReleaseModuleIdentifier( MavenRepository repository )
 	{
 		return new MavenModuleIdentifier( repository, getGroupId(), getArtifactId(), getRelease() );
 	}
 
+	/**
+	 * As module identifiers.
+	 * 
+	 * @param repository
+	 *        The repository
+	 * @return The module identifiers
+	 */
 	public Iterable<MavenModuleIdentifier> getModuleIdentifiers( MavenRepository repository )
 	{
 		List<MavenModuleIdentifier> moduleIdentifiers = new ArrayList<MavenModuleIdentifier>();

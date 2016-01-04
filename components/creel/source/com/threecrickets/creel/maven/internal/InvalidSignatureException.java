@@ -12,6 +12,9 @@
 package com.threecrickets.creel.maven.internal;
 
 /**
+ * Thrown when downloaded files from a Maven repository don't match their
+ * signature.
+ * 
  * @author Tal Liron
  */
 public class InvalidSignatureException extends RuntimeException

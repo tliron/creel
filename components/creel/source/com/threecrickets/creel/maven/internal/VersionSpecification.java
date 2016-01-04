@@ -18,6 +18,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Parsed Maven version specification.
+ * <p>
+ * Supports "wildcard" specifications (null, "*", or "+") meaning that all
+ * versions would match the specification.
+ * 
  * @author Tal Liron
  */
 public class VersionSpecification
@@ -26,6 +31,14 @@ public class VersionSpecification
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param versionSpecification
+	 *        The version specification
+	 * @param strict
+	 *        Whether we are in strict Maven mode
+	 */
 	public VersionSpecification( String versionSpecification, boolean strict )
 	{
 		this.strict = strict;
@@ -82,21 +95,43 @@ public class VersionSpecification
 	// Attributes
 	//
 
+	/**
+	 * Whether we are in strict Maven mode.
+	 * 
+	 * @return True if strict
+	 */
 	public boolean isStrict()
 	{
 		return strict;
 	}
 
+	/**
+	 * Whether we allow for all versions.
+	 * 
+	 * @return True if wildcard
+	 */
 	public boolean isWildcard()
 	{
 		return wildcard;
 	}
 
+	/**
+	 * Whether we are a trivial version (no ranges).
+	 * 
+	 * @return True if trivial
+	 */
 	public boolean isTrivial()
 	{
 		return trivial;
 	}
 
+	/**
+	 * Check whether the version is allowed by this version specification.
+	 * 
+	 * @param version
+	 *        The version
+	 * @return True if allowed
+	 */
 	public boolean allows( Version version )
 	{
 		if( isWildcard() )
@@ -106,7 +141,7 @@ public class VersionSpecification
 			return text.equals( version.getText() );
 
 		for( VersionRange range : ranges )
-			if( range.allows( version ) )
+			if( range.in( version ) )
 				// Logical or: it takes just one positive to be positive
 				return true;
 

@@ -15,7 +15,11 @@ import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 
+import com.threecrickets.creel.util.Jobs;
+
 /**
+ * See {@link Jobs}.
+ * 
  * @author Tal Liron
  */
 public class Job
@@ -24,6 +28,12 @@ public class Job
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param executor
+	 *        The executor
+	 */
 	public Job( ExecutorService executor )
 	{
 		this.executor = executor;
@@ -33,11 +43,20 @@ public class Job
 	// Operations
 	//
 
+	/**
+	 * Adds a task to run when the job finishes.
+	 * 
+	 * @param onEnd
+	 */
 	public void onEnd( Runnable onEnd )
 	{
 		this.onEnd.add( onEnd );
 	}
 
+	/**
+	 * Mark the job finished. If there are tasks to run, submit them to the
+	 * executor.
+	 */
 	public void end()
 	{
 		for( Runnable onEnd : this.onEnd )

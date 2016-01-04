@@ -19,7 +19,7 @@ import java.util.Properties;
 import java.util.TreeSet;
 
 /**
- * Properties sorted by their keys.
+ * JVM properties sorted by their keys.
  * 
  * @author Tal Liron
  */
@@ -29,11 +29,20 @@ public class SortedProperties extends Properties
 	// Construction
 	//
 
+	/**
+	 * Constructor using natural order.
+	 */
 	public SortedProperties()
 	{
 		this( null );
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param comparator
+	 *        The comparator or null to use natural order.
+	 */
 	public SortedProperties( Comparator<Object> comparator )
 	{
 		super();

@@ -12,9 +12,19 @@
 package com.threecrickets.creel.util;
 
 /**
+ * I/O operation progress listener.
+ * 
  * @author Tal Liron
  */
 public interface ProgressListener
 {
+	/**
+	 * Called when there is progress.
+	 * 
+	 * @param position
+	 *        The current position in the stream
+	 * @param length
+	 *        The total length of the stream
+	 */
 	public void onProgress( int position, int length );
 }

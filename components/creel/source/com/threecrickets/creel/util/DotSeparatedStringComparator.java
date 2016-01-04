@@ -14,6 +14,9 @@ package com.threecrickets.creel.util;
 import java.util.Comparator;
 
 /**
+ * Compares the string values of objects using parsed dot notation, such that
+ * integer parts will be compared numerically rather than lexigraphically.
+ * 
  * @author Tal Liron
  * @param <T>
  *        The type of objects that may be compared by this comparator

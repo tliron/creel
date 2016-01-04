@@ -8,7 +8,7 @@ It can be run as a command line tool, via an [Ant](http://ant.apache.org/) task,
 
 Features:
 
-* _No dependencies._ Just one tiny jar. Requires just JVM 7+.
+* _No dependencies._ Just one tiny jar (135Kb). Requires just JVM 7+.
 * Very fast multi-threaded, multi-part downloads. (The downloader class is general purpose and you can use it independently of Creel.)
 * Optimizes even further when using a filesystem-based ("file:" URL) repository, using fast copies and memory-mapped loading.
 * Resolves version conflicts according to policy, your choice of newest (cutting-edge) or oldest (conservative).

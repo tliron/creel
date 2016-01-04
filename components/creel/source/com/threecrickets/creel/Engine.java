@@ -38,7 +38,7 @@ import com.threecrickets.creel.internal.Conflicts;
 import com.threecrickets.creel.internal.IdentificationContext;
 import com.threecrickets.creel.internal.Modules;
 import com.threecrickets.creel.packaging.Package;
-import com.threecrickets.creel.packaging.Packaging;
+import com.threecrickets.creel.packaging.PackagingUtil;
 import com.threecrickets.creel.util.ClassUtil;
 import com.threecrickets.creel.util.ConfigHelper;
 
@@ -742,7 +742,7 @@ public class Engine extends Notifier implements Runnable
 		Iterable<Package> packages = null;
 		try
 		{
-			packages = Packaging.getPackages( classLoader, getRootDir() );
+			packages = PackagingUtil.getPackages( classLoader, getRootDir() );
 		}
 		catch( IOException x )
 		{

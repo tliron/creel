@@ -94,11 +94,11 @@ public class ConcurrentIdentificationContext implements Closeable
 
 	/**
 	 * Checks if we are already identifying the module. If we are not, then mark
-	 * that we have begun identifying it. If we are, then submit the task to run
+	 * that we have begun identifying it. If we are, then hook the task to run
 	 * when that identification finishes.
 	 * 
 	 * @param identifyModule
-	 *        The task
+	 *        The task to submit or run when identification finishes
 	 * @return True if not already identifying the module
 	 */
 	public boolean beginIdentifyingIfNotIdentifying( Engine.IdentifyModule identifyModule )
@@ -107,7 +107,8 @@ public class ConcurrentIdentificationContext implements Closeable
 	}
 
 	/**
-	 * Submits the task to run when identification finishes.
+	 * Submits the task to run when identification finishes. If already
+	 * finished, runs the task now.
 	 * 
 	 * @param identifiedModule
 	 *        The task
