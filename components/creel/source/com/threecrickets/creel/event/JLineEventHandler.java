@@ -15,6 +15,10 @@ import jline.Terminal;
 import jline.TerminalFactory;
 
 /**
+ * A console event handler that uses
+ * <a href="https://github.com/jline/jline2">JLine</a> to automatically detect
+ * ANSI support and query the terminal width.
+ * 
  * @author Tal Liron
  */
 public class JLineEventHandler extends ConsoleEventHandler
@@ -23,22 +27,54 @@ public class JLineEventHandler extends ConsoleEventHandler
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param stacktrace
+	 *        Whether to print stack traces of exceptions
+	 */
 	public JLineEventHandler( boolean stacktrace )
 	{
 		this( TerminalFactory.get(), stacktrace );
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param ansi
+	 *        Whether to output ANSI colors and animations
+	 * @param stacktrace
+	 *        Whether to print stack traces of exceptions
+	 */
+	public JLineEventHandler( boolean ansi, boolean stacktrace )
+	{
+		this( TerminalFactory.get(), ansi, stacktrace );
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param terminal
+	 *        The terminal
+	 * @param stacktrace
+	 *        Whether to print stack traces of exceptions
+	 */
 	public JLineEventHandler( Terminal terminal, boolean stacktrace )
 	{
 		super( terminal.isAnsiSupported(), stacktrace );
 		this.terminal = terminal;
 	}
 
-	public JLineEventHandler( boolean ansi, boolean stacktrace )
-	{
-		this( TerminalFactory.get(), ansi, stacktrace );
-	}
-
+	/**
+	 * Constructor.
+	 * 
+	 * @param terminal
+	 *        The terminal
+	 * @param ansi
+	 *        Whether to output ANSI colors and animations
+	 * @param stacktrace
+	 *        Whether to print stack traces of exceptions
+	 */
 	public JLineEventHandler( Terminal terminal, boolean ansi, boolean stacktrace )
 	{
 		super( ansi, stacktrace );

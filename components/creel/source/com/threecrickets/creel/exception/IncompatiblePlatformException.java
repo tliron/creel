@@ -12,9 +12,62 @@
 package com.threecrickets.creel.exception;
 
 /**
+ * Thrown when a module identifier, module specification, or repository are used
+ * with others of a different platforms.
+ * 
  * @author Tal Liron
  */
 public class IncompatiblePlatformException extends ClassCastException
 {
+	//
+	// Construction
+	//
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param platform
+	 *        The platform
+	 * @param object
+	 *        The incompatible object
+	 */
+	public IncompatiblePlatformException( String platform, Object object )
+	{
+		super( "Object incompatible with platform: " + platform );
+		this.platform = platform;
+		this.object = object;
+	}
+
+	//
+	// Attributes
+	//
+
+	/**
+	 * The platform.
+	 * 
+	 * @return The platform
+	 */
+	public String getPlatform()
+	{
+		return platform;
+	}
+
+	/**
+	 * The incompatible object.
+	 * 
+	 * @return The incompatible object
+	 */
+	public Object getObject()
+	{
+		return object;
+	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
 	private static final long serialVersionUID = 1L;
+
+	private final String platform;
+
+	private final Object object;
 }

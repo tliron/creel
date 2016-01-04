@@ -76,7 +76,7 @@
 				<attribute name="Implementation-Title" value="${component.group}:${component.artifact}" />
 				<attribute name="Implementation-Version" value="${component.version}${component.version.postfix}" />
 				<attribute name="Implementation-Vendor" value="Three Crickets" />
-				<attribute name="Main-Class" value="com.threecrickets.creel.Creel" />
+				<attribute name="Main-Class" value="com.threecrickets.creel.Tool" />
 			</manifest>
 		</jar>
 	</target>

@@ -36,8 +36,8 @@ import com.threecrickets.creel.util.IoUtil;
 /**
  * Fast file downloader supporting concurrent downloads and chunks. Just give it
  * a list of source URLs to download and it will do the rest. Network (HTTP,
- * FTP, etc.) URLs are supported, while file URLs are automatically optimized to
- * use fast copying.
+ * FTP, etc.) URLs are supported, while "file:" URLs are automatically optimized
+ * to use fast copying.
  * 
  * @author Tal Liron
  */
@@ -47,6 +47,16 @@ public class Downloader implements Closeable
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param threadsPerHost
+	 *        Number of threads per host
+	 * @param chunksPerFile
+	 *        Number of chunks per file
+	 * @param notifier
+	 *        The notifier or null
+	 */
 	public Downloader( int threadsPerHost, int chunksPerFile, Notifier notifier )
 	{
 		this.threadsPerHost = threadsPerHost;
@@ -58,64 +68,122 @@ public class Downloader implements Closeable
 	// Attributes
 	//
 
+	/**
+	 * Number of threads per host.
+	 * 
+	 * @return Number of threads per host
+	 */
 	public int getThreadsPerHost()
 	{
 		return threadsPerHost;
 	}
 
+	/**
+	 * Number of chunks per file.
+	 * 
+	 * @return Number of chunks per file
+	 */
 	public int getChunksPerFile()
 	{
 		return chunksPerFile;
 	}
 
-	public ExecutorService getExecutor( String key )
+	/**
+	 * The downloaded file count.
+	 * 
+	 * @return The count
+	 */
+	public int getCount()
 	{
-		ExecutorService executor = executors.get( key );
+		return count.get();
+	}
+
+	/**
+	 * The exceptions throw while downloading.
+	 * 
+	 * @return The exceptions
+	 */
+	public Iterable<Throwable> getExceptions()
+	{
+		return Collections.unmodifiableCollection( exceptions );
+	}
+
+	/**
+	 * Adds an exception.
+	 * 
+	 * @param x
+	 *        The exception
+	 */
+	public void addException( Throwable x )
+	{
+		exceptions.add( x );
+	}
+
+	/**
+	 * The notifier.
+	 * 
+	 * @return The notifier
+	 */
+	public Notifier getNotifier()
+	{
+		return notifier;
+	}
+
+	/**
+	 * The executor for a host. It will be fixed thread pool with
+	 * {@link Downloader#getThreadsPerHost()} threads.
+	 * 
+	 * @param host
+	 *        The host
+	 * @return The executor
+	 */
+	public ExecutorService getExecutor( String host )
+	{
+		ExecutorService executor = executors.get( host );
 		if( executor == null )
 		{
 			executor = Executors.newFixedThreadPool( getThreadsPerHost(), DaemonThreadFactory.INSTANCE );
-			ExecutorService existing = executors.putIfAbsent( key, executor );
+			ExecutorService existing = executors.putIfAbsent( host, executor );
 			if( existing != null )
 				executor = existing;
 		}
 		return executor;
 	}
 
-	public Iterable<Throwable> getExceptions()
-	{
-		return Collections.unmodifiableCollection( exceptions );
-	}
-
-	public void addException( Throwable x )
-	{
-		exceptions.add( x );
-	}
-
-	public Notifier getNotifier()
-	{
-		return notifier;
-	}
-
+	/**
+	 * The phaser.
+	 * 
+	 * @return The phaser
+	 */
 	public Phaser getPhaser()
 	{
 		return phaser;
 	}
 
-	public int getCount()
-	{
-		return count.get();
-	}
-
+	/**
+	 * Increments the downloaded file count.
+	 */
 	public void incrementCount()
 	{
 		count.incrementAndGet();
 	}
 
+	/**
+	 * Delay in milliseconds. Used for testing/debugging. Defaults to 0.
+	 * 
+	 * @return The delay in milliseconds
+	 */
 	public int getDelay()
 	{
 		return delay;
 	}
 
+	/**
+	 * Delay in milliseconds. Used for testing/debugging. Defaults to 0.
+	 * 
+	 * @param delay
+	 *        The delay in milliseconds
+	 */
 	public void setDelay( int delay )
 	{
 		this.delay = delay;
@@ -125,6 +193,16 @@ public class Downloader implements Closeable
 	// Operations
 	//
 
+	/**
+	 * Submits a file for download.
+	 * 
+	 * @param sourceUrl
+	 *        The source URL
+	 * @param file
+	 *        The file
+	 * @param validator
+	 *        The optional validator to run after downloading
+	 */
 	public void submit( URL sourceUrl, File file, Runnable validator )
 	{
 		try
@@ -144,15 +222,18 @@ public class Downloader implements Closeable
 		{
 			// Optimize for file copies
 			getPhaser().register();
-			executor.submit( new CopyFileTask( this, executor, validator, sourceFile, file ) );
+			executor.submit( new CopyFileTask( sourceFile, file, this, executor, validator ) );
 		}
 		else
 		{
 			getPhaser().register();
-			executor.submit( new DownloadTask( this, executor, validator, sourceUrl, file ) );
+			executor.submit( new DownloadTask( sourceUrl, file, this, executor, validator ) );
 		}
 	}
 
+	/**
+	 * Blocks until all downloads are done.
+	 */
 	public void waitUntilDone()
 	{
 		phaser.arriveAndAwaitAdvance();

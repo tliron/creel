@@ -17,6 +17,8 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.DynamicAttribute;
 
 /**
+ * An Ant tag that supports any arbitrary attribute.
+ * 
  * @author Tal Liron
  */
 public class DynamicType extends HashMap<String, String> implements DynamicAttribute

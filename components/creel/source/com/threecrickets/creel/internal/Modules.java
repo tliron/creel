@@ -21,6 +21,8 @@ import com.threecrickets.creel.ModuleIdentifier;
 import com.threecrickets.creel.ModuleSpecification;
 
 /**
+ * Manages a thread-safe collection of unique modules.
+ * 
  * @author Tal Liron
  */
 public class Modules implements Iterable<Module>
@@ -29,6 +31,11 @@ public class Modules implements Iterable<Module>
 	// Attributes
 	//
 
+	/**
+	 * Number of modules in collection.
+	 * 
+	 * @return The number of modules
+	 */
 	public synchronized int size()
 	{
 		return modules.size();
@@ -38,6 +45,13 @@ public class Modules implements Iterable<Module>
 	// Operations
 	//
 
+	/**
+	 * Gets a module according to its identifier.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 * @return The module or null if not in collection
+	 */
 	public synchronized Module get( ModuleIdentifier moduleIdentifier )
 	{
 		for( Module module : modules )
@@ -46,6 +60,13 @@ public class Modules implements Iterable<Module>
 		return null;
 	}
 
+	/**
+	 * Gets a module according to its specification.
+	 * 
+	 * @param moduleSpecification
+	 *        The module specification
+	 * @return The module or null if not in collection
+	 */
 	public synchronized Module get( ModuleSpecification moduleSpecification )
 	{
 		for( Module module : modules )
@@ -54,7 +75,16 @@ public class Modules implements Iterable<Module>
 		return null;
 	}
 
-	public synchronized void addByIdentifier( Module module )
+	/**
+	 * Adds a module, making sure its identifier only appears once in the
+	 * collection.
+	 * 
+	 * @param module
+	 *        The module
+	 * @return True if added, false is the identifier is already in the
+	 *         collection
+	 */
+	public synchronized boolean addByIdentifier( Module module )
 	{
 		boolean found = false;
 		for( Module aModule : modules )
@@ -66,9 +96,19 @@ public class Modules implements Iterable<Module>
 			}
 		if( !found )
 			modules.add( module );
+		return !found;
 	}
 
-	public synchronized void addBySpecification( Module module )
+	/**
+	 * Adds a module, making sure its specification only appears once in the
+	 * collection.
+	 * 
+	 * @param module
+	 *        The module
+	 * @return True if added, false is the specification is already in the
+	 *         collection
+	 */
+	public synchronized boolean addBySpecification( Module module )
 	{
 		boolean found = false;
 		for( Module aModule : modules )
@@ -80,8 +120,15 @@ public class Modules implements Iterable<Module>
 			}
 		if( !found )
 			modules.add( module );
+		return !found;
 	}
 
+	/**
+	 * Removes a module according to its identifier.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 */
 	public synchronized void remove( ModuleIdentifier moduleIdentifier )
 	{
 		for( Module module : modules )
@@ -92,6 +139,12 @@ public class Modules implements Iterable<Module>
 			}
 	}
 
+	/**
+	 * Removes a module according to its specification.
+	 * 
+	 * @param moduleSpecification
+	 *        The module specification
+	 */
 	public synchronized void remove( ModuleSpecification moduleSpecification )
 	{
 		for( Module module : modules )
@@ -102,11 +155,17 @@ public class Modules implements Iterable<Module>
 			}
 	}
 
+	/**
+	 * Sorts the collection by identifiers as strings.
+	 */
 	public synchronized void sortByIdentifiers()
 	{
 		Collections.sort( modules, ModuleIdentifierComparator.INSTANCE );
 	}
 
+	/**
+	 * Sorts the collection by specifications as strings.
+	 */
 	public synchronized void sortBySpecifications()
 	{
 		Collections.sort( modules, ModuleSpecificationComparator.INSTANCE );
@@ -116,7 +175,6 @@ public class Modules implements Iterable<Module>
 	// Iterable
 	//
 
-	@Override
 	public synchronized Iterator<Module> iterator()
 	{
 		return Collections.unmodifiableCollection( new ArrayList<Module>( modules ) ).iterator();

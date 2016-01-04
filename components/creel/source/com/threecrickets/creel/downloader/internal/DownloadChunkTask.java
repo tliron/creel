@@ -22,6 +22,8 @@ import com.threecrickets.creel.downloader.Downloader;
 import com.threecrickets.creel.util.IoUtil;
 
 /**
+ * Downloader task for downloading a chunk.
+ * 
  * @author Tal Liron
  */
 public class DownloadChunkTask extends DownloadTask
@@ -30,9 +32,33 @@ public class DownloadChunkTask extends DownloadTask
 	// Construction
 	//
 
-	public DownloadChunkTask( Downloader downloader, ExecutorService executor, Runnable validator, URL sourceUrl, File file, int start, int length, int chunk, int chunks, AtomicInteger counter )
+	/**
+	 * Constructor
+	 * 
+	 * @param sourceUrl
+	 *        The source URL
+	 * @param file
+	 *        The destination file
+	 * @param start
+	 *        The start of the chunk in bytes
+	 * @param length
+	 *        The length of the chunk in bytes
+	 * @param chunk
+	 *        The chunk number
+	 * @param chunks
+	 *        The total number of chunks
+	 * @param counter
+	 *        Counter of finished chunks
+	 * @param downloader
+	 *        The downloader
+	 * @param executor
+	 *        The executor
+	 * @param validator
+	 *        The validator or null
+	 */
+	public DownloadChunkTask( URL sourceUrl, File file, int start, int length, int chunk, int chunks, AtomicInteger counter, Downloader downloader, ExecutorService executor, Runnable validator )
 	{
-		super( downloader, executor, validator, sourceUrl, file );
+		super( sourceUrl, file, downloader, executor, validator );
 		this.start = start;
 		this.length = length;
 		this.chunk = chunk;
@@ -44,26 +70,51 @@ public class DownloadChunkTask extends DownloadTask
 	// Attributes
 	//
 
+	/**
+	 * The start of the chunk in bytes
+	 * 
+	 * @return The start of the chunk
+	 */
 	public int getStart()
 	{
 		return start;
 	}
 
+	/**
+	 * The length of the chunk in bytes
+	 * 
+	 * @return The lenght of the chunk
+	 */
 	public int getLength()
 	{
 		return length;
 	}
 
+	/**
+	 * The chunk number.
+	 * 
+	 * @return The chunk number
+	 */
 	public int getChunk()
 	{
 		return chunk;
 	}
 
+	/**
+	 * The total number of chunks.
+	 * 
+	 * @return The total number of chunks
+	 */
 	public int getChunks()
 	{
 		return chunks;
 	}
 
+	/**
+	 * Counter of finished chunks.
+	 * 
+	 * @return The counter
+	 */
 	public AtomicInteger getCounter()
 	{
 		return counter;

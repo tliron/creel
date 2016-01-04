@@ -26,6 +26,8 @@ import java.util.TreeMap;
 import com.threecrickets.creel.util.IoUtil;
 
 /**
+ * Creel's JVM properties.
+ * 
  * @author Tal Liron
  */
 public class Properties extends java.util.Properties
@@ -34,11 +36,27 @@ public class Properties extends java.util.Properties
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param file
+	 *        The file
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
 	public Properties( File file ) throws IOException
 	{
 		this( new BufferedReader( new FileReader( file ), IoUtil.bufferSize ) );
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param reader
+	 *        The reader
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
 	public Properties( Reader reader ) throws IOException
 	{
 		load( reader );
@@ -48,28 +66,61 @@ public class Properties extends java.util.Properties
 	// Attributes
 	//
 
+	/**
+	 * Gets a boolean value.
+	 * 
+	 * @param key
+	 *        The key
+	 * @param defaultValue
+	 *        The default value to return if key not found
+	 * @return The value
+	 */
 	public Boolean getBoolean( String key, Boolean defaultValue )
 	{
 		String value = getProperty( key );
 		return value != null ? new Boolean( value ) : defaultValue;
 	}
 
+	/**
+	 * Gets an integer value.
+	 * 
+	 * @param key
+	 *        The key
+	 * @param defaultValue
+	 *        The default value to return if key not found
+	 * @return The value
+	 */
 	public Integer getInteger( String key, Integer defaultValue )
 	{
 		String value = getProperty( key );
 		return value != null ? new Integer( value ) : defaultValue;
 	}
 
-	public Collection<Map<String, ?>> getExplicitModuleConfigs()
+	/**
+	 * Gets all the module specification configs.
+	 * 
+	 * @return The module specification configs
+	 */
+	public Collection<Map<String, ?>> getModuleSpecificationConfigs()
 	{
 		return getConfigs( "module" );
 	}
 
+	/**
+	 * Gets all the repository configs.
+	 * 
+	 * @return The repository configs
+	 */
 	public Collection<Map<String, ?>> getRepositoryConfigs()
 	{
 		return getConfigs( "repository" );
 	}
 
+	/**
+	 * Gets all the rule configs.
+	 * 
+	 * @return The rule configs
+	 */
 	public Collection<Map<String, ?>> getRuleConfigs()
 	{
 		return getConfigs( "rule" );

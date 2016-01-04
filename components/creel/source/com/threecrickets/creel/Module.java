@@ -11,18 +11,27 @@
 
 package com.threecrickets.creel;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Represents a module. Modules are specified by a {@link ModuleSpecification},
- * and may optionally have a {@link ModuleIdentifier}, meaning that they have
- * been identified. A module can have one or more dependencies (modules that it
- * needs) as well as one or more supplicants (modules that have this module as a
- * dependency).
+ * Represents information about a module.
+ * <p>
+ * Modules are specified by a {@link ModuleSpecification}, and may optionally
+ * have a {@link ModuleIdentifier}, meaning that they have been identified.
+ * <p>
+ * A module can have one or more dependencies (modules that it needs) as well as
+ * one or more supplicants (modules that have this module as a dependency).
+ * <p>
+ * An "explicit" module is one that was explicitly listed as a dependency. An
+ * "implicit" module is a dependency of another module. So, explicit modules
+ * represent the roots of the dependency tree.
+ * <p>
+ * Note that an explicit module can still have supplicants: it could have been
+ * explicitly listed and <i>also</i> listed as a dependency of another module.
  * 
  * @author Tal Liron
  */
@@ -32,6 +41,16 @@ public class Module
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param explicit
+	 *        Whether the module is explicit
+	 * @param identifier
+	 *        The identifier or null
+	 * @param specification
+	 *        The specification
+	 */
 	public Module( boolean explicit, ModuleIdentifier identifier, ModuleSpecification specification )
 	{
 		this.explicit = explicit;
@@ -43,52 +62,90 @@ public class Module
 	// Attributes
 	//
 
+	/**
+	 * Whether the module is explicit
+	 * 
+	 * @return True if explicit
+	 */
 	public boolean isExplicit()
 	{
 		return explicit;
 	}
 
+	/**
+	 * Whether the module is explicit
+	 * 
+	 * @param explicit
+	 *        True if explicit
+	 */
 	public void setExplicit( boolean explicit )
 	{
 		this.explicit = explicit;
 	}
 
+	/**
+	 * The module identifier.
+	 * 
+	 * @return The module identifier or null
+	 */
 	public ModuleIdentifier getIdentifier()
 	{
 		return identifier;
 	}
 
+	/**
+	 * The module specification
+	 * 
+	 * @return The module specification
+	 */
 	public ModuleSpecification getSpecification()
 	{
 		return specification;
 	}
 
-	public Iterable<Module> getDependencies()
+	/**
+	 * The module's dependencies.
+	 * 
+	 * @return The dependencies
+	 */
+	public synchronized Iterable<Module> getDependencies()
 	{
-		return Collections.unmodifiableCollection( dependencies );
+		return Collections.unmodifiableCollection( new ArrayList<Module>( dependencies ) );
 	}
 
-	public Iterable<Module> getSupplicants()
+	/**
+	 * The module's supplicants.
+	 * 
+	 * @return The supplicants
+	 */
+	public synchronized Iterable<Module> getSupplicants()
 	{
-		return Collections.unmodifiableCollection( supplicants );
+		return Collections.unmodifiableCollection( new ArrayList<Module>( supplicants ) );
 	}
 
 	//
 	// Operations
 	//
 
-	public void addDependency( Module dependency )
+	/**
+	 * Sets another module as a dependency of this module.
+	 * 
+	 * @param dependency
+	 *        The dependency
+	 */
+	public synchronized void addDependency( Module dependency )
 	{
 		dependencies.add( dependency );
 	}
 
 	/**
-	 * Adds a new supplicant if we don't have it already.
+	 * Sets another module as a supplicant of this module. Makes sure that
+	 * duplicate supplicants are not added.
 	 * 
 	 * @param module
 	 *        The supplicant module
 	 */
-	public void addSupplicant( Module module )
+	public synchronized void addSupplicant( Module module )
 	{
 		boolean found = false;
 		for( Module supplicant : getSupplicants() )
@@ -102,12 +159,12 @@ public class Module
 	}
 
 	/**
-	 * Removes a supplicant if we have it.
+	 * Sets another module to not be a supplicant of this module.
 	 * 
 	 * @param module
 	 *        The supplicant module
 	 */
-	public void removeSupplicant( Module module )
+	public synchronized void removeSupplicant( Module module )
 	{
 		for( ListIterator<Module> i = supplicants.listIterator(); i.hasNext(); )
 		{
@@ -121,12 +178,13 @@ public class Module
 	}
 
 	/**
-	 * Copies identifier, repository, and dependencies from another module.
+	 * Copies identifier, repository, and dependencies from another module
+	 * instance.
 	 * 
 	 * @param module
 	 *        The other module
 	 */
-	public void copyIdentificationFrom( Module module )
+	public synchronized void copyIdentificationFrom( Module module )
 	{
 		identifier = module.getIdentifier().clone();
 		dependencies.clear();
@@ -141,7 +199,7 @@ public class Module
 	 * @param module
 	 *        The other module
 	 */
-	public void mergeSupplicants( Module module )
+	public synchronized void mergeSupplicants( Module module )
 	{
 		if( module.isExplicit() )
 			setExplicit( true );
@@ -149,7 +207,17 @@ public class Module
 			addSupplicant( supplicant );
 	}
 
-	public void replaceModule( Module oldModule, Module newModule, boolean recursive )
+	/**
+	 * Replaces a module with another one in the dependency tree.
+	 * 
+	 * @param oldModule
+	 *        The old module
+	 * @param newModule
+	 *        The new module
+	 * @param recursive
+	 *        True if we should recurse replacing in dependencies
+	 */
+	public synchronized void replaceModule( Module oldModule, Module newModule, boolean recursive )
 	{
 		removeSupplicant( oldModule );
 		for( ListIterator<Module> i = dependencies.listIterator(); i.hasNext(); )
@@ -157,8 +225,9 @@ public class Module
 			Module dependency = i.next();
 			if( oldModule.getIdentifier().equals( dependency.getIdentifier() ) )
 			{
-				i.set( newModule );
-				newModule.addSupplicant( this );
+				dependency = newModule;
+				i.set( dependency );
+				dependency.addSupplicant( this );
 			}
 
 			if( recursive )
@@ -166,6 +235,13 @@ public class Module
 		}
 	}
 
+	/**
+	 * Represents the module as a string.
+	 * 
+	 * @param longForm
+	 *        True to use the long form
+	 * @return The string representation
+	 */
 	public String toString( boolean longForm )
 	{
 		StringBuilder r = new StringBuilder(), prefix = new StringBuilder();
@@ -174,7 +250,7 @@ public class Module
 			r.append( "id=" );
 			r.append( getIdentifier() );
 		}
-		if( ( longForm || !( getIdentifier() == null ) ) && ( getSpecification() != null ) )
+		if( ( longForm || ( getIdentifier() != null ) ) && ( getSpecification() != null ) )
 		{
 			if( r.length() != 0 )
 				r.append( ", " );
@@ -185,23 +261,25 @@ public class Module
 		{
 			prefix.append( isExplicit() ? '*' : '+' ); // explicit?
 			prefix.append( getIdentifier() != null ? '!' : '?' ); // identified?
-			if( getDependencies().iterator().hasNext() )
+			Iterator<?> i = getDependencies().iterator();
+			if( i.hasNext() )
 			{
 				if( r.length() != 0 )
 					r.append( ", " );
 				r.append( "dependencies=" );
 				int size = 0;
-				for( Iterator<?> i = getDependencies().iterator(); i.hasNext(); )
+				for( ; i.hasNext(); i.next() )
 					size++;
 				r.append( size );
 			}
-			if( getSupplicants().iterator().hasNext() )
+			i = getSupplicants().iterator();
+			if( i.hasNext() )
 			{
 				if( r.length() != 0 )
 					r.append( ", " );
 				r.append( "supplicants=" );
 				int size = 0;
-				for( Iterator<?> i = getSupplicants().iterator(); i.hasNext(); )
+				for( ; i.hasNext(); i.next() )
 					size++;
 				r.append( size );
 			}
@@ -227,13 +305,13 @@ public class Module
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private boolean explicit;
+	private volatile boolean explicit;
 
 	private volatile ModuleIdentifier identifier;
 
 	private volatile ModuleSpecification specification;
 
-	private final List<Module> dependencies = new CopyOnWriteArrayList<Module>();
+	private final List<Module> dependencies = new ArrayList<Module>();
 
-	private final List<Module> supplicants = new CopyOnWriteArrayList<Module>();
+	private final List<Module> supplicants = new ArrayList<Module>();
 }

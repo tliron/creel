@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import com.threecrickets.creel.Artifact;
+import com.threecrickets.creel.Command;
 import com.threecrickets.creel.Module;
 import com.threecrickets.creel.ModuleIdentifier;
 import com.threecrickets.creel.ModuleSpecification;
@@ -30,8 +32,7 @@ import com.threecrickets.creel.Repository;
 import com.threecrickets.creel.Rule;
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.exception.IncompatiblePlatformException;
-import com.threecrickets.creel.exception.InvalidSignatureException;
-import com.threecrickets.creel.internal.Command;
+import com.threecrickets.creel.exception.InvalidArtifactException;
 import com.threecrickets.creel.maven.internal.MetaData;
 import com.threecrickets.creel.maven.internal.POM;
 import com.threecrickets.creel.maven.internal.Signature;
@@ -40,22 +41,37 @@ import com.threecrickets.creel.util.ConfigHelper;
 import com.threecrickets.creel.util.IoUtil;
 
 /**
- * Dependency management support for
- * <a href="https://maven.apache.org/">Maven</a> m2 (also known as "ibiblio")
- * repositories.
+ * Creel implementation of <a href="https://maven.apache.org/">Maven</a> m2
+ * (also known as "ibiblio") repositories.
  * <p>
- * Supports reading the repository URL structure, retrieving and parsing ".pom"
- * and "maven-metadata.xml" data, interpreting module identifiers
+ * Supports reading the repository URL structure, retrieving and parsing
+ * "pom.xml" and "maven-metadata.xml" data, interpreting module identifiers
  * (group/name/version), applying version ranges, downloading ".jar" files, and
  * validating against signatures in ".sha1" or ".md5" files.
  * <p>
- * Beyond the Maven spec, extra features are supported:
+ * Supports the following rules:
  * <ul>
- * <li><a href="http://ant.apache.org/ivy/">Ivy</a>/
- * <a href="http://gradle.org/">Gradle</a>-style "+" suffix for version ranges
- * </li>
- * <li>Globbing, via the "*" and "?"</li>
- * <li>Exclusions, via the "!" prefix</li>
+ * <li><b>exclude</b>: Excludes modules from installation. Note that their
+ * dependencies will be excluded from identification, but can still be pulled in
+ * by other modules. To match, set "group", "name", and optionally "version".
+ * You can use globs and version ranges.</li>
+ * <li><b>excludeDependencies</b>: Excludes modules' dependencies from
+ * installation. (In Ivy these are called "intransient" dependencies.) To match,
+ * set "group", "name", and optionally "version". You can use globs and version
+ * ranges.</li>
+ * <li><b>rewrite</b>: Rewrites module specifications. To match, set "group",
+ * "name", and optionally "version". You can use globs and version ranges. Set
+ * either or both of "newGroup" and "newName" to the new value.</li>
+ * <li><b>rewriteVersion</b>: Rewrites module versions. To match, set "group",
+ * "name", and optionally "version". You can use globs and version ranges. Set
+ * "newVersion" to the new value.</li>
+ * <li><b>repositories</b>: Look for modules only in specific repositories. By
+ * default, all repositories will be used for all modules. Set "all" to false
+ * for repositories that you don't want used this way, in which case you will
+ * need to use the "repositories" rule to use them with specific modules. To
+ * match, set "group", "name", and optionally "version". You can use globs and
+ * version ranges. Set "repositories" to a comma-separated list of repository
+ * IDs.</li>
  * </ul>
  * 
  * @author Tal Liron
@@ -66,12 +82,20 @@ public class MavenRepository extends Repository
 	// Static operations
 	//
 
+	/**
+	 * Casts the object to this class. If it cannot be cast, will throw a
+	 * {@link IncompatiblePlatformException}.
+	 * 
+	 * @param object
+	 *        The object
+	 * @return The cast object
+	 */
 	public static MavenRepository cast( Object object )
 	{
 		if( object == null )
 			throw new NullPointerException();
 		if( !( object instanceof MavenRepository ) )
-			throw new IncompatiblePlatformException();
+			throw new IncompatiblePlatformException( "mvn", object );
 		return (MavenRepository) object;
 	}
 
@@ -79,6 +103,22 @@ public class MavenRepository extends Repository
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        The repository ID (should be unique in the engine)
+	 * @param all
+	 *        Whether the engine should attempt to identify all modules in this
+	 *        repository
+	 * @param url
+	 *        The root URL
+	 * @param checkSignatures
+	 *        Whether we should check signatures for all downloaded files
+	 * @param allowMd5
+	 *        Whether we should allow for MD5 signatures (considered less
+	 *        secure) if SHA-1 signatures are not available
+	 */
 	public MavenRepository( String id, boolean all, URL url, boolean checkSignatures, boolean allowMd5 )
 	{
 		super( id, all );
@@ -87,6 +127,12 @@ public class MavenRepository extends Repository
 		this.allowMd5 = allowMd5;
 	}
 
+	/**
+	 * Config constructor.
+	 * 
+	 * @param config
+	 *        The config
+	 */
 	public MavenRepository( Map<String, ?> config )
 	{
 		super( config );
@@ -107,31 +153,61 @@ public class MavenRepository extends Repository
 	// Attributes
 	//
 
+	/**
+	 * The root URL.
+	 * 
+	 * @return The root URL
+	 */
 	public URL getUrl()
 	{
 		return url;
 	}
 
+	/**
+	 * Whether we should check signatures for all downloaded files
+	 * 
+	 * @return True to check signatures
+	 */
 	public boolean isCheckSignatures()
 	{
 		return checkSignatures;
 	}
 
+	/**
+	 * Whether we should allow for MD5 signatures (considered less secure) if
+	 * SHA-1 signatures are not available
+	 * 
+	 * @return True to allow MD5
+	 */
 	public boolean isAllowMd5()
 	{
 		return allowMd5;
 	}
 
-	public File getFile( MavenModuleIdentifier moduleIdentifier, String extension, File directory, boolean flat )
+	/**
+	 * Gets a local file representing a module artifact in the repository.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 * @param extension
+	 *        The file extension
+	 * @param rootDir
+	 *        The root directory
+	 * @param flat
+	 *        Whether we should use a flat file structure under the root
+	 *        directory (no sub-directories)
+	 * @return The file
+	 */
+	public File getFile( MavenModuleIdentifier moduleIdentifier, String extension, File rootDir, boolean flat )
 	{
 		File file;
 		try
 		{
-			file = directory.getCanonicalFile();
+			file = rootDir.getCanonicalFile();
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( "Could not access directory: " + directory );
+			throw new RuntimeException( "Could not access directory: " + rootDir );
 		}
 
 		if( flat )
@@ -163,6 +239,15 @@ public class MavenRepository extends Repository
 		}
 	}
 
+	/**
+	 * Gets a URL for a module in the repository.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 * @param extension
+	 *        The file extension
+	 * @return The URL
+	 */
 	public URL getUrl( MavenModuleIdentifier moduleIdentifier, String extension )
 	{
 		StringBuilder url = new StringBuilder( getUrl().toString() );
@@ -198,6 +283,15 @@ public class MavenRepository extends Repository
 		}
 	}
 
+	/**
+	 * Gets the URL for a "maven-metadata.xml" in the repository.
+	 * 
+	 * @param group
+	 *        The group
+	 * @param name
+	 *        The name
+	 * @return The URL
+	 */
 	public URL getMetaDataUrl( String group, String name )
 	{
 		StringBuilder url = new StringBuilder( getUrl().toString() );
@@ -226,6 +320,16 @@ public class MavenRepository extends Repository
 		}
 	}
 
+	/**
+	 * Loads a module's "pom.xml", validates it against its signature, and
+	 * parses it.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 * @param notifier
+	 *        The notifier or null
+	 * @return The parsed POM
+	 */
 	public POM getPom( MavenModuleIdentifier moduleIdentifier, Notifier notifier )
 	{
 		if( notifier == null )
@@ -249,7 +353,7 @@ public class MavenRepository extends Repository
 			notifier.debug( "No POM: " + url );
 			return null;
 		}
-		catch( InvalidSignatureException x )
+		catch( InvalidArtifactException x )
 		{
 			notifier.error( "Invalid signature for POM: " + url );
 			return null;
@@ -260,6 +364,18 @@ public class MavenRepository extends Repository
 		}
 	}
 
+	/**
+	 * Loads a "maven-metadata.xml", validates it against its signature, and
+	 * parses it.
+	 * 
+	 * @param group
+	 *        The group
+	 * @param name
+	 *        The name
+	 * @param notifier
+	 *        The notifier or null
+	 * @return The parsed metadata
+	 */
 	public MetaData getMetaData( String group, String name, Notifier notifier )
 	{
 		if( notifier == null )
@@ -283,7 +399,7 @@ public class MavenRepository extends Repository
 			notifier.debug( "No metadata: " + url );
 			return null;
 		}
-		catch( InvalidSignatureException x )
+		catch( InvalidArtifactException x )
 		{
 			notifier.error( "Invalid signature for metadata: " + url );
 			return null;
@@ -297,33 +413,6 @@ public class MavenRepository extends Repository
 	//
 	// Repository
 	//
-
-	public boolean hasModule( ModuleIdentifier moduleIdentifier )
-	{
-		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
-		URL url = getUrl( mavenModuleIdentifier, "pom" );
-		return IoUtil.exists( url );
-	}
-
-	public Module getModule( ModuleIdentifier moduleIdentifier, Notifier notifier )
-	{
-		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
-		if( notifier == null )
-			notifier = new Notifier();
-
-		POM pom = getPom( mavenModuleIdentifier, notifier );
-		if( pom == null )
-			return null;
-
-		Module module = new Module( false, moduleIdentifier, null );
-		for( MavenModuleSpecification moduleSpecification : pom.getDependencyModuleSpecifications() )
-		{
-			Module dependencyModule = new Module( false, null, moduleSpecification );
-			dependencyModule.addSupplicant( module );
-			module.addDependency( dependencyModule );
-		}
-		return module;
-	}
 
 	public Iterable<ModuleIdentifier> getAllowedModuleIdentifiers( ModuleSpecification moduleSpecification, Notifier notifier )
 	{
@@ -354,7 +443,34 @@ public class MavenRepository extends Repository
 		return moduleSpecification.filterAllowedModuleIdentifiers( potentialModuleIdentifiers );
 	}
 
-	public void validateFile( ModuleIdentifier moduleIdentifier, File file, Notifier notifier )
+	public boolean hasModule( ModuleIdentifier moduleIdentifier )
+	{
+		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
+		URL url = getUrl( mavenModuleIdentifier, "pom" );
+		return IoUtil.exists( url );
+	}
+
+	public Module getModule( ModuleIdentifier moduleIdentifier, Notifier notifier )
+	{
+		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
+		if( notifier == null )
+			notifier = new Notifier();
+
+		POM pom = getPom( mavenModuleIdentifier, notifier );
+		if( pom == null )
+			return null;
+
+		Module module = new Module( false, moduleIdentifier, null );
+		for( MavenModuleSpecification moduleSpecification : pom.getDependencyModuleSpecifications() )
+		{
+			Module dependencyModule = new Module( false, null, moduleSpecification );
+			dependencyModule.addSupplicant( module );
+			module.addDependency( dependencyModule );
+		}
+		return module;
+	}
+
+	public void validateArtifact( ModuleIdentifier moduleIdentifier, Artifact artifact, Notifier notifier )
 	{
 		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
 
@@ -368,11 +484,11 @@ public class MavenRepository extends Repository
 		try
 		{
 			Signature signature = new Signature( url, allowMd5 );
-			if( !signature.validate( file ) )
+			if( !signature.validate( artifact.getFile() ) )
 			{
-				notifier.error( "Invalid signature for " + file );
+				notifier.error( "Invalid signature for " + artifact.getFile() );
 				// IoUtil.deleteWithParentDirectories( file, root );
-				throw new InvalidSignatureException( file );
+				throw new InvalidArtifactException( artifact );
 			}
 		}
 		catch( IOException x )
@@ -382,19 +498,19 @@ public class MavenRepository extends Repository
 	}
 
 	@Override
-	public ValidateFile validateFileTask( final ModuleIdentifier moduleIdentifier, final File file, final Notifier notifier )
+	public Runnable validateArtifactTask( final ModuleIdentifier moduleIdentifier, final Artifact artifact, final Notifier notifier )
 	{
 		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
 
 		if( !isCheckSignatures() )
 			return null;
 
-		return super.validateFileTask( mavenModuleIdentifier, file, notifier );
+		return super.validateArtifactTask( mavenModuleIdentifier, artifact, notifier );
 	}
 
-	public Command applyModuleRule( Module module, Rule rule, Notifier notifier )
+	public Command applyRule( Module module, Rule rule, Notifier notifier )
 	{
-		if( !"maven".equals( rule.getPlatform() ) )
+		if( !"mvn".equals( rule.getPlatform() ) )
 			return null;
 
 		if( notifier == null )
@@ -496,7 +612,7 @@ public class MavenRepository extends Repository
 	@Override
 	public String toString()
 	{
-		return "id=" + getId() + ", url=maven:" + getUrl() + ", checkSignatures=" + isCheckSignatures() + ", allowMd5=" + isAllowMd5();
+		return "mvn: id=" + getId() + ", url=maven:" + getUrl() + ", checkSignatures=" + isCheckSignatures() + ", allowMd5=" + isAllowMd5();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

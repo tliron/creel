@@ -56,6 +56,12 @@ public abstract class ModuleIdentifier implements Comparable<ModuleIdentifier>, 
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param repository
+	 *        The repository
+	 */
 	public ModuleIdentifier( Repository repository )
 	{
 		super();
@@ -66,12 +72,28 @@ public abstract class ModuleIdentifier implements Comparable<ModuleIdentifier>, 
 	// Attributes
 	//
 
+	/**
+	 * The repository
+	 * 
+	 * @return The repository
+	 */
 	public Repository getRepository()
 	{
 		return repository;
 	}
 
-	public abstract Iterable<Artifact> getArtifacts( File directory, boolean flat );
+	/**
+	 * The artifacts. Note that there is no guarantee that the artifacts
+	 * actually exist in the repository.
+	 * 
+	 * @param rootDir
+	 *        The root directory
+	 * @param flat
+	 *        Whether we should use a flat file structure under the root
+	 *        directory (no sub-directories)
+	 * @return The artifacts
+	 */
+	public abstract Iterable<Artifact> getArtifacts( File rootDir, boolean flat );
 
 	//
 	// Cloneable

@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.Objects;
 
 /**
- * Base class for module specification.
+ * Base class for module specifications.
  * <p>
  * These are implemented differently per platform.
  * <p>

@@ -12,6 +12,8 @@
 package com.threecrickets.creel;
 
 /**
+ * Represents a resolved module identification conflict.
+ * 
  * @author Tal Liron
  */
 public interface Conflict
@@ -20,7 +22,17 @@ public interface Conflict
 	// Attributes
 	//
 
+	/**
+	 * The chosen module.
+	 * 
+	 * @return The chosen module
+	 */
 	public Module getChosen();
 
+	/**
+	 * The rejected modules. There will be at least one.
+	 * 
+	 * @return The rejected modules
+	 */
 	public Iterable<Module> getRejects();
 }

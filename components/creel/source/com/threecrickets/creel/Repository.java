@@ -11,12 +11,11 @@
 
 package com.threecrickets.creel;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Objects;
 
 import com.threecrickets.creel.event.Notifier;
-import com.threecrickets.creel.internal.Command;
+import com.threecrickets.creel.exception.InvalidArtifactException;
 import com.threecrickets.creel.util.ConfigHelper;
 
 /**
@@ -61,12 +60,27 @@ public abstract class Repository implements Cloneable
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        The repository ID (should be unique in the engine)
+	 * @param all
+	 *        Whether the engine should attempt to identify all modules in this
+	 *        repository
+	 */
 	public Repository( String id, boolean all )
 	{
 		this.id = id;
 		this.all = all;
 	}
 
+	/**
+	 * Config constructor.
+	 * 
+	 * @param config
+	 *        The config
+	 */
 	public Repository( Map<String, ?> config )
 	{
 		ConfigHelper configHelper = new ConfigHelper( config );
@@ -78,22 +92,35 @@ public abstract class Repository implements Cloneable
 	// Attributes
 	//
 
+	/**
+	 * The repository ID. Should be unique in the engine.
+	 * 
+	 * @return The ID
+	 */
 	public String getId()
 	{
 		return id;
 	}
 
+	/**
+	 * Whether the engine should attempt to identify all modules in this
+	 * repository.
+	 * 
+	 * @return True if for all modules
+	 */
 	public boolean isAll()
 	{
 		return all;
 	}
 
-	public abstract boolean hasModule( ModuleIdentifier moduleIdentifier );
-
-	public abstract Module getModule( ModuleIdentifier moduleIdentifier, Notifier notifier );
+	//
+	// Operations
+	//
 
 	/**
-	 * Expected to be sorted.
+	 * Finds all modules in the repository that match the module specification.
+	 * The result is sorted, such that the oldest module is first and the newest
+	 * module is last.
 	 * 
 	 * @param moduleSpecification
 	 *        The module specification
@@ -103,18 +130,74 @@ public abstract class Repository implements Cloneable
 	 */
 	public abstract Iterable<ModuleIdentifier> getAllowedModuleIdentifiers( ModuleSpecification moduleSpecification, Notifier notifier );
 
-	//
-	// Operations
-	//
+	/**
+	 * Checks if a module exists in the repository.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 * @return True is exists
+	 */
+	public abstract boolean hasModule( ModuleIdentifier moduleIdentifier );
 
-	public abstract void validateFile( ModuleIdentifier moduleIdentifier, File file, Notifier notifier );
+	/**
+	 * Fetches module information (specifically its dependencies) from the
+	 * repository.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 * @param notifier
+	 *        The notifier or null
+	 * @return The module or null if it doesn't exist
+	 */
+	public abstract Module getModule( ModuleIdentifier moduleIdentifier, Notifier notifier );
 
-	public ValidateFile validateFileTask( ModuleIdentifier moduleIdentifier, File file, Notifier notifier )
+	/**
+	 * Makes sure an artifact is valid. This is usually achieved by comparing
+	 * the cryptographic digest of the file to one stored in the repository. If
+	 * the artifact is invalid, a {@link InvalidArtifactException} will be
+	 * thrown.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 * @param artifact
+	 *        The artifact
+	 * @param notifier
+	 *        The notifier or null
+	 */
+	public abstract void validateArtifact( ModuleIdentifier moduleIdentifier, Artifact artifact, Notifier notifier );
+
+	/**
+	 * A {@link Runnable} version of
+	 * {@link Repository#validateArtifact(ModuleIdentifier, Artifact, Notifier)}
+	 * .
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
+	 * @param artifact
+	 *        The artifact
+	 * @param notifier
+	 *        The notifier or null
+	 * @return The runnable
+	 */
+	public Runnable validateArtifactTask( ModuleIdentifier moduleIdentifier, Artifact artifact, Notifier notifier )
 	{
-		return new ValidateFile( moduleIdentifier, file, notifier );
+		return new ValidateArtifact( moduleIdentifier, artifact, notifier );
 	}
 
-	public abstract Command applyModuleRule( Module module, Rule rule, Notifier notifier );
+	/**
+	 * Attempt to apply a rule to a module. If the rule is unsupported by this
+	 * repository, nothing should happen. The method can optionally return a
+	 * {@link Command} for the engine to process.
+	 * 
+	 * @param module
+	 *        The module
+	 * @param rule
+	 *        The rule
+	 * @param notifier
+	 *        The notifier or null
+	 * @return The command or null
+	 */
+	public abstract Command applyRule( Module module, Rule rule, Notifier notifier );
 
 	//
 	// Cloneable
@@ -152,23 +235,23 @@ public abstract class Repository implements Cloneable
 	// Classes
 	//
 
-	public class ValidateFile implements Runnable
+	public class ValidateArtifact implements Runnable
 	{
-		public ValidateFile( ModuleIdentifier moduleIdentifier, File file, Notifier notifier )
+		public ValidateArtifact( ModuleIdentifier moduleIdentifier, Artifact artifact, Notifier notifier )
 		{
 			this.moduleIdentifier = moduleIdentifier;
-			this.file = file;
+			this.artifact = artifact;
 			this.notifier = notifier;
 		}
 
 		public void run()
 		{
-			validateFile( moduleIdentifier, file, notifier );
+			validateArtifact( moduleIdentifier, artifact, notifier );
 		}
 
 		final ModuleIdentifier moduleIdentifier;
 
-		final File file;
+		final Artifact artifact;
 
 		final Notifier notifier;
 	}

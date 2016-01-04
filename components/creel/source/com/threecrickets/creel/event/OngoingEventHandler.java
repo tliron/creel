@@ -16,6 +16,11 @@ import java.util.Collections;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
+ * Base class for event handlers that maintain a list of ongoing events. Will
+ * intercept {@link Event.Type#BEGIN}, {@link Event.Type#END},
+ * {@link Event.Type#FAIL}, and {@link Event.Type#UPDATE} events and update the
+ * ongoing event list accordingly.
+ * 
  * @author Tal Liron
  */
 public abstract class OngoingEventHandler implements EventHandler
@@ -24,6 +29,11 @@ public abstract class OngoingEventHandler implements EventHandler
 	// Attributes
 	//
 
+	/**
+	 * The ongoing events.
+	 * 
+	 * @return The ongoing events
+	 */
 	public Iterable<Event> getOngoingEvents()
 	{
 		return Collections.unmodifiableCollection( ongoingEvents );

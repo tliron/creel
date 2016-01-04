@@ -15,6 +15,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 /**
+ * A thread factory that marks all threads as daemons.
+ * 
  * @author Tal Liron
  */
 public class DaemonThreadFactory implements ThreadFactory
@@ -23,6 +25,9 @@ public class DaemonThreadFactory implements ThreadFactory
 	// Constants
 	//
 
+	/**
+	 * The singleton.
+	 */
 	public static final DaemonThreadFactory INSTANCE = new DaemonThreadFactory();
 
 	//

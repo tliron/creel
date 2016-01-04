@@ -19,35 +19,54 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.threecrickets.creel.downloader.Downloader;
 import com.threecrickets.creel.util.IoUtil;
+import com.threecrickets.creel.util.ProgressListener;
 
 /**
+ * Downloader task for downloading. If the downloader wants to use chunks, and
+ * the source URL supports ranges, will submit several {@link DownloadChunkTask}
+ * instances to the executor. Otherwise, will download the whole file as a
+ * single stream.
+ * 
  * @author Tal Liron
  */
-public class DownloadTask extends Task implements IoUtil.ProgressListener
+public class DownloadTask extends Task implements ProgressListener
 {
 	//
 	// Construction
 	//
 
-	public DownloadTask( Downloader downloader, ExecutorService executor, Runnable validator, URL sourceUrl, File file )
+	/**
+	 * Constructor.
+	 * 
+	 * @param sourceUrl
+	 *        The source URL
+	 * @param file
+	 *        The destination file
+	 * @param downloader
+	 *        The downloader
+	 * @param executor
+	 *        The executor
+	 * @param validator
+	 *        The validator or null
+	 */
+	public DownloadTask( URL sourceUrl, File file, Downloader downloader, ExecutorService executor, Runnable validator )
 	{
-		super( downloader, executor, validator );
+		super( file, downloader, executor, validator );
 		this.sourceUrl = sourceUrl;
-		this.file = file;
 	}
 
 	//
 	// Attributes
 	//
 
+	/**
+	 * The source URL.
+	 * 
+	 * @return The source URL
+	 */
 	public URL getSourceUrl()
 	{
 		return sourceUrl;
-	}
-
-	public File getFile()
-	{
-		return file;
 	}
 
 	//
@@ -88,7 +107,7 @@ public class DownloadTask extends Task implements IoUtil.ProgressListener
 				int start = chunk * chunkSize;
 				int length = chunk < chunksPerFile - 1 ? chunkSize : chunksStreamSize - start;
 				getDownloader().getPhaser().register();
-				getExecutor().submit( new DownloadChunkTask( getDownloader(), getExecutor(), getValidator(), getSourceUrl(), getFile(), start, length, chunk + 1, chunksPerFile, counter ) );
+				getExecutor().submit( new DownloadChunkTask( getSourceUrl(), getFile(), start, length, chunk + 1, chunksPerFile, counter, getDownloader(), getExecutor(), getValidator() ) );
 			}
 			done( false );
 		}
@@ -112,7 +131,7 @@ public class DownloadTask extends Task implements IoUtil.ProgressListener
 	}
 
 	//
-	// IoUtil.Listener
+	// ProgressListener
 	//
 
 	public void onProgress( int position, int length )
@@ -135,8 +154,6 @@ public class DownloadTask extends Task implements IoUtil.ProgressListener
 	// Private
 
 	private final URL sourceUrl;
-
-	private final File file;
 
 	private String id;
 }

@@ -15,6 +15,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Rules are used to manipulate the module dependency tree, such as excluding
+ * modules, rewriting them, etc.
+ * <p>
+ * They are implemented differently per platform, via
+ * {@link Repository#applyRule(Module, Rule, com.threecrickets.creel.event.Notifier)}
+ * .
+ * 
  * @author Tal Liron
  */
 public class Rule extends HashMap<String, String>
@@ -23,12 +30,28 @@ public class Rule extends HashMap<String, String>
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param platform
+	 *        The platform
+	 * @param type
+	 *        The rule type
+	 */
 	public Rule( String platform, String type )
 	{
 		put( "platform", platform );
 		put( "type", type );
 	}
 
+	/**
+	 * Config constructor.
+	 * 
+	 * @param config
+	 *        The config
+	 * @param defaultPlatform
+	 *        The default platform to use if none is specified
+	 */
 	public Rule( Map<String, ?> config, String defaultPlatform )
 	{
 		for( Map.Entry<String, ?> entry : config.entrySet() )
@@ -41,11 +64,21 @@ public class Rule extends HashMap<String, String>
 	// Attributes
 	//
 
+	/**
+	 * The platform.
+	 * 
+	 * @return The platform name
+	 */
 	public String getPlatform()
 	{
 		return get( "platform" );
 	}
 
+	/**
+	 * The rule type.
+	 * 
+	 * @return The type
+	 */
 	public String getType()
 	{
 		return get( "type" );
@@ -55,5 +88,4 @@ public class Rule extends HashMap<String, String>
 	// Private
 
 	private static final long serialVersionUID = 1L;
-
 }

@@ -126,6 +126,17 @@ public abstract class ClassUtil
 		}
 	}
 
+	public static <T extends Enum<?>> T valueOfNonStrict( Class<T> enumeration, String value )
+	{
+		for( T e : enumeration.getEnumConstants() )
+		{
+			String name = e.name().replaceAll( "_", "" );
+			if( name.equalsIgnoreCase( value ) )
+				return e;
+		}
+		return null;
+	}
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

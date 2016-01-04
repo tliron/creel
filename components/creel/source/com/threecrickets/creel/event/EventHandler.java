@@ -12,11 +12,15 @@
 package com.threecrickets.creel.event;
 
 /**
+ * Handles events.
+ * 
  * @author Tal Liron
  */
 public interface EventHandler
 {
 	/**
+	 * Handle the event.
+	 * 
 	 * @param event
 	 *        The event
 	 * @return True if the event was swallowed

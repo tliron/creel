@@ -17,6 +17,8 @@ import java.util.Collection;
 import com.threecrickets.creel.Repository;
 
 /**
+ * Used in the identification phase of the engine.
+ * 
  * @author Tal Liron
  */
 public class IdentificationContext
@@ -25,6 +27,14 @@ public class IdentificationContext
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param repositories
+	 *        The repositories
+	 * @param recursive
+	 *        Whether we are recursing into the dependencies
+	 */
 	public IdentificationContext( Iterable<Repository> repositories, boolean recursive )
 	{
 		for( Repository repository : repositories )
@@ -37,26 +47,53 @@ public class IdentificationContext
 	// Attributes
 	//
 
+	/**
+	 * The repositories.
+	 * 
+	 * @return The repositories
+	 */
 	public Collection<Repository> getRepositories()
 	{
 		return repositories;
 	}
 
+	/**
+	 * Whether we should exclude the current module.
+	 * 
+	 * @return True to exclude
+	 */
 	public boolean isExclude()
 	{
 		return exclude;
 	}
 
+	/**
+	 * Whether we should exclude the current module.
+	 * 
+	 * @param exclude
+	 *        True to exclude
+	 */
 	public void setExclude( boolean exclude )
 	{
 		this.exclude = exclude;
 	}
 
+	/**
+	 * Whether we are recursing into the dependencies.
+	 * 
+	 * @return True to recurse
+	 */
 	public boolean isRecursive()
 	{
 		return recursive;
 	}
 
+	/**
+	 * Whether we are recursing into the dependencies.
+	 * 
+	 * @param recursive
+	 *        True to recurse
+	 */
 	public void setRecursive( boolean recursive )
 	{
 		this.recursive = recursive;

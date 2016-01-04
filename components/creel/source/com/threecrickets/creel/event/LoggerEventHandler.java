@@ -15,6 +15,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * An event handler that outputs events to a standard JVM logger.
+ * 
  * @author Tal Liron
  */
 public class LoggerEventHandler implements EventHandler
@@ -23,11 +25,20 @@ public class LoggerEventHandler implements EventHandler
 	// Construction
 	//
 
+	/**
+	 * Constructor using the global logger.
+	 */
 	public LoggerEventHandler()
 	{
 		this( Logger.getGlobal() );
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param logger
+	 *        The logger
+	 */
 	public LoggerEventHandler( Logger logger )
 	{
 		this.logger = logger;
@@ -37,6 +48,11 @@ public class LoggerEventHandler implements EventHandler
 	// Attributes
 	//
 
+	/**
+	 * The logger.
+	 * 
+	 * @return The logger
+	 */
 	public Logger getLogger()
 	{
 		return logger;

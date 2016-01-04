@@ -27,17 +27,25 @@ import com.threecrickets.creel.util.ConfigHelper;
 import com.threecrickets.creel.util.GlobUtil;
 
 /**
- * Maven specification with support for version ranges.
+ * Creel implementation of <a href="https://maven.apache.org/">Maven</a> m2
+ * (also known as "ibiblio") module specifications, with various enhancements.
  * <p>
- * Note that a Maven version range can in fact contain several ranges, in which
- * case they match via a logical or. For example. "(,1.1),(1.1,)" means that
- * everything except "1.1" will match.
+ * Supports <a href=
+ * "https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html">version
+ * ranges</a>. Note that a Maven version range can in fact contain several
+ * ranges, in which case they match via a logical or. For example.
+ * "(,1.1),(1.1,)" means that everything except "1.1" will match.
  * <p>
- * Likewise, you may have a specification with more than one option, which will
- * also match via a logical or, <i>unless</i> the option has a version beginning
- * with a "!". That signifies an exclusion, which will always take precedence.
- * For example, "!1.1" will explicitly reject "1.1", even if "1.1" is matched by
+ * Also, you may have a specification with more than one option, which will also
+ * match via a logical or, <i>unless</i> the option has a version beginning with
+ * a "!". That signifies an exclusion, which will always take precedence. For
+ * example, "!1.1" will explicitly reject "1.1", even if "1.1" is matched by
  * other options.
+ * <p>
+ * In non-strict mode, will also support the
+ * <a href="http://ant.apache.org/ivy/">Ivy</a>/
+ * <a href="http://gradle.org/">Gradle</a>-style "+" suffix for versions. For
+ * example, "1.0+" will translate to the "[1.0,)" Maven range.
  * 
  * @author Tal Liron
  */
@@ -47,12 +55,20 @@ public class MavenModuleSpecification extends ModuleSpecification
 	// Static operations
 	//
 
+	/**
+	 * Casts the object to this class. If it cannot be cast, will throw a
+	 * {@link IncompatiblePlatformException}.
+	 * 
+	 * @param object
+	 *        The object
+	 * @return The cast object
+	 */
 	public static MavenModuleSpecification cast( Object object )
 	{
 		if( object == null )
 			throw new NullPointerException();
 		if( !( object instanceof MavenModuleSpecification ) )
-			throw new IncompatiblePlatformException();
+			throw new IncompatiblePlatformException( "mvn", object );
 		return (MavenModuleSpecification) object;
 	}
 
@@ -60,12 +76,31 @@ public class MavenModuleSpecification extends ModuleSpecification
 	// Construction
 	//
 
+	/**
+	 * Constructor for a single option.
+	 * 
+	 * @param group
+	 *        The group specification
+	 * @param name
+	 *        The name specification
+	 * @param version
+	 *        The version specification
+	 * @param strict
+	 *        Whether we are in strict Maven mode
+	 */
 	public MavenModuleSpecification( String group, String name, String version, boolean strict )
 	{
-		options.add( new SpecificationOption( group, name, version, strict ) );
-		this.strict = strict;
+		this( Collections.singleton( new SpecificationOption( group, name, version, strict ) ), strict );
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param options
+	 *        The options
+	 * @param strict
+	 *        Whether we are in strict Maven mode
+	 */
 	public MavenModuleSpecification( Iterable<SpecificationOption> options, boolean strict )
 	{
 		for( SpecificationOption option : options )
@@ -73,6 +108,12 @@ public class MavenModuleSpecification extends ModuleSpecification
 		this.strict = strict;
 	}
 
+	/**
+	 * Config constructor.
+	 * 
+	 * @param config
+	 *        The config
+	 */
 	public MavenModuleSpecification( Map<String, ?> config )
 	{
 		ConfigHelper configHelper = new ConfigHelper( config );
@@ -89,11 +130,21 @@ public class MavenModuleSpecification extends ModuleSpecification
 	// Attributes
 	//
 
+	/**
+	 * The options.
+	 * 
+	 * @return The options
+	 */
 	public Iterable<SpecificationOption> getOptions()
 	{
 		return Collections.unmodifiableCollection( options );
 	}
 
+	/**
+	 * Whether we are in strict Maven mode
+	 * 
+	 * @return True if strict
+	 */
 	public boolean isStrict()
 	{
 		return strict;
@@ -103,6 +154,18 @@ public class MavenModuleSpecification extends ModuleSpecification
 	// Operations
 	//
 
+	/**
+	 * Checks if this module specification has an option that matches the
+	 * requirements. The requirements may include glob wildcards ("*" and "?").
+	 * 
+	 * @param group
+	 *        The group requirement or null to match all
+	 * @param name
+	 *        The name requirement or null to match all
+	 * @param version
+	 *        The version requirement or null to match all
+	 * @return True if matches
+	 */
 	public boolean is( String group, String name, String version )
 	{
 		Pattern groupPattern = group != null ? GlobUtil.toPattern( group ) : null;
@@ -114,6 +177,22 @@ public class MavenModuleSpecification extends ModuleSpecification
 		return false;
 	}
 
+	/**
+	 * Rewrites the first option that matches the requirements. The requirements
+	 * may include glob wildcards ("*" and "?").
+	 * 
+	 * @param group
+	 *        The group requirement or null to match all
+	 * @param name
+	 *        The name requirement or null to match all
+	 * @param version
+	 *        The version requirement or null to match all
+	 * @param newGroup
+	 *        The new group
+	 * @param newName
+	 *        The new name
+	 * @return True if rewritten
+	 */
 	public boolean rewrite( String group, String name, String version, String newGroup, String newName )
 	{
 		Pattern groupPattern = group != null ? GlobUtil.toPattern( group ) : null;
@@ -128,6 +207,20 @@ public class MavenModuleSpecification extends ModuleSpecification
 		return false;
 	}
 
+	/**
+	 * Rewrites the version of the first option that matches the requirements.
+	 * The requirements may include glob wildcards ("*" and "?").
+	 * 
+	 * @param group
+	 *        The group requirement or null to match all
+	 * @param name
+	 *        The name requirement or null to match all
+	 * @param version
+	 *        The version requirement or null to match all
+	 * @param newVersion
+	 *        The new version
+	 * @return True if rewritten
+	 */
 	public boolean rewriteVersion( String group, String name, String version, String newVersion )
 	{
 		Pattern groupPattern = group != null ? GlobUtil.toPattern( group ) : null;
@@ -213,7 +306,7 @@ public class MavenModuleSpecification extends ModuleSpecification
 	@Override
 	public String toString()
 	{
-		String r = "maven:{";
+		String r = "mvn:{";
 		for( Iterator<SpecificationOption> i = getOptions().iterator(); i.hasNext(); )
 		{
 			SpecificationOption option = i.next();

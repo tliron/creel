@@ -32,6 +32,9 @@ import com.threecrickets.creel.util.IoUtil;
 import com.threecrickets.creel.util.MultiValueProperties;
 
 /**
+ * A database of artifacts that be saved to and loaded from a JVM properties
+ * file.
+ * 
  * @author Tal Liron
  */
 public class ArtifactDatabase
@@ -40,20 +43,40 @@ public class ArtifactDatabase
 	// Construction
 	//
 
-	public ArtifactDatabase( String databaseFile, String rootDir ) throws IOException
+	/**
+	 * Constructor. Loads the database from a JVM properties file if it exists.
+	 * 
+	 * @param file
+	 *        The JVM properties file
+	 * @param rootDir
+	 *        The root directory for artifacts
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
+	public ArtifactDatabase( String file, String rootDir ) throws IOException
 	{
-		this( new File( databaseFile ), rootDir != null ? new File( rootDir ) : null );
+		this( new File( file ), rootDir != null ? new File( rootDir ) : null );
 	}
 
-	public ArtifactDatabase( File databaseFile, File rootDir ) throws IOException
+	/**
+	 * Constructor. Loads the database from a JVM properties file if it exists.
+	 * 
+	 * @param file
+	 *        The JVM properties file
+	 * @param rootDir
+	 *        The root directory for artifacts
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
+	public ArtifactDatabase( File file, File rootDir ) throws IOException
 	{
 		try
 		{
-			this.databaseFile = databaseFile.getCanonicalFile();
+			this.file = file.getCanonicalFile();
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( "Could not access database file: " + databaseFile, x );
+			throw new RuntimeException( "Could not access database file: " + file, x );
 		}
 		try
 		{
@@ -66,18 +89,10 @@ public class ArtifactDatabase
 		try
 		{
 			MultiValueProperties properties = new MultiValueProperties();
-			properties.load( new BufferedReader( new FileReader( databaseFile ), IoUtil.bufferSize ) );
+			properties.load( new BufferedReader( new FileReader( file ), IoUtil.bufferSize ) );
 
 			for( Map<String, String> config : properties.toMaps() )
-			{
-				try
-				{
-					addArtifact( new Artifact( config, getRootDir() ) );
-				}
-				catch( RuntimeException x )
-				{
-				}
-			}
+				addArtifact( new Artifact( config, getRootDir() ) );
 		}
 		catch( FileNotFoundException x )
 		{
@@ -88,16 +103,37 @@ public class ArtifactDatabase
 	// Attributes
 	//
 
+	/**
+	 * The database file.
+	 * 
+	 * @return The database file
+	 */
 	public File getDatabaseFile()
 	{
-		return databaseFile;
+		return file;
 	}
 
+	/**
+	 * The root directory for artifacts.
+	 * 
+	 * @return The root directory
+	 */
 	public File getRootDir()
 	{
 		return rootDir;
 	}
 
+	//
+	// Operations
+	//
+
+	/**
+	 * Gets an artifact from the database if it already is there.
+	 * 
+	 * @param file
+	 *        The file (should be canonical)
+	 * @return The artifact or null if not found
+	 */
 	public Artifact getArtifact( File file )
 	{
 		for( Artifact artifact : getArtifacts() )
@@ -106,27 +142,59 @@ public class ArtifactDatabase
 		return null;
 	}
 
+	/**
+	 * The artifacts in the database.
+	 * 
+	 * @return The artifacts
+	 */
 	public Iterable<Artifact> getArtifacts()
 	{
 		return Collections.unmodifiableCollection( artifacts );
 	}
 
+	/**
+	 * Adds an artifact to the database.
+	 * 
+	 * @param artifact
+	 *        The artifact
+	 * @return True if added, false if already in database
+	 */
 	public boolean addArtifact( Artifact artifact )
 	{
 		return artifacts.add( artifact );
 	}
 
+	/**
+	 * Adds artifacts to the database.
+	 * 
+	 * @param artifacts
+	 *        The artifacts
+	 */
 	public void addArtifacts( Iterable<Artifact> artifacts )
 	{
 		for( Artifact artifact : artifacts )
 			addArtifact( artifact );
 	}
 
+	/**
+	 * Removes an artifact from the database.
+	 * 
+	 * @param artifact
+	 *        The artifact
+	 * @return True if removed, false is not in database
+	 */
 	public boolean removeArtifact( Artifact artifact )
 	{
 		return artifacts.remove( artifact );
 	}
 
+	/**
+	 * Gets all artifacts in the database that are <i>not</i> listed.
+	 * 
+	 * @param allArtifacts
+	 *        The listed artifacts
+	 * @return The redundant artifacts
+	 */
 	public Iterable<Artifact> getRedundantArtifacts( Iterable<Artifact> allArtifacts )
 	{
 		Collection<Artifact> reundantArtifacts = new LinkedList<Artifact>();
@@ -137,13 +205,15 @@ public class ArtifactDatabase
 		return Collections.unmodifiableCollection( reundantArtifacts );
 	}
 
-	//
-	// Operations
-	//
-
+	/**
+	 * Saves the database to the JVM properties file.
+	 * 
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
 	public void save() throws IOException
 	{
-		Files.createDirectories( databaseFile.toPath().getParent() );
+		Files.createDirectories( file.toPath().getParent() );
 
 		MultiValueProperties properties = new MultiValueProperties();
 		int index = 0;
@@ -153,7 +223,7 @@ public class ArtifactDatabase
 			properties.putMap( index++, config );
 		}
 
-		Writer writer = new BufferedWriter( new FileWriter( databaseFile ), IoUtil.bufferSize );
+		Writer writer = new BufferedWriter( new FileWriter( file ), IoUtil.bufferSize );
 		try
 		{
 			properties.store( writer, "Managed by Creel" );
@@ -167,7 +237,7 @@ public class ArtifactDatabase
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final File databaseFile;
+	private final File file;
 
 	private final File rootDir;
 

@@ -14,26 +14,40 @@ package com.threecrickets.creel.internal;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import com.threecrickets.creel.Manager;
+import com.threecrickets.creel.Engine;
 import com.threecrickets.creel.Module;
 
 /**
+ * Conflict implementation.
+ * 
  * @author Tal Liron
  */
 public class Conflict extends ArrayList<Module> implements com.threecrickets.creel.Conflict
 {
 	//
-	// Attributes
+	// Operations
 	//
 
-	public void choose( Manager.ConflictPolicy policy )
+	/**
+	 * Chooses a module according to the conflict resolution policy.
+	 * 
+	 * @param policy
+	 *        The policy
+	 */
+	public void choose( Engine.ConflictPolicy policy )
 	{
-		if( policy == Manager.ConflictPolicy.NEWEST )
+		if( policy == Engine.ConflictPolicy.NEWEST )
 			choose( size() - 1 );
-		else if( policy == Manager.ConflictPolicy.OLDEST )
+		else if( policy == Engine.ConflictPolicy.OLDEST )
 			choose( 0 );
 	}
 
+	/**
+	 * Chooses a module.
+	 * 
+	 * @param index
+	 *        The index
+	 */
 	public void choose( int index )
 	{
 		chosen = remove( index );
@@ -43,10 +57,9 @@ public class Conflict extends ArrayList<Module> implements com.threecrickets.cre
 			chosen.mergeSupplicants( module );
 	}
 
-	//
-	// Operations
-	//
-
+	/**
+	 * Sorts the module identifiers.
+	 */
 	public void sort()
 	{
 		Collections.sort( this, ModuleIdentifierComparator.INSTANCE );

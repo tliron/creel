@@ -25,17 +25,42 @@ import java.util.Objects;
 import com.threecrickets.creel.util.DigestUtil;
 import com.threecrickets.creel.util.HexUtil;
 import com.threecrickets.creel.util.IoUtil;
-import com.threecrickets.creel.util.IoUtil.ProgressListener;
+import com.threecrickets.creel.util.ProgressListener;
 
 /**
+ * Represents a named file copied/downloaded from a source URL.
+ * <p>
+ * An artifact can be marked as "volatile," meaning that it is expected to be
+ * modified after the initial copy/download. A cryptographic digest (SHA-1 by
+ * default) is used to track changes to the artifact.
+ * 
  * @author Tal Liron
  */
 public class Artifact
 {
 	//
+	// Static attributes
+	//
+
+	/**
+	 * The algorithm for digests. Defaults to SHA-1.
+	 */
+	public static volatile String algorithm = "SHA-1";
+
+	//
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param file
+	 *        The file
+	 * @param sourceUrl
+	 *        The source URL
+	 * @param isVolatile
+	 *        Whether the artifact is volatile
+	 */
 	public Artifact( File file, URL sourceUrl, boolean isVolatile )
 	{
 		try
@@ -50,6 +75,15 @@ public class Artifact
 		this.isVolatile = isVolatile;
 	}
 
+	/**
+	 * Config constructor.
+	 * 
+	 * @param config
+	 *        The config
+	 * @param rootDir
+	 *        The root directory of the file or null
+	 * @see Artifact#toConfig(File)
+	 */
 	public Artifact( Map<String, String> config, File rootDir )
 	{
 		String url = config.get( "url" );
@@ -78,21 +112,41 @@ public class Artifact
 	// Attributes
 	//
 
+	/**
+	 * The file.
+	 * 
+	 * @return The file
+	 */
 	public File getFile()
 	{
 		return file;
 	}
 
+	/**
+	 * The source URL.
+	 * 
+	 * @return The source URL
+	 */
 	public URL getSourceUrl()
 	{
 		return sourceUrl;
 	}
 
+	/**
+	 * Whether the artifact is volatile.
+	 * 
+	 * @return True if volatile
+	 */
 	public boolean isVolatile()
 	{
 		return isVolatile;
 	}
 
+	/**
+	 * The digest.
+	 * 
+	 * @return The digest or null
+	 */
 	public byte[] getDigest()
 	{
 		return digest;
@@ -102,6 +156,14 @@ public class Artifact
 	// Operations
 	//
 
+	/**
+	 * Converts the artifact to a config.
+	 * 
+	 * @param rootDir
+	 *        The root directory of the file
+	 * @return The config
+	 * @see Artifact#Artifact(Map, File)
+	 */
 	public Map<String, Object> toConfig( File rootDir )
 	{
 		Map<String, Object> config = new HashMap<String, Object>();
@@ -122,39 +184,85 @@ public class Artifact
 		return Collections.unmodifiableMap( config );
 	}
 
+	/**
+	 * Checks whether the file exists.
+	 * 
+	 * @return True if exists
+	 */
 	public boolean exists()
 	{
 		return getFile().exists();
 	}
 
+	/**
+	 * Checks whether the file was modified by comparing its current digest to
+	 * the stored digest.
+	 * <p>
+	 * If there is no digest stored or the file does not exist will return true.
+	 * 
+	 * @return True if was modified
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
 	public boolean wasModified() throws IOException
 	{
 		if( ( getDigest() == null ) || !exists() )
 			return true;
-		byte[] currentDigest = DigestUtil.getDigest( getFile(), ALGORITHM );
+		byte[] currentDigest = DigestUtil.getDigest( getFile(), algorithm );
 		return !Arrays.equals( getDigest(), currentDigest );
 	}
 
+	/**
+	 * Checks whether the file is different from the content of the source URL
+	 * by comparing their current digests.
+	 * 
+	 * @return True if different
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
 	public boolean isDifferent() throws IOException
 	{
-		byte[] currentDigest = DigestUtil.getDigest( getFile(), ALGORITHM );
-		byte[] sourceDigest = DigestUtil.getDigest( getSourceUrl(), ALGORITHM );
+		byte[] currentDigest = DigestUtil.getDigest( getFile(), algorithm );
+		byte[] sourceDigest = DigestUtil.getDigest( getSourceUrl(), algorithm );
 		return !Arrays.equals( currentDigest, sourceDigest );
 	}
 
+	/**
+	 * Copies the file's content from the source URL, overwriting it if it
+	 * already exists.
+	 * 
+	 * @param progressListener
+	 *        The progress listener or null
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
 	public void copy( ProgressListener progressListener ) throws IOException
 	{
 		IoUtil.copy( getSourceUrl(), getFile(), progressListener );
 	}
 
+	/**
+	 * Deletes the file, including empty parent directories up to the root
+	 * directory.
+	 * 
+	 * @param rootDir
+	 *        The root directory
+	 * @return True if deleted
+	 */
 	public boolean delete( File rootDir )
 	{
 		return IoUtil.deleteWithParentDirectories( getFile(), rootDir );
 	}
 
+	/**
+	 * Updates the stored digest to the current value.
+	 * 
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
 	public void updateDigest() throws IOException
 	{
-		digest = DigestUtil.getDigest( getFile(), ALGORITHM );
+		digest = DigestUtil.getDigest( getFile(), algorithm );
 	}
 
 	//
@@ -167,6 +275,9 @@ public class Artifact
 		return "file: " + getFile() + ", sourceUrl: " + getSourceUrl();
 	}
 
+	/*
+	 * Note that we are <b>only</b> using the file for the equality check.
+	 */
 	@Override
 	public boolean equals( Object object )
 	{
@@ -176,6 +287,9 @@ public class Artifact
 		return getFile().equals( artifact.getFile() );
 	}
 
+	/*
+	 * Note that we are <b>only</b> using the file for the hash.
+	 */
 	@Override
 	public int hashCode()
 	{
@@ -184,8 +298,6 @@ public class Artifact
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	private static final String ALGORITHM = "SHA-1";
 
 	private final File file;
 

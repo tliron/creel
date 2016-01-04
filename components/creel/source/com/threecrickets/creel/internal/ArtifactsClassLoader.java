@@ -19,8 +19,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import com.threecrickets.creel.Artifact;
+import com.threecrickets.creel.Engine;
 
 /**
+ * Class loader for artifacts. Useful in conjunction with
+ * {@link Engine#getInstalledArtifacts()}.
+ * 
  * @author Tal Liron
  */
 public class ArtifactsClassLoader extends URLClassLoader
@@ -29,6 +33,12 @@ public class ArtifactsClassLoader extends URLClassLoader
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param artifacts
+	 *        The artifacts
+	 */
 	public ArtifactsClassLoader( Iterable<Artifact> artifacts )
 	{
 		super( gatherJars( artifacts ) );
@@ -43,7 +53,7 @@ public class ArtifactsClassLoader extends URLClassLoader
 		for( Artifact artifact : artifacts )
 		{
 			File file = artifact.getFile();
-			if( file.getName().toLowerCase().endsWith( ".jar" ) )
+			if( file.exists() && file.getName().toLowerCase().endsWith( ".jar" ) )
 			{
 				try
 				{

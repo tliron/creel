@@ -20,11 +20,21 @@ import java.util.Objects;
 
 import com.threecrickets.creel.Artifact;
 import com.threecrickets.creel.ModuleIdentifier;
-import com.threecrickets.creel.exception.IncompatibleIdentifierException;
+import com.threecrickets.creel.exception.IncompatibleIdentifiersException;
 import com.threecrickets.creel.exception.IncompatiblePlatformException;
 import com.threecrickets.creel.maven.internal.Version;
 
 /**
+ * Creel implementation of <a href="https://maven.apache.org/">Maven</a> m2
+ * (also known as "ibiblio") module identifiers.
+ * <p>
+ * Maven identifiers have a group, name, and version.
+ * <p>
+ * Version comparison (see {@link MavenModuleIdentifier#getParsedVersion()})
+ * follows dot-notation rules and semantic values of alphanumeric suffixes. For
+ * example, "1.0-alpha2" is greater than "1.0-alpha1", but lesser than
+ * "1.0-beta1".
+ * 
  * @author Tal Liron
  */
 public class MavenModuleIdentifier extends ModuleIdentifier
@@ -33,12 +43,20 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 	// Static operations
 	//
 
+	/**
+	 * Casts the object to this class. If it cannot be cast, will throw a
+	 * {@link IncompatiblePlatformException}.
+	 * 
+	 * @param object
+	 *        The object
+	 * @return The cast object
+	 */
 	public static MavenModuleIdentifier cast( Object object )
 	{
 		if( object == null )
 			throw new NullPointerException();
 		if( !( object instanceof MavenModuleIdentifier ) )
-			throw new IncompatiblePlatformException();
+			throw new IncompatiblePlatformException( "mvn", object );
 		return (MavenModuleIdentifier) object;
 	}
 
@@ -46,6 +64,18 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param repository
+	 *        The repository
+	 * @param group
+	 *        The group
+	 * @param name
+	 *        The name
+	 * @param version
+	 *        The version
+	 */
 	public MavenModuleIdentifier( MavenRepository repository, String group, String name, String version )
 	{
 		super( repository );
@@ -58,21 +88,41 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 	// Attributes
 	//
 
+	/**
+	 * The group.
+	 * 
+	 * @return The group
+	 */
 	public String getGroup()
 	{
 		return group;
 	}
 
+	/**
+	 * The name.
+	 * 
+	 * @return The name
+	 */
 	public String getName()
 	{
 		return name;
 	}
 
+	/**
+	 * The version.
+	 * 
+	 * @return The version
+	 */
 	public String getVersion()
 	{
 		return version;
 	}
 
+	/**
+	 * The parsed version.
+	 * 
+	 * @return The parsed version
+	 */
 	public Version getParsedVersion()
 	{
 		if( parsedVersion == null )
@@ -84,11 +134,11 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 	// ModuleIdentifier
 	//
 
-	public Iterable<Artifact> getArtifacts( File directory, boolean flat )
+	public Iterable<Artifact> getArtifacts( File rootDir, boolean flat )
 	{
 		MavenRepository repository = (MavenRepository) getRepository();
 		Collection<Artifact> artifacts = new ArrayList<Artifact>();
-		File file = repository.getFile( this, "jar", directory, flat );
+		File file = repository.getFile( this, "jar", rootDir, flat );
 		URL sourceUrl = repository.getUrl( this, "jar" );
 		artifacts.add( new Artifact( file, sourceUrl, false ) );
 		return Collections.unmodifiableCollection( artifacts );
@@ -103,7 +153,7 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 		MavenModuleIdentifier mavenModuleIdentifier = cast( moduleIdentifier );
 		if( getGroup().equals( mavenModuleIdentifier.getGroup() ) && getName().equals( mavenModuleIdentifier.getName() ) )
 			return getParsedVersion().compareTo( mavenModuleIdentifier.getParsedVersion() );
-		throw new IncompatibleIdentifierException();
+		throw new IncompatibleIdentifiersException( this, moduleIdentifier );
 	}
 
 	//
@@ -137,7 +187,7 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 	@Override
 	public String toString()
 	{
-		return "maven:" + getGroup() + ":" + getName() + ":" + getVersion();
+		return "mvn:" + getGroup() + ":" + getName() + ":" + getVersion();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

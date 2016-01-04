@@ -12,6 +12,8 @@
 package com.threecrickets.creel.event;
 
 /**
+ * An event handler that does nothing.
+ * 
  * @author Tal Liron
  */
 public class NullEventHandler implements EventHandler
@@ -20,6 +22,9 @@ public class NullEventHandler implements EventHandler
 	// Constants
 	//
 
+	/**
+	 * The singleton.
+	 */
 	public static final NullEventHandler INSTANCE = new NullEventHandler();
 
 	//

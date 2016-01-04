@@ -32,6 +32,8 @@ import com.threecrickets.creel.util.IoUtil;
 import com.threecrickets.creel.util.XmlUtil;
 
 /**
+ * Represents a <a href="https://maven.apache.org/pom.html">Maven pom.xml</a>.
+ * 
  * @author Tal Liron
  */
 public class POM
@@ -40,6 +42,17 @@ public class POM
 	// Construction
 	//
 
+	/**
+	 * Constructor. Loads the POM from the URL, optionally validates it against
+	 * a signature, and parses it.
+	 * 
+	 * @param url
+	 *        The source URL
+	 * @param signature
+	 *        The signature or null
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
 	public POM( URL url, Signature signature ) throws IOException
 	{
 		Document document;

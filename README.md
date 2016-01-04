@@ -34,10 +34,10 @@ It's easy to embed Creel into your Java (or Groovy, Clojure, Scala, etc.) applic
 
 Here's a simple example in JavaScript, `creel.js`, using the excellent Nashorn engine that comes with JVM 8: 
 
-    var manager = new com.threecrickets.creel.Manager()
-    manager.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true, false))
+    var engine = new com.threecrickets.creel.Engine()
+    engine.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true, false))
     
-    manager.modules = [
+    engine.modules = [
         {group: 'com.github.sommeri', name: 'less4j', version: '(,1.15.2)'},
         {group: 'org.jsoup', name: 'jsoup', version: '1.8.1'},
         {group: 'com.fasterxml.jackson', name: 'jackson'},
@@ -45,19 +45,19 @@ Here's a simple example in JavaScript, `creel.js`, using the excellent Nashorn e
         {group: 'jsslutils', name: 'jsslutils'}]
     
     var local = false
-    manager.repositories = [
+    engine.repositories = [
         local ? {id: '3c', url: 'file:/Depot/Repository/'} : {id: '3c', url: 'http://repository.threecrickets.com/maven'},
         {id: 'restlet', url: 'http://maven.restlet.com', all: false},
         {id: 'central', url: 'https://repo1.maven.org/maven2/'}]
     
-    manager.rules = [
+    engine.rules = [
         {type: 'exclude', name: '*annotations*'},
         {type: 'excludeDependencies', group: 'org.apache.commons', name: 'commons-beanutils'},
         {type: 'rewriteVersion', group: 'com.beust', name: '*c?mmand*', newVersion: '1.35+'},
         {type: 'repositories', group: 'jsslutils', repositories: 'restlet'}]
     
-    manager.rootDir = 'lib'
-    manager.install()
+    engine.rootDir = 'lib'
+    engine.run()
 
 To run it:
 
@@ -102,7 +102,7 @@ Use Creel to download your dependency Jars and include them in the classpath. He
     <project name="Testing Creel" default="compile" xmlns:creel="antlib:com.threecrickets.creel.ant">
         <taskdef uri="antlib:com.threecrickets.creel.ant" resource="com/threecrickets/creel/ant/antlib.xml" classpath="creel.jar" />
         <target name="dependencies">
-            <creel:dependencies destdir="lib" pathid="my.dependencies.classpath">
+            <creel:run destdir="lib" pathid="my.dependencies.classpath">
                 <module group="com.github.sommeri" name="less4j" version="(,1.15.2)"/>
                 <module group="org.jsoup" name="jsoup" version="1.8.1"/>
                 <module group="com.fasterxml.jackson" name="jackson"/>
@@ -112,7 +112,7 @@ Use Creel to download your dependency Jars and include them in the classpath. He
                 <repository id="restlet" url="http://maven.restlet.com" all="false"/>
                 <repository id="central" url="https://repo1.maven.org/maven2/"/>
                 <rule type="exclude" name="*annotations*"/>
-            </creel:dependencies>
+            </creel:run>
         </target>
         <target name="compile" depends="dependencies">
             <javac srcdir="." classpathref="my.dependencies.classpath">

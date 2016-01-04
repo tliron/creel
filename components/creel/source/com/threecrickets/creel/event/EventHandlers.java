@@ -14,6 +14,9 @@ package com.threecrickets.creel.event;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
+ * One or more event handlers to be called in sequence. If a handler swallows
+ * the event, the sequence will be stopped.
+ * 
  * @author Tal Liron
  */
 public class EventHandlers extends CopyOnWriteArrayList<EventHandler> implements EventHandler
@@ -25,10 +28,8 @@ public class EventHandlers extends CopyOnWriteArrayList<EventHandler> implements
 	public boolean handleEvent( Event event )
 	{
 		for( EventHandler eventHandler : this )
-		{
 			if( eventHandler.handleEvent( event ) )
 				return true;
-		}
 		return false;
 	}
 

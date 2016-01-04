@@ -16,11 +16,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Phaser;
 
-import com.threecrickets.creel.Manager;
+import com.threecrickets.creel.Engine;
 import com.threecrickets.creel.Module;
 import com.threecrickets.creel.util.Jobs;
 
 /**
+ * Used in the identification phase of the engine.
+ * 
  * @author Tal Liron
  */
 public class ConcurrentIdentificationContext implements Closeable
@@ -29,6 +31,12 @@ public class ConcurrentIdentificationContext implements Closeable
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param threads
+	 *        Number of threads for the executor
+	 */
 	public ConcurrentIdentificationContext( int threads )
 	{
 		executor = Executors.newFixedThreadPool( threads, DaemonThreadFactory.INSTANCE );
@@ -38,16 +46,31 @@ public class ConcurrentIdentificationContext implements Closeable
 	// Attributes
 	//
 
+	/**
+	 * The executor.
+	 * 
+	 * @return The executor
+	 */
 	public ExecutorService getExecutor()
 	{
 		return executor;
 	}
 
+	/**
+	 * The phaser.
+	 * 
+	 * @return The phaser
+	 */
 	public Phaser getPhaser()
 	{
 		return phaser;
 	}
 
+	/**
+	 * The jobs.
+	 * 
+	 * @return The jobs
+	 */
 	public Jobs getJobs()
 	{
 		return jobs;
@@ -57,30 +80,52 @@ public class ConcurrentIdentificationContext implements Closeable
 	// Operations
 	//
 
-	public void identifyModule( Manager.IdentifyModule identifyModule )
+	/**
+	 * Submits a module identification task to the executor.
+	 * 
+	 * @param identifyModule
+	 *        The task
+	 */
+	public void identifyModule( Engine.IdentifyModule identifyModule )
 	{
 		getPhaser().register();
 		getExecutor().submit( identifyModule );
 	}
 
-	public boolean beginIdentifyingIfNotIdentifying( Module module, Manager.IdentifyModule identifyModule )
+	/**
+	 * Checks if we are already identifying the module. If we are not, then mark
+	 * that we have begun identifying it. If we are, then submit the task to run
+	 * when that identification finishes.
+	 * 
+	 * @param identifyModule
+	 *        The task
+	 * @return True if not already identifying the module
+	 */
+	public boolean beginIdentifyingIfNotIdentifying( Engine.IdentifyModule identifyModule )
 	{
-		return getJobs().beginIfNotBegun( module.getSpecification().hashCode(), getExecutor(), getPhaser(), identifyModule );
+		return getJobs().beginIfNotBegun( identifyModule.getModule().getSpecification().hashCode(), getExecutor(), getPhaser(), identifyModule );
 	}
 
-	public void onIdentified( Module module, Manager.IdentifiedModule identifiedModule )
+	/**
+	 * Submits the task to run when identification finishes.
+	 * 
+	 * @param identifiedModule
+	 *        The task
+	 */
+	public void onIdentified( Engine.IdentifiedModule identifiedModule )
 	{
-		getJobs().onEnd( module.getSpecification().hashCode(), identifiedModule );
+		getJobs().onEnd( identifiedModule.getModule().getSpecification().hashCode(), identifiedModule );
 	}
 
+	/**
+	 * Mark the identification finished, which may trigger tasks to be
+	 * submitted.
+	 * 
+	 * @param module
+	 */
 	public void notifyIdentified( Module module )
 	{
 		getJobs().notifyEnd( module.getSpecification().hashCode() );
-	}
-
-	public void identified()
-	{
-		getPhaser().arriveAndDeregister();
 	}
 
 	//

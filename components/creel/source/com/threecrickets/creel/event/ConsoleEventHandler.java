@@ -15,6 +15,10 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 
 /**
+ * An event handler that outputs events to a {@link PrintWriter}. Optionally
+ * supports rich ANSI output with colors and progress bar animations for ongoing
+ * events.
+ * 
  * @author Tal Liron
  */
 public class ConsoleEventHandler extends OngoingEventHandler
@@ -23,21 +27,52 @@ public class ConsoleEventHandler extends OngoingEventHandler
 	// Construction
 	//
 
+	/**
+	 * Constructor: standard out, no ANSI, no stacktrace.
+	 */
 	public ConsoleEventHandler()
 	{
 		this( false, false );
 	}
 
+	/**
+	 * Constructor: standard out.
+	 * 
+	 * @param ansi
+	 *        Whether to output ANSI colors and animations
+	 * @param stacktrace
+	 *        Whether to print stack traces of exceptions
+	 */
 	public ConsoleEventHandler( boolean ansi, boolean stacktrace )
 	{
 		this( System.out, ansi, stacktrace );
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param out
+	 *        The output
+	 * @param ansi
+	 *        Whether to output ANSI colors and animations
+	 * @param stacktrace
+	 *        Whether to print stack traces of exceptions
+	 */
 	public ConsoleEventHandler( OutputStream out, boolean ansi, boolean stacktrace )
 	{
 		this( new PrintWriter( out ), ansi, stacktrace );
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param out
+	 *        The output
+	 * @param ansi
+	 *        Whether to output ANSI colors and animations
+	 * @param stacktrace
+	 *        Whether to print stack traces of exceptions
+	 */
 	public ConsoleEventHandler( PrintWriter out, boolean ansi, boolean stacktrace )
 	{
 		this.out = out;
@@ -49,116 +84,241 @@ public class ConsoleEventHandler extends OngoingEventHandler
 	// Attributes
 	//
 
+	/**
+	 * Whether to output ANSI colors and animations.
+	 * 
+	 * @return True if ANSI is supported
+	 */
 	public boolean isAnsi()
 	{
 		return ansi;
 	}
 
+	/**
+	 * Whether to print stack traces of exceptions.
+	 * 
+	 * @return True if printing stack traces
+	 */
 	public boolean isStacktrace()
 	{
 		return stacktrace;
 	}
 
+	/**
+	 * The output.
+	 * 
+	 * @return The output
+	 */
 	public PrintWriter getOut()
 	{
 		return out;
 	}
 
+	/**
+	 * The ANSI end event graphics code.
+	 * 
+	 * @return The ANSI end event graphics code
+	 */
 	public String getEndGraphics()
 	{
 		return endGraphics;
 	}
 
+	/**
+	 * The ANSI end event graphics code.
+	 * 
+	 * @param endGraphics
+	 *        The ANSI end event graphics code
+	 */
 	public void setEndGraphics( String endGraphics )
 	{
 		this.endGraphics = endGraphics;
 	}
 
+	/**
+	 * The ANSI fail event graphics code.
+	 * 
+	 * @return The ANSI fail event graphics code
+	 */
 	public String getFailGraphics()
 	{
 		return failGraphics;
 	}
 
+	/**
+	 * The ANSI fail event graphics code.
+	 * 
+	 * @param failGraphics
+	 *        The ANSI fail event graphics code
+	 */
 	public void setFailGraphics( String failGraphics )
 	{
 		this.failGraphics = failGraphics;
 	}
 
+	/**
+	 * The ANSI error event graphics code.
+	 * 
+	 * @return The ANSI error event graphics code
+	 */
 	public String getErrorGraphics()
 	{
 		return errorGraphics;
 	}
 
+	/**
+	 * The ANSI error event graphics code.
+	 * 
+	 * @param errorGraphics
+	 *        The ANSI error event graphics code
+	 */
 	public void setErrorGraphics( String errorGraphics )
 	{
 		this.errorGraphics = errorGraphics;
 	}
 
+	/**
+	 * The ANSI ongoing event graphics code.
+	 * 
+	 * @return The ANSI ongoing event graphics code
+	 */
 	public String getOngoingGraphics()
 	{
 		return ongoingGraphics;
 	}
 
+	/**
+	 * The ANSI ongoing event graphics code.
+	 * 
+	 * @param ongoingGraphics
+	 *        The ANSI ongoing event graphics code
+	 */
 	public void setOngoingGraphics( String ongoingGraphics )
 	{
 		this.ongoingGraphics = ongoingGraphics;
 	}
 
+	/**
+	 * The ANSI default event graphics code.
+	 * 
+	 * @return The ANSI default event graphics code
+	 */
 	public String getDefaultGraphics()
 	{
 		return defaultGraphics;
 	}
 
+	/**
+	 * The ANSI default event graphics code.
+	 * 
+	 * @param defaultGraphics
+	 *        The ANSI default event graphics code
+	 */
 	public void setDefaultGraphics( String defaultGraphics )
 	{
 		this.defaultGraphics = defaultGraphics;
 	}
 
+	/**
+	 * Th elength of the ongoing event progress animation bar.
+	 * 
+	 * @return The progress length
+	 */
 	public int getProgressLength()
 	{
 		return progressLength;
 	}
 
+	/**
+	 * The length of the ongoing event progress animation bar.
+	 * 
+	 * @param progressLength
+	 *        The progress length
+	 */
 	public void setProgressLength( int progressLength )
 	{
 		this.progressLength = progressLength;
 	}
 
+	/**
+	 * The ongoing event progress animation bar prefix.
+	 * 
+	 * @return The progress start
+	 */
 	public String getProgressStart()
 	{
 		return progressStart;
 	}
 
+	/**
+	 * The ongoing event progress animation bar prefix.
+	 * 
+	 * @param progressStart
+	 *        The progress start
+	 */
 	public void setProgressStart( String progressStart )
 	{
 		this.progressStart = progressStart;
 	}
 
+	/**
+	 * The ongoing event progress animation bar suffix.
+	 * 
+	 * @return The progress end
+	 */
 	public String getProgressEnd()
 	{
 		return progressEnd;
 	}
 
+	/**
+	 * The ongoing event progress animation bar suffix.
+	 * 
+	 * @param progressEnd
+	 *        The progress end
+	 */
 	public void setProgressEnd( String progressEnd )
 	{
 		this.progressEnd = progressEnd;
 	}
 
+	/**
+	 * The ongoing event progress animation bar done block.
+	 * 
+	 * @return The progress done block
+	 */
 	public String getProgressDone()
 	{
 		return progressDone;
 	}
 
+	/**
+	 * The ongoing event progress animation bar done block.
+	 * 
+	 * @param progressDone
+	 *        The progress done block
+	 */
 	public void setProgressDone( String progressDone )
 	{
 		this.progressDone = progressDone;
 	}
 
+	/**
+	 * The ongoing event progress animation bar not-done block.
+	 * 
+	 * @return The progress not-done block
+	 */
 	public String getProgressTodo()
 	{
 		return progressTodo;
 	}
 
+	/**
+	 * The ongoing event progress animation bar not-done block.
+	 * 
+	 * @param progressTodo
+	 *        The progress not-done block
+	 */
 	public void setProgressTodo( String progressTodo )
 	{
 		this.progressTodo = progressTodo;
@@ -173,19 +333,19 @@ public class ConsoleEventHandler extends OngoingEventHandler
 		// Move up before the ongoing block we printed last time
 		int ongoingEventsHeight = ongoingEvents.size();
 		if( ongoingEventsHeight > 0 )
-			controlSequence( Integer.toString( ongoingEventsHeight ) + 'A' );
+			ansi( Integer.toString( ongoingEventsHeight ) + 'A' );
 
 		super.handleEvent( event );
 
 		Event.Type type = event.getType();
 		if( type == Event.Type.END )
-			controlSequence( getEndGraphics() + 'm' );
+			ansi( getEndGraphics() + 'm' );
 		else if( type == Event.Type.FAIL )
-			controlSequence( getFailGraphics() + 'm' );
+			ansi( getFailGraphics() + 'm' );
 		else if( type == Event.Type.ERROR )
-			controlSequence( getErrorGraphics() + 'm' );
+			ansi( getErrorGraphics() + 'm' );
 		else if( type == Event.Type.INFO )
-			controlSequence( getDefaultGraphics() + 'm' );
+			ansi( getDefaultGraphics() + 'm' );
 
 		if( ( type != Event.Type.BEGIN ) && ( type != Event.Type.UPDATE ) && ( type != Event.Type.DEBUG ) )
 			print( event );
@@ -194,12 +354,12 @@ public class ConsoleEventHandler extends OngoingEventHandler
 		if( isAnsi() )
 			for( Event ongoingEvent : ongoingEvents )
 			{
-				controlSequence( getOngoingGraphics() + 'm' );
+				ansi( getOngoingGraphics() + 'm' );
 				print( ongoingEvent );
 			}
 
 		// Erase to end of screen
-		controlSequence( "0J" );
+		ansi( "0J" );
 
 		getOut().flush();
 
@@ -209,11 +369,25 @@ public class ConsoleEventHandler extends OngoingEventHandler
 	// //////////////////////////////////////////////////////////////////////////
 	// Protected
 
+	/**
+	 * Gets the terminal's width in characters. Defaults to
+	 * {@link Integer#MAX_VALUE}. Override this to support your terminal
+	 * implementation.
+	 * 
+	 * @return The terminal's width
+	 */
 	protected int getTerminalWidth()
 	{
 		return Integer.MAX_VALUE;
 	}
 
+	/**
+	 * Prints an event, making sure to fit it in
+	 * {@link ConsoleEventHandler#getTerminalWidth()}.
+	 * 
+	 * @param event
+	 *        The event
+	 */
 	protected void print( Event event )
 	{
 		StringBuilder output = new StringBuilder();
@@ -249,7 +423,7 @@ public class ConsoleEventHandler extends OngoingEventHandler
 		{
 			getOut().print( output );
 			// Reset graphics and erase to end of line
-			controlSequence( "0m", "K" );
+			ansi( "0m", "K" );
 			getOut().println();
 		}
 
@@ -259,14 +433,20 @@ public class ConsoleEventHandler extends OngoingEventHandler
 			Throwable exception = event.getException();
 			if( exception != null )
 			{
-				controlSequence( getErrorGraphics() + 'm' );
+				ansi( getErrorGraphics() + 'm' );
 				exception.printStackTrace( getOut() );
-				controlSequence( "0m" );
+				ansi( "0m" );
 			}
 		}
 	}
 
-	protected void controlSequence( CharSequence... args )
+	/**
+	 * Outputs ANSI control sequences.
+	 * 
+	 * @param args
+	 *        The sequences
+	 */
+	protected void ansi( CharSequence... args )
 	{
 		if( !isAnsi() )
 			return;

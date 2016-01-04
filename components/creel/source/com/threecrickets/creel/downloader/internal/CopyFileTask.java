@@ -19,6 +19,8 @@ import com.threecrickets.creel.downloader.Downloader;
 import com.threecrickets.creel.util.IoUtil;
 
 /**
+ * Downloader task for copying files.
+ * 
  * @author Tal Liron
  */
 public class CopyFileTask extends Task
@@ -27,25 +29,38 @@ public class CopyFileTask extends Task
 	// Construction
 	//
 
-	public CopyFileTask( Downloader downloader, ExecutorService executor, Runnable validator, File sourceFile, File file )
+	/**
+	 * Constructor.
+	 * 
+	 * @param sourceFile
+	 *        The source file
+	 * @param file
+	 *        The destination file
+	 * @param downloader
+	 *        The downloader
+	 * @param executor
+	 *        The executor
+	 * @param validator
+	 *        The validator or null
+	 */
+	public CopyFileTask( File sourceFile, File file, Downloader downloader, ExecutorService executor, Runnable validator )
 	{
-		super( downloader, executor, validator );
+		super( file, downloader, executor, validator );
 		this.sourceFile = sourceFile;
-		this.file = file;
 	}
 
 	//
 	// Attributes
 	//
 
+	/**
+	 * The source file.
+	 * 
+	 * @return The source file
+	 */
 	public File getSourceFile()
 	{
 		return sourceFile;
-	}
-
-	public File getFile()
-	{
-		return file;
 	}
 
 	//
@@ -80,6 +95,4 @@ public class CopyFileTask extends Task
 	// Private
 
 	private final File sourceFile;
-
-	private final File file;
 }

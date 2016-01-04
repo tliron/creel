@@ -14,12 +14,14 @@ package com.threecrickets.creel.internal;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import com.threecrickets.creel.Manager;
+import com.threecrickets.creel.Engine;
 import com.threecrickets.creel.Module;
 import com.threecrickets.creel.event.Notifier;
-import com.threecrickets.creel.exception.IncompatibleIdentifierException;
+import com.threecrickets.creel.exception.IncompatibleIdentifiersException;
 
 /**
+ * Manages a collection of conflicts.
+ * 
  * @author Tal Liron
  */
 public class Conflicts extends ArrayList<com.threecrickets.creel.Conflict>
@@ -28,6 +30,12 @@ public class Conflicts extends ArrayList<com.threecrickets.creel.Conflict>
 	// Operations
 	//
 
+	/**
+	 * Finds all conflicts.
+	 * 
+	 * @param modules
+	 *        The modules
+	 */
 	public void find( Iterable<Module> modules )
 	{
 		LinkedList<Module> potentialConflicts = new LinkedList<Module>();
@@ -47,7 +55,7 @@ public class Conflicts extends ArrayList<com.threecrickets.creel.Conflict>
 					if( module.getIdentifier().compareTo( otherModule.getIdentifier() ) != 0 )
 						conflict.add( otherModule );
 				}
-				catch( IncompatibleIdentifierException x )
+				catch( IncompatibleIdentifiersException x )
 				{
 				}
 			}
@@ -59,7 +67,15 @@ public class Conflicts extends ArrayList<com.threecrickets.creel.Conflict>
 		}
 	}
 
-	public void resolve( Manager.ConflictPolicy policy, Notifier notifier )
+	/**
+	 * Resolves all conflicts according to the conflict resolution policy.
+	 * 
+	 * @param policy
+	 *        The policy
+	 * @param notifier
+	 *        The notifier or null
+	 */
+	public void resolve( Engine.ConflictPolicy policy, Notifier notifier )
 	{
 		if( notifier == null )
 			notifier = new Notifier();

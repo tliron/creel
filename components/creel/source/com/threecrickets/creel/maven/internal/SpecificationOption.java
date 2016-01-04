@@ -167,7 +167,7 @@ public class SpecificationOption
 	@Override
 	public String toString()
 	{
-		return getGroup() + ":" + getName() + ":" + getVersion();
+		return getGroup() + ":" + getName() + ( !getVersion().isEmpty() ? ":" + getVersion() : "" );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

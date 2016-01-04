@@ -16,6 +16,8 @@ import java.util.Comparator;
 import com.threecrickets.creel.Module;
 
 /**
+ * Compares module according to their identifiers as strings.
+ * 
  * @author Tal Liron
  */
 public class ModuleIdentifierComparator implements Comparator<Module>
@@ -24,6 +26,9 @@ public class ModuleIdentifierComparator implements Comparator<Module>
 	// Constants
 	//
 
+	/**
+	 * The singleton.
+	 */
 	public static final ModuleIdentifierComparator INSTANCE = new ModuleIdentifierComparator();
 
 	//

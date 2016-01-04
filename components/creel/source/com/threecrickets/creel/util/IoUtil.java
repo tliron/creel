@@ -49,15 +49,6 @@ public abstract class IoUtil
 	public static volatile String userAgent = "Creel";
 
 	//
-	// Interfaces
-	//
-
-	public interface ProgressListener
-	{
-		public void onProgress( int position, int length );
-	}
-
-	//
 	// Static operations
 	//
 
@@ -162,7 +153,17 @@ public abstract class IoUtil
 		return -1;
 	}
 
-	public static boolean deleteWithParentDirectories( File file, File root )
+	/**
+	 * Deletes the file, including empty parent directories up to the root
+	 * directory.
+	 *
+	 * @param file
+	 *        The file
+	 * @param rootDir
+	 *        The root directory
+	 * @return True if deleted
+	 */
+	public static boolean deleteWithParentDirectories( File file, File rootDir )
 	{
 		while( true )
 		{
@@ -174,7 +175,7 @@ public abstract class IoUtil
 			else if( file.exists() && !file.delete() )
 				return false;
 			file = file.getParentFile();
-			if( ( file == null ) || file.equals( root ) )
+			if( ( file == null ) || file.equals( rootDir ) )
 				break;
 		}
 		return true;

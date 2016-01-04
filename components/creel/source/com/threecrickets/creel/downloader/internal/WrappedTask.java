@@ -14,6 +14,9 @@ package com.threecrickets.creel.downloader.internal;
 import com.threecrickets.creel.downloader.Downloader;
 
 /**
+ * Wraps an arbitrary {@link Runnable} such that it correctly reports to a
+ * {@link Downloader}.
+ * 
  * @author Tal Liron
  */
 public class WrappedTask implements Runnable
@@ -22,6 +25,14 @@ public class WrappedTask implements Runnable
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param runnable
+	 *        The runnable to wrap
+	 * @param downloader
+	 *        The downloader
+	 */
 	public WrappedTask( Runnable runnable, Downloader downloader )
 	{
 		this.runnable = runnable;
@@ -32,11 +43,21 @@ public class WrappedTask implements Runnable
 	// Attributes
 	//
 
+	/**
+	 * The wrapped runnable.
+	 * 
+	 * @return The wrapped runnable
+	 */
 	public Runnable getRunnable()
 	{
 		return runnable;
 	}
 
+	/**
+	 * The downloader.
+	 * 
+	 * @return The downloader
+	 */
 	public Downloader getDownloader()
 	{
 		return downloader;
