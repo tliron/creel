@@ -22,8 +22,8 @@ import com.threecrickets.creel.Artifact;
 import com.threecrickets.creel.Engine;
 
 /**
- * Class loader for artifacts. Useful in conjunction with
- * {@link Engine#getInstalledArtifacts()}.
+ * Class loader for artifacts of type {@link Artifact.Type#LIBRARY}. Useful in
+ * conjunction with {@link Engine#getInstalledArtifacts()}.
  * 
  * @author Tal Liron
  */
@@ -52,8 +52,11 @@ public class ArtifactsClassLoader extends URLClassLoader
 		Collection<URL> urls = new ArrayList<URL>();
 		for( Artifact artifact : artifacts )
 		{
+			if( artifact.getType() != Artifact.Type.LIBRARY )
+				continue;
+
 			File file = artifact.getFile();
-			if( file.exists() && file.getName().toLowerCase().endsWith( ".jar" ) )
+			if( file.exists() )
 			{
 				try
 				{

@@ -11,7 +11,6 @@
 
 package com.threecrickets.creel;
 
-import java.io.File;
 import java.util.Objects;
 
 /**
@@ -86,14 +85,14 @@ public abstract class ModuleIdentifier implements Comparable<ModuleIdentifier>, 
 	 * The artifacts. Note that there is no guarantee that the artifacts
 	 * actually exist in the repository.
 	 * 
-	 * @param rootDir
-	 *        The root directory
+	 * @param rootDirectories
+	 *        The root directories
 	 * @param flat
 	 *        Whether we should use a flat file structure under the root
-	 *        directory (no sub-directories)
+	 *        directories (no sub-directories)
 	 * @return The artifacts
 	 */
-	public abstract Iterable<Artifact> getArtifacts( File rootDir, boolean flat );
+	public abstract Iterable<Artifact> getArtifacts( RootDirectories rootDirectories, boolean flat );
 
 	//
 	// Cloneable

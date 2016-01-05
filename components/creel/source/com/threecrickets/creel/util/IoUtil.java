@@ -267,6 +267,7 @@ public abstract class IoUtil
 	 */
 	public static void copy( InputStream source, File target, int start, ProgressListener progressListener, int length ) throws IOException
 	{
+		Files.createDirectories( target.toPath().getParent() );
 		RandomAccessFile random = new RandomAccessFile( target, "rw" );
 		try
 		{
@@ -345,6 +346,8 @@ public abstract class IoUtil
 	 */
 	public static void copy( File source, File target ) throws IOException
 	{
+		if( !source.exists() )
+			throw new FileNotFoundException( source.toString() );
 		Files.createDirectories( target.toPath().getParent() );
 		Files.copy( source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING );
 	}

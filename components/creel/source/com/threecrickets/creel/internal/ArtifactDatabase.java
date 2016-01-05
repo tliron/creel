@@ -22,12 +22,14 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import com.threecrickets.creel.Artifact;
+import com.threecrickets.creel.Engine;
+import com.threecrickets.creel.RootDirectories;
 import com.threecrickets.creel.util.IoUtil;
 import com.threecrickets.creel.util.MultiValueProperties;
 
@@ -48,27 +50,12 @@ public class ArtifactDatabase
 	 * 
 	 * @param file
 	 *        The JVM properties file
-	 * @param rootDir
-	 *        The root directory for artifacts
+	 * @param rootDirectories
+	 *        The root directories in which to install artifacts
 	 * @throws IOException
 	 *         In case of an I/O error
 	 */
-	public ArtifactDatabase( String file, String rootDir ) throws IOException
-	{
-		this( new File( file ), rootDir != null ? new File( rootDir ) : null );
-	}
-
-	/**
-	 * Constructor. Loads the database from a JVM properties file if it exists.
-	 * 
-	 * @param file
-	 *        The JVM properties file
-	 * @param rootDir
-	 *        The root directory for artifacts
-	 * @throws IOException
-	 *         In case of an I/O error
-	 */
-	public ArtifactDatabase( File file, File rootDir ) throws IOException
+	public ArtifactDatabase( File file, RootDirectories rootDirectories ) throws IOException
 	{
 		try
 		{
@@ -76,23 +63,26 @@ public class ArtifactDatabase
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( "Could not access database file: " + file, x );
+			throw new RuntimeException( "Could not access properties file: " + file, x );
 		}
-		try
-		{
-			this.rootDir = rootDir != null ? rootDir.getCanonicalFile() : new File( "" ).getCanonicalFile();
-		}
-		catch( IOException x )
-		{
-			throw new RuntimeException( "Could not access root directory: " + rootDir, x );
-		}
+
+		this.rootDirectories = rootDirectories;
+
 		try
 		{
 			MultiValueProperties properties = new MultiValueProperties();
 			properties.load( new BufferedReader( new FileReader( file ), IoUtil.bufferSize ) );
 
 			for( Map<String, String> config : properties.toMaps() )
-				addArtifact( new Artifact( config, getRootDir() ) );
+			{
+				try
+				{
+					addArtifact( new Artifact( config, rootDirectories ) );
+				}
+				catch( RuntimeException x )
+				{
+				}
+			}
 		}
 		catch( FileNotFoundException x )
 		{
@@ -114,13 +104,13 @@ public class ArtifactDatabase
 	}
 
 	/**
-	 * The root directory for artifacts.
+	 * The root directories in which to install artifacts.
 	 * 
-	 * @return The root directory
+	 * @return The root directories
 	 */
-	public File getRootDir()
+	public RootDirectories getRootDirectories()
 	{
-		return rootDir;
+		return rootDirectories;
 	}
 
 	//
@@ -219,14 +209,14 @@ public class ArtifactDatabase
 		int index = 0;
 		for( Artifact artifact : getArtifacts() )
 		{
-			Map<String, Object> config = artifact.toConfig( getRootDir() );
+			Map<String, Object> config = artifact.toConfig( getRootDirectories() );
 			properties.putMap( index++, config );
 		}
 
 		Writer writer = new BufferedWriter( new FileWriter( file ), IoUtil.bufferSize );
 		try
 		{
-			properties.store( writer, "Managed by Creel" );
+			properties.store( writer, "Managed by Creel " + Engine.getVersion() );
 		}
 		finally
 		{
@@ -239,7 +229,7 @@ public class ArtifactDatabase
 
 	private final File file;
 
-	private final File rootDir;
+	private final RootDirectories rootDirectories;
 
-	private final Set<Artifact> artifacts = new HashSet<Artifact>();
+	private final SortedSet<Artifact> artifacts = new TreeSet<Artifact>();
 }

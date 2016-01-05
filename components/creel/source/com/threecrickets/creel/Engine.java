@@ -272,56 +272,41 @@ public class Engine extends Notifier implements Runnable
 	}
 
 	/**
-	 * The root directory in which to install artifacts.
+	 * The root directories in which to install artifacts.
 	 * 
-	 * @return The root directory
+	 * @return The root directories
 	 */
-	public File getRootDir()
+	public RootDirectories getRootDirectories()
 	{
-		return rootDir;
+		return rootDirectories;
 	}
 
 	/**
-	 * The root directory in which to install artifacts.
-	 * 
-	 * @param rootPath
-	 *        The root directory path
-	 * @throws IOException
-	 *         In case the directory could not be accessed
-	 */
-	public void setRootDir( String rootPath ) throws IOException
-	{
-		setRootDir( new File( rootPath ) );
-	}
-
-	/**
-	 * The root directory in which to install artifacts.
-	 * 
-	 * @param rootDir
-	 *        The root directory
-	 * @throws IOException
-	 *         In case the directory could not be accessed
-	 */
-	public void setRootDir( File rootDir ) throws IOException
-	{
-		this.rootDir = rootDir.getCanonicalFile();
-	}
-
-	/**
-	 * Where to store state. Will default to a file named ".creel" in the root
-	 * directory.
+	 * Where to store state. Will default to a file named ".creel" in the
+	 * unknown artifact root directory, or the current directory if the unknown
+	 * artifact root directory was not set.
 	 * 
 	 * @return The state file
+	 * @throws IOException
+	 *         In case the file could not be accessed
 	 */
-	public File getStateFile()
+	public File getStateFile() throws IOException
 	{
 		File stateFile = this.stateFile;
-		return stateFile != null ? stateFile : new File( getRootDir(), ".creel" );
+		if( stateFile == null )
+		{
+			if( getRootDirectories().getOther() != null )
+				stateFile = new File( getRootDirectories().getOther(), ".creel" ).getCanonicalFile();
+			else
+				stateFile = new File( ".creel" ).getCanonicalFile();
+		}
+		return stateFile;
 	}
 
 	/**
-	 * Where to store state. Will default to a file named ".creel" in the root
-	 * directory.
+	 * Where to store state. Will default to a file named ".creel" in the
+	 * unknown artifact root directory, or the current directory if the unknown
+	 * artifact root directory was not set.
 	 * 
 	 * @param statePath
 	 *        The state file path or null to revert to default
@@ -690,7 +675,7 @@ public class Engine extends Notifier implements Runnable
 			downloader.setDelay( getDelay() );
 			for( Module module : identifiedModules )
 			{
-				for( Artifact artifact : module.getIdentifier().getArtifacts( getRootDir(), isFlat() ) )
+				for( Artifact artifact : module.getIdentifier().getArtifacts( getRootDirectories(), isFlat() ) )
 				{
 					if( isOverwrite() || !artifact.getFile().exists() )
 						downloader.submit( artifact.getSourceUrl(), artifact.getFile(), module.getIdentifier().getRepository().validateArtifactTask( module.getIdentifier(), artifact, this ) );
@@ -713,122 +698,138 @@ public class Engine extends Notifier implements Runnable
 
 		if( count > 0 )
 		{
-			String message = "Had " + ( count != 1 ? " errors during installation" : " error during installation" );
+			String message = "Had " + count + ( count != 1 ? " errors during installation" : " error during installation" );
 			fail( id, message );
 			throw new RuntimeException( message );
 		}
 
 		count = downloader.getCount();
 
-		// Unpacking
-
 		if( stage.getValue() < Stage.UNPACKING.getValue() )
+		{
+			if( count == 0 )
+				end( id, "No new artifacts to install" );
+			else
+				end( id, "Installed " + count + ( count != 1 ? " new artifacts" : " new artifact" ) );
 			return;
+		}
 
 		ArtifactDatabase knownArtifacts = null;
 		try
 		{
-			knownArtifacts = new ArtifactDatabase( getStateFile(), getRootDir() );
+			knownArtifacts = new ArtifactDatabase( getStateFile(), getRootDirectories() );
 		}
 		catch( FileNotFoundException x )
 		{
 		}
 		catch( IOException x )
 		{
-			error( "Could not load state from " + getStateFile(), x );
-		}
-
-		ClassLoader classLoader = new ArtifactsClassLoader( installedArtifacts );
-		Iterable<Package> packages = null;
-		try
-		{
-			packages = PackagingUtil.getPackages( classLoader, getRootDir() );
-		}
-		catch( IOException x )
-		{
-			error( "Could not scan for packages", x );
-		}
-
-		if( packages != null )
-		{
-			for( Package thePackage : packages )
+			try
 			{
-				if( !thePackage.iterator().hasNext() )
-					continue;
+				error( "Could not load state from " + getStateFile(), x );
+			}
+			catch( IOException xx )
+			{
+				error( xx );
+			}
+		}
 
-				String pId = begin( "Unpacking " + thePackage.getSourceFile() );
-				try
+		// Unpacking
+
+		if( getRootDirectories().getOther() != null )
+		{
+			ClassLoader classLoader = new ArtifactsClassLoader( installedArtifacts );
+			Iterable<Package> packages = null;
+			try
+			{
+				packages = PackagingUtil.getPackages( classLoader, getRootDirectories().getOther() );
+			}
+			catch( IOException x )
+			{
+				error( "Could not scan for packages", x );
+			}
+
+			if( packages != null )
+			{
+				for( Package thePackage : packages )
 				{
-					int pCount = 0;
-					for( Artifact artifact : thePackage )
-					{
-						boolean copy = false;
+					if( !thePackage.iterator().hasNext() )
+						continue;
 
-						if( isOverwrite() || !artifact.exists() )
-							copy = true;
-						else
+					String pId = begin( "Unpacking " + thePackage.getSourceFile() );
+					try
+					{
+						int pCount = 0;
+						for( Artifact artifact : thePackage )
 						{
-							Artifact knownArtifact = knownArtifacts != null ? knownArtifacts.getArtifact( artifact.getFile() ) : null;
-							if( knownArtifact == null )
+							boolean copy = false;
+
+							if( isOverwrite() || !artifact.exists() )
 								copy = true;
 							else
 							{
-								if( !knownArtifact.isVolatile() )
-									copy = artifact.isDifferent();
+								Artifact knownArtifact = knownArtifacts != null ? knownArtifacts.getArtifact( artifact.getFile() ) : null;
+								if( knownArtifact == null )
+									copy = true;
 								else
 								{
-									if( !knownArtifact.wasModified() )
+									if( !knownArtifact.isVolatile() )
 										copy = artifact.isDifferent();
 									else
-										info( "Modified, so not overwriting " + artifact.getFile() );
+									{
+										if( !knownArtifact.wasModified() )
+											copy = artifact.isDifferent();
+										else
+											info( "Modified, so not overwriting " + artifact.getFile() );
+									}
 								}
 							}
+
+							if( copy )
+							{
+								artifact.copy( null );
+								if( artifact.isVolatile() )
+									artifact.updateDigest();
+								if( getVerbosity() > 1 )
+									info( "Unpacked " + artifact.getFile() );
+								pCount++;
+								count++;
+							}
+
+							installedArtifacts.add( artifact );
 						}
 
-						if( copy )
+						if( pCount == 0 )
+							end( pId, "No new files unpacked from " + thePackage.getSourceFile() );
+						else
+							end( pId, "Unpacked " + pCount + ( pCount != 1 ? " new files from " : " file from " ) + thePackage.getSourceFile() );
+					}
+					catch( IOException x )
+					{
+						fail( pId, "Could not unpack " + thePackage.getSourceFile(), x );
+					}
+				}
+
+				// Run installers
+
+				for( Package thePackage : packages )
+				{
+					String installer = thePackage.getInstaller();
+					if( installer != null )
+					{
+						try
 						{
-							artifact.copy( null );
-							if( artifact.isVolatile() )
-								artifact.updateDigest();
-							if( getVerbosity() > 1 )
-								info( "Unpacked " + artifact.getFile() );
-							pCount++;
-							count++;
+							ClassUtil.main( classLoader, installer.split( " " ) );
 						}
-
-						installedArtifacts.add( artifact );
+						catch( Throwable x )
+						{
+							error( "Could not run installer: " + installer, x );
+						}
 					}
+				}
 
-					if( pCount == 0 )
-						end( pId, "No new files unpacked from " + thePackage.getSourceFile() );
-					else
-						end( pId, "Unpacked " + pCount + ( pCount != 1 ? " new files from " : " file from " ) + thePackage.getSourceFile() );
-				}
-				catch( IOException x )
-				{
-					fail( pId, "Could not unpack " + thePackage.getSourceFile(), x );
-				}
+				// TODO: uninstallers?
 			}
-
-			// Run installers
-
-			for( Package thePackage : packages )
-			{
-				String installer = thePackage.getInstaller();
-				if( installer != null )
-				{
-					try
-					{
-						ClassUtil.main( classLoader, installer.split( " " ) );
-					}
-					catch( Throwable x )
-					{
-						error( "Could not run installer: " + installer, x );
-					}
-				}
-			}
-
-			// TODO: uninstallers?
 		}
 
 		if( count == 0 )
@@ -871,7 +872,7 @@ public class Engine extends Notifier implements Runnable
 
 					if( delete )
 					{
-						if( redundantArtifact.delete( getRootDir() ) )
+						if( redundantArtifact.delete( getRootDirectories() ) )
 						{
 							if( getVerbosity() > 1 )
 								info( "Deleted " + redundantArtifact.getFile() );
@@ -899,7 +900,15 @@ public class Engine extends Notifier implements Runnable
 			}
 			catch( IOException x )
 			{
-				error( "Could not save state to " + getStateFile(), x );
+				try
+				{
+					error( "Could not save state to " + getStateFile(), x );
+				}
+				catch( IOException xx )
+				{
+					error( xx );
+				}
+
 			}
 		}
 	}
@@ -992,7 +1001,7 @@ public class Engine extends Notifier implements Runnable
 
 	private boolean multithreaded = true;
 
-	private File rootDir;
+	private RootDirectories rootDirectories = new RootDirectories();
 
 	private File stateFile;
 

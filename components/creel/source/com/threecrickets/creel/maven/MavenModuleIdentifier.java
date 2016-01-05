@@ -11,8 +11,6 @@
 
 package com.threecrickets.creel.maven;
 
-import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +18,7 @@ import java.util.Objects;
 
 import com.threecrickets.creel.Artifact;
 import com.threecrickets.creel.ModuleIdentifier;
+import com.threecrickets.creel.RootDirectories;
 import com.threecrickets.creel.exception.IncompatibleIdentifiersException;
 import com.threecrickets.creel.exception.IncompatiblePlatformException;
 import com.threecrickets.creel.maven.internal.Version;
@@ -134,13 +133,16 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 	// ModuleIdentifier
 	//
 
-	public Iterable<Artifact> getArtifacts( File rootDir, boolean flat )
+	public Iterable<Artifact> getArtifacts( RootDirectories rootDirectories, boolean flat )
 	{
 		MavenRepository repository = (MavenRepository) getRepository();
 		Collection<Artifact> artifacts = new ArrayList<Artifact>();
-		File file = repository.getFile( this, "jar", rootDir, flat );
-		URL sourceUrl = repository.getUrl( this, "jar" );
-		artifacts.add( new Artifact( file, sourceUrl, false ) );
+		if( rootDirectories.getLibrary() != null )
+			artifacts.add( new Artifact( Artifact.Type.LIBRARY, repository.getFile( this, "jar", null, rootDirectories.getLibrary(), flat ), repository.getUrl( this, "jar", null ), false ) );
+		if( rootDirectories.getReference() != null )
+			artifacts.add( new Artifact( Artifact.Type.REFERENCE, repository.getFile( this, "jar", "javadoc", rootDirectories.getReference(), flat ), repository.getUrl( this, "jar", "javadoc" ), false ) );
+		if( rootDirectories.getSource() != null )
+			artifacts.add( new Artifact( Artifact.Type.SOURCE, repository.getFile( this, "jar", "sources", rootDirectories.getSource(), flat ), repository.getUrl( this, "jar", "sources" ), false ) );
 		return Collections.unmodifiableCollection( artifacts );
 	}
 

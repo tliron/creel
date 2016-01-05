@@ -43,7 +43,7 @@ import com.threecrickets.creel.internal.Properties;
  * &lt;project name="Sincerity" default="compile" xmlns:creel="antlib:com.threecrickets.creel.ant"&gt;
  * 	&lt;taskdef uri="antlib:com.threecrickets.creel.ant" resource="com/threecrickets/creel/ant/antlib.xml" classpath="creel.jar"/&gt;
  *  &lt;target name="dependencies&gt;
- * 	  &lt;creel:run conflictPolicy="newest" destDir="lib" pathId="my.dependencies.classpath"&gt;
+ * 	  &lt;creel:run conflictPolicy="newest" libraryDir="lib" pathId="my.dependencies.classpath"&gt;
  * 	    &lt;module group="com.github.sommeri" name="less4j" version="(,1.15.2)"/&gt;
  * 	    &lt;module group="org.jsoup" name="jsoup" version="1.8.1"/&gt;
  *      &lt;repository id="restlet" url="http://maven.restlet.com" all="false"/&gt;
@@ -106,14 +106,47 @@ public class RunTask extends Task
 	}
 
 	/**
-	 * The destination root directory.
+	 * The library destination root directory.
 	 * 
-	 * @param destDir
-	 *        The destination directory
+	 * @param libraryDir
+	 *        The library root directory
 	 */
-	public void setDestDir( FileResource destDir )
+	public void setLibraryDir( FileResource libraryDir )
 	{
-		this.destDir = destDir;
+		this.libraryDir = libraryDir;
+	}
+
+	/**
+	 * The reference destination root directory.
+	 * 
+	 * @param referenceDir
+	 *        The reference root directory
+	 */
+	public void setReferenceDir( FileResource referenceDir )
+	{
+		this.referenceDir = referenceDir;
+	}
+
+	/**
+	 * The source destination root directory.
+	 * 
+	 * @param sourceDir
+	 *        The source root directory
+	 */
+	public void setSourceDir( FileResource sourceDir )
+	{
+		this.sourceDir = sourceDir;
+	}
+
+	/**
+	 * The other destination root directory.
+	 * 
+	 * @param otherDir
+	 *        The other root directory
+	 */
+	public void setOtherDir( FileResource otherDir )
+	{
+		this.otherDir = otherDir;
 	}
 
 	/**
@@ -275,7 +308,14 @@ public class RunTask extends Task
 
 		try
 		{
-			engine.setRootDir( destDir.getFile() );
+			if( libraryDir != null )
+				engine.getRootDirectories().setLibrary( libraryDir.getFile() );
+			if( referenceDir != null )
+				engine.getRootDirectories().setReference( referenceDir.getFile() );
+			if( sourceDir != null )
+				engine.getRootDirectories().setSource( sourceDir.getFile() );
+			if( otherDir != null )
+				engine.getRootDirectories().setOther( otherDir.getFile() );
 			if( state != null )
 				engine.setStateFile( state.getFile() );
 		}
@@ -319,7 +359,13 @@ public class RunTask extends Task
 
 	private String pathId;
 
-	private FileResource destDir = new FileResource( new File( "lib" ) );
+	private FileResource libraryDir = new FileResource( new File( "lib" ) );
+
+	private FileResource referenceDir = null;
+
+	private FileResource sourceDir = null;
+
+	private FileResource otherDir = null;
 
 	private FileResource state = null;
 

@@ -14,9 +14,10 @@ package com.threecrickets.creel.internal;
 import java.util.Comparator;
 
 import com.threecrickets.creel.Module;
+import com.threecrickets.creel.exception.IncompatibleIdentifiersException;
 
 /**
- * Compares modules according to their identifiers as strings.
+ * Compares modules according to their identifiers.
  * 
  * @author Tal Liron
  */
@@ -38,6 +39,14 @@ public class ModuleIdentifierComparator implements Comparator<Module>
 	@Override
 	public int compare( Module m1, Module m2 )
 	{
-		return m1.getIdentifier().toString().compareTo( m2.getIdentifier().toString() );
+		try
+		{
+			return m1.getIdentifier().compareTo( m2.getIdentifier() );
+		}
+		catch( IncompatibleIdentifiersException x )
+		{
+			return m1.getIdentifier().toString().compareTo( m2.getIdentifier().toString() );
+
+		}
 	}
 }

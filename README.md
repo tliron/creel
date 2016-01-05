@@ -56,7 +56,10 @@ Here's a simple example in JavaScript, `creel.js`, using the excellent Nashorn e
         {type: 'rewriteVersion', group: 'com.beust', name: '*c?mmand*', newVersion: '1.35+'},
         {type: 'repositories', group: 'jsslutils', repositories: 'restlet'}]
     
-    engine.rootDir = 'lib'
+    engine.rootDirectories.library = 'project/libraries'
+    iengine.rootDirectories.reference = 'project/reference'
+    engine.rootDirectories.source = 'project/sources'
+    engine.rootDirectories.other = 'project'
     engine.run()
 
 To run it:
@@ -73,7 +76,7 @@ If you really don't want to or can't use scripting, then there's a basic command
 
 By default it will look for a file called `creel.properties` in the current directory. Here's a simple example:
 
-    destination=lib/jars
+    library=lib
 
     module.1.group=com.github.sommeri
     module.1.name=less4j
@@ -90,7 +93,7 @@ By default it will look for a file called `creel.properties` in the current dire
 
 Use `--help` to get a list of command line options.
 
-Note that the properties file can define all of the same attributes we used in the JavaScript example above, but we omitted them here for brevity. You may also set command line options in the properties file, such as `destination=` above. Command line options would override these. 
+Note that the properties file can define all of the same attributes we used in the JavaScript example above, but we omitted them here for brevity. You may also set long-form command line options in the properties file, such as `destination=` above. Command line options would override these. 
 
 
 Ant Task
@@ -102,7 +105,7 @@ Use Creel to download your dependency Jars and include them in the classpath. He
     <project name="Testing Creel" default="compile" xmlns:creel="antlib:com.threecrickets.creel.ant">
         <taskdef uri="antlib:com.threecrickets.creel.ant" resource="com/threecrickets/creel/ant/antlib.xml" classpath="creel.jar" />
         <target name="dependencies">
-            <creel:run destdir="lib" pathid="my.dependencies.classpath">
+            <creel:run librarydir="lib" pathid="my.dependencies.classpath">
                 <module group="com.github.sommeri" name="less4j" version="(,1.15.2)"/>
                 <module group="org.jsoup" name="jsoup" version="1.8.1"/>
                 <module group="com.fasterxml.jackson" name="jackson"/>

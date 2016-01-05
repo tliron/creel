@@ -63,17 +63,26 @@ public class Tool
 
 			Properties properties = new Properties( propertiesFile );
 
-			String destinationPath = properties.getProperty( "destination", "lib" );
-			destinationPath = argumentsHelper.getString( "destination", "d", destinationPath );
+			String libraryPath = properties.getProperty( "library", "libraries" );
+			libraryPath = argumentsHelper.getString( "library", "l", libraryPath );
+
+			String referencePath = properties.getProperty( "reference", null );
+			referencePath = argumentsHelper.getString( "reference", "r", referencePath );
+
+			String sourcePath = properties.getProperty( "source", null );
+			sourcePath = argumentsHelper.getString( "source", "s", sourcePath );
+
+			String otherPath = properties.getProperty( "other", null );
+			otherPath = argumentsHelper.getString( "other", "o", otherPath );
 
 			String statePath = properties.getProperty( "state", null );
-			statePath = argumentsHelper.getString( "state", "s", statePath );
+			statePath = argumentsHelper.getString( "state", "t", statePath );
 
 			int end = properties.getInteger( "end", 4 );
 			end = argumentsHelper.getInteger( "end", "e", end );
 
 			String defaultPlatform = properties.getProperty( "platform", "mvn" );
-			defaultPlatform = argumentsHelper.getString( "platform", "l", defaultPlatform );
+			defaultPlatform = argumentsHelper.getString( "platform", "p", defaultPlatform );
 
 			boolean quiet = properties.getBoolean( "quiet", false );
 			quiet = quiet || argumentsHelper.hasSwitch( "quiet", "q" );
@@ -99,7 +108,10 @@ public class Tool
 
 			engine.info( "Using " + propertiesFile );
 
-			engine.setRootDir( destinationPath );
+			engine.getRootDirectories().setLibrary( libraryPath );
+			engine.getRootDirectories().setReference( referencePath );
+			engine.getRootDirectories().setSource( sourcePath );
+			engine.getRootDirectories().setOther( otherPath );
 			engine.setStateFile( statePath );
 			engine.setDefaultPlatform( defaultPlatform );
 			engine.setVerbosity( verbosity );
@@ -135,10 +147,13 @@ public class Tool
 		out.println( "Options:" );
 		out.println( "  --help, -h              Show this help" );
 		out.println( "  --properties=, -p       Use properties file (default: creel.properties)" );
-		out.println( "  --destination=, -d      Download to directory (default: lib)" );
-		out.println( "  --state=, -s            State file (default: [destination]/.creel)" );
+		out.println( "  --library=, -l          Download/unpack library artifacts to directory (default: libraries)" );
+		out.println( "  --reference=, -r        Download/unpack reference artifacts to directory" );
+		out.println( "  --source=, -s           Download/unpack source artifacts to directory" );
+		out.println( "  --other=, -o            Download/unpack artifacts of unknown type to directory" );
+		out.println( "  --state=, -t            State file (default: [other]/.creel, or .creel if there is no other not set)" );
 		out.println( "  --end=, -e              At which stage to end: 1=identify, 2=install, 3=unpack, 4=delete redundant (default: 4)" );
-		out.println( "  --platform=, -l         Set default platform (default: mvn)" );
+		out.println( "  --platform=, -p         Set default platform (default: mvn)" );
 		out.println( "  --quiet, -q             Quiet mode: don't output anything" );
 		out.println( "  --verbosity=, -v        Output verbosity (default: 1)" );
 		out.println( "  --ansi, -a              ANSI terminal output: pretty colors and animations" );

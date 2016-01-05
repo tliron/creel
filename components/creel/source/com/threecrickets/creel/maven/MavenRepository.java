@@ -191,6 +191,8 @@ public class MavenRepository extends Repository
 	 *        The module identifier
 	 * @param extension
 	 *        The file extension
+	 * @param classifier
+	 *        The classifier or null
 	 * @param rootDir
 	 *        The root directory
 	 * @param flat
@@ -198,7 +200,7 @@ public class MavenRepository extends Repository
 	 *        directory (no sub-directories)
 	 * @return The file
 	 */
-	public File getFile( MavenModuleIdentifier moduleIdentifier, String extension, File rootDir, boolean flat )
+	public File getFile( MavenModuleIdentifier moduleIdentifier, String extension, String classifier, File rootDir, boolean flat )
 	{
 		File file;
 		try
@@ -214,10 +216,15 @@ public class MavenRepository extends Repository
 		{
 			StringBuilder s = new StringBuilder();
 			s.append( moduleIdentifier.getGroup() );
-			s.append( '_' );
+			s.append( '-' );
 			s.append( moduleIdentifier.getName() );
-			s.append( '_' );
+			s.append( '-' );
 			s.append( moduleIdentifier.getVersion() );
+			if( classifier != null )
+			{
+				s.append( '-' );
+				s.append( classifier );
+			}
 			s.append( '.' );
 			s.append( extension );
 			file = new File( file, s.toString() );
@@ -227,7 +234,10 @@ public class MavenRepository extends Repository
 			file = new File( file, moduleIdentifier.getGroup() );
 			file = new File( file, moduleIdentifier.getName() );
 			file = new File( file, moduleIdentifier.getVersion() );
-			file = new File( file, moduleIdentifier.getName() + '.' + extension );
+			if( classifier != null )
+				file = new File( file, moduleIdentifier.getName() + '-' + classifier + '.' + extension );
+			else
+				file = new File( file, moduleIdentifier.getName() + '.' + extension );
 		}
 		try
 		{
@@ -246,9 +256,11 @@ public class MavenRepository extends Repository
 	 *        The module identifier
 	 * @param extension
 	 *        The file extension
+	 * @param classifier
+	 *        The classifier or null
 	 * @return The URL
 	 */
-	public URL getUrl( MavenModuleIdentifier moduleIdentifier, String extension )
+	public URL getUrl( MavenModuleIdentifier moduleIdentifier, String extension, String classifier )
 	{
 		StringBuilder url = new StringBuilder( getUrl().toString() );
 
@@ -266,6 +278,11 @@ public class MavenRepository extends Repository
 		url.append( moduleIdentifier.getName() );
 		url.append( '-' );
 		url.append( moduleIdentifier.getVersion() );
+		if( classifier != null )
+		{
+			url.append( '-' );
+			url.append( classifier );
+		}
 		url.append( '.' );
 		url.append( extension );
 
@@ -336,7 +353,7 @@ public class MavenRepository extends Repository
 			notifier = new Notifier();
 
 		// TODO: cache POMs
-		URL url = getUrl( moduleIdentifier, "pom" );
+		URL url = getUrl( moduleIdentifier, "pom", null );
 		try
 		{
 			Signature signature = isCheckSignatures() ? new Signature( url, isAllowMd5() ) : null;
@@ -446,7 +463,7 @@ public class MavenRepository extends Repository
 	public boolean hasModule( ModuleIdentifier moduleIdentifier )
 	{
 		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
-		URL url = getUrl( mavenModuleIdentifier, "pom" );
+		URL url = getUrl( mavenModuleIdentifier, "pom", null );
 		return IoUtil.exists( url );
 	}
 
@@ -472,7 +489,7 @@ public class MavenRepository extends Repository
 
 	public void validateArtifact( ModuleIdentifier moduleIdentifier, Artifact artifact, Notifier notifier )
 	{
-		MavenModuleIdentifier mavenModuleIdentifier = MavenModuleIdentifier.cast( moduleIdentifier );
+		MavenModuleIdentifier.cast( moduleIdentifier );
 
 		if( !isCheckSignatures() )
 			return;
@@ -480,14 +497,15 @@ public class MavenRepository extends Repository
 		if( notifier == null )
 			notifier = new Notifier();
 
-		URL url = getUrl( mavenModuleIdentifier, "jar" );
 		try
 		{
-			Signature signature = new Signature( url, allowMd5 );
+			Signature signature = new Signature( artifact.getSourceUrl(), allowMd5 );
 			if( !signature.validate( artifact.getFile() ) )
 			{
-				notifier.error( "Invalid signature for " + artifact.getFile() );
-				// IoUtil.deleteWithParentDirectories( file, root );
+				notifier.error( "Invalid, so deleting " + artifact.getFile() );
+				artifact.getFile().delete();
+				// IoUtil.deleteWithParentDirectories( artifact.getFile(), root
+				// );
 				throw new InvalidArtifactException( artifact );
 			}
 		}

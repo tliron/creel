@@ -78,7 +78,10 @@ public class ArgumentsHelper
 		{
 			String argument = i.next();
 			if( argument.startsWith( longForm ) )
-				return argument.substring( longForm.length() );
+			{
+				String value = argument.substring( longForm.length() ).trim();
+				return !value.isEmpty() ? value : defaultValue;
+			}
 			else if( argument.startsWith( shortForm ) )
 				if( i.hasNext() )
 					return i.next();

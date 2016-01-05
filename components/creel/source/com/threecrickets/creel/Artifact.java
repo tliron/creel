@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import com.threecrickets.creel.util.ClassUtil;
 import com.threecrickets.creel.util.DigestUtil;
 import com.threecrickets.creel.util.HexUtil;
 import com.threecrickets.creel.util.IoUtil;
@@ -36,8 +37,36 @@ import com.threecrickets.creel.util.ProgressListener;
  * 
  * @author Tal Liron
  */
-public class Artifact
+public class Artifact implements Comparable<Artifact>
 {
+	//
+	// Constants
+	//
+
+	/**
+	 * Artifact type.
+	 */
+	public enum Type
+	{
+		/**
+		 * Contains JVM ".class" files.
+		 */
+		LIBRARY,
+		/**
+		 * Contains reference materials (JavaDocs, manuals, etc.)
+		 */
+		REFERENCE,
+		/**
+		 * Contains source code (".java" files, etc.)
+		 */
+		SOURCE;
+
+		public static Type valueOfNonStrict( String value )
+		{
+			return ClassUtil.valueOfNonStrict( Type.class, value );
+		}
+	};
+
 	//
 	// Static attributes
 	//
@@ -54,6 +83,8 @@ public class Artifact
 	/**
 	 * Constructor.
 	 * 
+	 * @param type
+	 *        The type
 	 * @param file
 	 *        The file
 	 * @param sourceUrl
@@ -61,7 +92,7 @@ public class Artifact
 	 * @param isVolatile
 	 *        Whether the artifact is volatile
 	 */
-	public Artifact( File file, URL sourceUrl, boolean isVolatile )
+	public Artifact( Type type, File file, URL sourceUrl, boolean isVolatile )
 	{
 		try
 		{
@@ -71,6 +102,7 @@ public class Artifact
 		{
 			throw new RuntimeException( "Could not access artifact file: " + file, x );
 		}
+		this.type = type;
 		this.sourceUrl = sourceUrl;
 		this.isVolatile = isVolatile;
 	}
@@ -80,12 +112,17 @@ public class Artifact
 	 * 
 	 * @param config
 	 *        The config
-	 * @param rootDir
-	 *        The root directory of the file or null
-	 * @see Artifact#toConfig(File)
+	 * @param rootDirectories
+	 *        The root directories in which to install artifacts
+	 * @see Artifact#toConfig(RootDirectories)
 	 */
-	public Artifact( Map<String, String> config, File rootDir )
+	public Artifact( Map<String, String> config, RootDirectories rootDirectories )
 	{
+		String type = config.get( "type" );
+		this.type = Type.valueOfNonStrict( type );
+		File rootDir = rootDirectories.getRootFor( this );
+		if( rootDir == null )
+			throw new RuntimeException( "Unsupported type: " + type );
 		String url = config.get( "url" );
 		if( url == null )
 			throw new RuntimeException( "Missing URL" );
@@ -100,7 +137,7 @@ public class Artifact
 		String file = config.get( "file" );
 		if( file == null )
 			throw new RuntimeException( "Missing file" );
-		this.file = rootDir != null ? new File( rootDir, file ) : new File( file );
+		this.file = new File( rootDir, file );
 		String isVolatile = config.get( "volatile" );
 		this.isVolatile = isVolatile != null ? Boolean.valueOf( isVolatile ) : false;
 		String digest = config.get( "digest" );
@@ -111,6 +148,16 @@ public class Artifact
 	//
 	// Attributes
 	//
+
+	/**
+	 * The type.
+	 * 
+	 * @return The type
+	 */
+	public Type getType()
+	{
+		return type;
+	}
 
 	/**
 	 * The file.
@@ -159,23 +206,29 @@ public class Artifact
 	/**
 	 * Converts the artifact to a config.
 	 * 
-	 * @param rootDir
-	 *        The root directory of the file
+	 * @param rootDirectories
+	 *        The root directories in which to install artifacts
 	 * @return The config
-	 * @see Artifact#Artifact(Map, File)
+	 * @see Artifact#Artifact(Map, RootDirectories)
 	 */
-	public Map<String, Object> toConfig( File rootDir )
+	public Map<String, Object> toConfig( RootDirectories rootDirectories )
 	{
 		Map<String, Object> config = new HashMap<String, Object>();
+		if( getType() != null )
+			config.put( "type", getType().toString() );
 		config.put( "url", getSourceUrl().toString() );
 		Path path = getFile().toPath();
-		try
+		File rootDir = rootDirectories.getRootFor( this );
+		if( rootDir != null )
 		{
-			config.put( "file", rootDir.toPath().relativize( path ) );
-		}
-		catch( IllegalArgumentException x )
-		{
-			config.put( "file", path );
+			try
+			{
+				config.put( "file", rootDir.toPath().relativize( path ) );
+			}
+			catch( IllegalArgumentException x )
+			{
+				config.put( "file", path );
+			}
 		}
 		if( isVolatile() )
 			config.put( "volatile", true );
@@ -245,13 +298,17 @@ public class Artifact
 	 * Deletes the file, including empty parent directories up to the root
 	 * directory.
 	 * 
-	 * @param rootDir
-	 *        The root directory
+	 * @param rootDirectories
+	 *        The root directories in which to install artifacts
 	 * @return True if deleted
 	 */
-	public boolean delete( File rootDir )
+	public boolean delete( RootDirectories rootDirectories )
 	{
-		return IoUtil.deleteWithParentDirectories( getFile(), rootDir );
+		File rootDir = rootDirectories.getRootFor( this );
+		if( rootDir != null )
+			return IoUtil.deleteWithParentDirectories( getFile(), rootDir );
+		else
+			return getFile().delete();
 	}
 
 	/**
@@ -263,6 +320,22 @@ public class Artifact
 	public void updateDigest() throws IOException
 	{
 		digest = DigestUtil.getDigest( getFile(), algorithm );
+	}
+
+	//
+	// Comparable
+	//
+
+	public int compareTo( Artifact artifact )
+	{
+		int c;
+		if( getType() == null )
+			c = 1;
+		else if( artifact.getType() == null )
+			c = -1;
+		else
+			c = getType().compareTo( artifact.getType() );
+		return c == 0 ? getFile().compareTo( artifact.getFile() ) : c;
 	}
 
 	//
@@ -298,6 +371,8 @@ public class Artifact
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private final Type type;
 
 	private final File file;
 

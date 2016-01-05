@@ -13,9 +13,7 @@ package com.threecrickets.creel.downloader;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -205,16 +203,6 @@ public class Downloader implements Closeable
 	 */
 	public void submit( URL sourceUrl, File file, Runnable validator )
 	{
-		try
-		{
-			Files.createDirectories( file.toPath().getParent() );
-		}
-		catch( IOException x )
-		{
-			getNotifier().error( "Could not create file " + file, x );
-			return;
-		}
-
 		ExecutorService executor = getExecutor( sourceUrl.getHost() );
 
 		File sourceFile = IoUtil.toFile( sourceUrl );
