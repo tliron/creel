@@ -24,18 +24,18 @@ How does Creel compare to [Gradle](http://gradle.org/)? Well, Creel is _much_ li
 
 And, actually, that's precisely the context in which Creel was created: it was spun off as an independent library out of [Sincerity](http://threecrickets.com/sincerity/). Sincerity is a terrific tool for managing and bootstrapping application containers. Check it out!
 
-How does Creel compare to [Ivy](http://ant.apache.org/ivy/)? Well, Ivy can also be used to download Maven dependencies and integrates with Ant, but it's heavier and much more complex. We actually used Ivy for a long time, but found it too cumbersome to embed and extend. Creel was conceived as a lighter, faster, and simpler replacement for Ivy.  
+How does Creel compare to [Ivy](http://ant.apache.org/ivy/)? Well, Ivy can also be used to download Maven dependencies and integrates with Ant, but it's heavier (1.3Mb!) and _much_ more complex. We actually used Ivy for a long time, but found it too cumbersome to embed and extend. Creel was conceived as a lighter, faster, and simpler replacement for Ivy.  
 
 
 Embedded
 --------
 
-It's easy to embed Creel into your Java (or Groovy, Clojure, Scala, etc.) application. A simple [EventHandler interface](components/creel/source/com/threecrickets/creel/event) can allow you to integrate Creel activity notifications as appropriate.
+It's easy to embed Creel into your Java (or Groovy, Clojure, Scala, etc.) application. A simple [EventHandler interface](http://threecrickets.com/api/java/creel/index.html?com/threecrickets/creel/event/package-summary.html) can allow you to integrate Creel activity notifications as appropriate.
 
-Here's a simple example in JavaScript, `creel.js`, using the excellent Nashorn engine that comes with JVM 8: 
+Here's a simple example in JavaScript, let's call it `creel.js`. If you have JVM 8, it will just work, using the [built-in JavaScript engine](https://docs.oracle.com/javase/8/docs/technotes/guides/scripting/nashorn/) engine. (For JVM 7, you can use [Rhino](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino).)
 
     var engine = new com.threecrickets.creel.Engine()
-    engine.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true, false))
+    engine.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true, false)) // ansi=true, stracktraces=false
     
     engine.modules = [
         {group: 'com.github.sommeri', name: 'less4j', version: '(,1.15.2)'},
@@ -44,11 +44,9 @@ Here's a simple example in JavaScript, `creel.js`, using the excellent Nashorn e
         {group: 'com.threecrickets.prudence', name: 'prudence'},
         {group: 'jsslutils', name: 'jsslutils'}]
     
-    var local = false
     engine.repositories = [
-        local ? {id: '3c', url: 'file:/Depot/Repository/'} : {id: '3c', url: 'http://repository.threecrickets.com/maven'},
-        {id: 'restlet', url: 'http://maven.restlet.com', all: false},
-        {id: 'central', url: 'https://repo1.maven.org/maven2/'}]
+        {id: 'central', url: 'https://repo1.maven.org/maven2/'},
+        {id: 'restlet', url: 'http://maven.restlet.com', all: false}]
     
     engine.rules = [
         {type: 'exclude', name: '*annotations*'},
@@ -56,21 +54,23 @@ Here's a simple example in JavaScript, `creel.js`, using the excellent Nashorn e
         {type: 'rewriteVersion', group: 'com.beust', name: '*c?mmand*', newVersion: '1.35+'},
         {type: 'repositories', group: 'jsslutils', repositories: 'restlet'}]
     
-    engine.rootDirectories.library = 'project/libraries'
-    iengine.rootDirectories.reference = 'project/reference'
-    engine.rootDirectories.source = 'project/sources'
-    engine.rootDirectories.other = 'project'
+    engine.directories.default = 'project'
+    engine.directories.library = 'project/libraries/jars'
+    engine.directories.api = 'project/reference/api'
+    engine.directories.source = 'project/reference/source'
     engine.run()
 
 To run it:
 
     jjs -cp creel.jar creel.js
 
+Creel keeps a small hidden state file in which it keeps track what it downloaded. This is used mostly for deleting old files during upgrades. By default, the file will be `.creel` in `directories.default`, or in the current directory if that is not set. 
+
 
 Command Line
 ------------
 
-If you really don't want to or can't use scripting, then there's a basic command line:
+If you really don't want to or can't use scripting, then Creel has a basic command line tool:
 
     java -jar creel.jar
 
@@ -93,7 +93,7 @@ By default it will look for a file called `creel.properties` in the current dire
 
 Use `--help` to get a list of command line options.
 
-Note that the properties file can define all of the same attributes we used in the JavaScript example above, but we omitted them here for brevity. You may also set long-form command line options in the properties file, such as `destination=` above. Command line options would override these. 
+Note that the properties file can define all of the same attributes we used in the JavaScript example above, but we omitted them here for brevity. You may also set long-form command line options in the properties file, such as `library=` above. (Command line options would override these.) 
 
 
 Ant Task
@@ -105,7 +105,7 @@ Use Creel to download your dependency Jars and include them in the classpath. He
     <project name="Testing Creel" default="compile" xmlns:creel="antlib:com.threecrickets.creel.ant">
         <taskdef uri="antlib:com.threecrickets.creel.ant" resource="com/threecrickets/creel/ant/antlib.xml" classpath="creel.jar" />
         <target name="dependencies">
-            <creel:run librarydir="lib" pathid="my.dependencies.classpath">
+            <creel:run ref="dependencies">
                 <module group="com.github.sommeri" name="less4j" version="(,1.15.2)"/>
                 <module group="org.jsoup" name="jsoup" version="1.8.1"/>
                 <module group="com.fasterxml.jackson" name="jackson"/>
@@ -118,21 +118,23 @@ Use Creel to download your dependency Jars and include them in the classpath. He
             </creel:run>
         </target>
         <target name="compile" depends="dependencies">
-            <javac srcdir="." classpathref="my.dependencies.classpath">
+            <javac srcdir="." classpathref="dependencies">
                 <include name="Test.java" />
             </javac>
         </target>
     </project>
 
-Note how lovely it is that you can include everything in your single `build.xml` file. (Still, if you prefer a separate file, the task supports loading a `creel.properties` file.)
+Note how lovely it is that you can include everything in your single `build.xml` file. (Still, if you prefer a separate file, the task supports loading a `creel.properties` as with the command line tool.)
 
-See the online documentation for all Ant task attributes.
+The task purposely does not run again if it was already completed successfully. If you've made modifications to your `build.xml` and want the task to run again, then you should delete the Creel state file and all installed artifacts. This is likely what you'd do normally when your "clean" task runs.
+
+See the [online documentation](http://threecrickets.com/api/java/creel/index.html?com/threecrickets/creel/ant/RunTask.html) for all available task attributes.
 
 
 Rules
 -----
 
-The following rules are built in:
+The following rules are supported:
 
 ##### exclude
 
@@ -142,7 +144,7 @@ To match, set `group`, `name`, and optionally `version`. You can use globs and v
 
 ##### excludeDependencies
 
-Excludes modules' dependencies from installation. (In Ivy these are called "intransient" dependencies.)
+Excludes modules' dependencies from installation. (In Ivy these are called "transient" dependencies.)
 
 To match, set `group`, `name`, and optionally `version`. You can use globs and version ranges.
 

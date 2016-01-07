@@ -56,7 +56,7 @@ import com.threecrickets.creel.util.IoUtil;
  * by other modules. To match, set "group", "name", and optionally "version".
  * You can use globs and version ranges.</li>
  * <li><b>excludeDependencies</b>: Excludes modules' dependencies from
- * installation. (In Ivy these are called "intransient" dependencies.) To match,
+ * installation. (In Ivy these are called "transient" dependencies.) To match,
  * set "group", "name", and optionally "version". You can use globs and version
  * ranges.</li>
  * <li><b>rewrite</b>: Rewrites module specifications. To match, set "group",

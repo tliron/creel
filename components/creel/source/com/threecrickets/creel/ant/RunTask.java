@@ -29,12 +29,18 @@ import com.threecrickets.creel.Tool;
 import com.threecrickets.creel.ant.internal.DynamicType;
 import com.threecrickets.creel.event.ConsoleEventHandler;
 import com.threecrickets.creel.event.EventHandlers;
-import com.threecrickets.creel.internal.Properties;
+import com.threecrickets.creel.internal.Configuration;
 
 /**
  * <a href="http://ant.apache.org/">Ant</a> task for Creel. Allows you to
  * download, install, and upgrade dependencies, as well as include them in the
  * classpath for compilation.
+ * <p>
+ * The task purposely does not run again if it was already completed
+ * successfully. If you've made modifications to your build.xml and want the
+ * task to run again, then you should delete the Creel state file and all
+ * installed artifacts. This is likely what you'd do normally when your "clean"
+ * task runs.
  * <p>
  * An example build.xml:
  * 
@@ -43,7 +49,7 @@ import com.threecrickets.creel.internal.Properties;
  * &lt;project name="Sincerity" default="compile" xmlns:creel="antlib:com.threecrickets.creel.ant"&gt;
  * 	&lt;taskdef uri="antlib:com.threecrickets.creel.ant" resource="com/threecrickets/creel/ant/antlib.xml" classpath="creel.jar"/&gt;
  *  &lt;target name="dependencies&gt;
- * 	  &lt;creel:run conflictPolicy="newest" libraryDir="lib" pathId="my.dependencies.classpath"&gt;
+ * 	  &lt;creel:run conflictPolicy="newest" libraryDir="lib" ref="my.dependencies.classpath"&gt;
  * 	    &lt;module group="com.github.sommeri" name="less4j" version="(,1.15.2)"/&gt;
  * 	    &lt;module group="org.jsoup" name="jsoup" version="1.8.1"/&gt;
  *      &lt;repository id="restlet" url="http://maven.restlet.com" all="false"/&gt;
@@ -82,34 +88,48 @@ public class RunTask extends Task
 	//
 
 	/**
-	 * The JVM properties file. If specified, will load the configuration from
-	 * this file.
+	 * The configuration (JVM properties) file. If specified, will load the
+	 * configuration from this file.
 	 * 
-	 * @param properties
-	 *        The JVM properties file
+	 * @param configuration
+	 *        The configuration file
 	 */
-	public void setProperties( FileResource properties )
+	public void setConfiguration( FileResource configuration )
 	{
-		this.properties = properties;
+		this.configuration = configuration;
 	}
 
 	/**
-	 * The path ID. If specified, will set an Ant path reference to the
-	 * installed artifacts.
+	 * The project reference ID for the resulting classpath (all installed Jar
+	 * artifacts).
 	 * 
-	 * @param pathId
-	 *        The path ID
+	 * @param ref
+	 *        The reference ID
 	 */
-	public void setPathId( String pathId )
+	public void setRef( String ref )
 	{
-		this.pathId = pathId;
+		this.ref = ref;
 	}
 
 	/**
-	 * The library destination root directory.
+	 * The default directory in which to install artifacts. When null, will not
+	 * install them.
+	 * 
+	 * @param defaultDir
+	 *        The other directory
+	 */
+	public void setDefaultDir( FileResource defaultDir )
+	{
+		this.defaultDir = defaultDir;
+	}
+
+	/**
+	 * The directory in which to install {@link Artifact.Type#LIBRARY}
+	 * artifacts. When null, will not install them. Defaults to
+	 * "libraries/jars".
 	 * 
 	 * @param libraryDir
-	 *        The library root directory
+	 *        The library directory
 	 */
 	public void setLibraryDir( FileResource libraryDir )
 	{
@@ -117,21 +137,23 @@ public class RunTask extends Task
 	}
 
 	/**
-	 * The reference destination root directory.
+	 * The directory in which to install {@link Artifact.Type#API} artifacts.
+	 * When null, will not install them.
 	 * 
-	 * @param referenceDir
-	 *        The reference root directory
+	 * @param apiDir
+	 *        The API directory
 	 */
-	public void setReferenceDir( FileResource referenceDir )
+	public void setApiDir( FileResource apiDir )
 	{
-		this.referenceDir = referenceDir;
+		this.apiDir = apiDir;
 	}
 
 	/**
-	 * The source destination root directory.
+	 * The directory in which to install {@link Artifact.Type#SOURCE} artifacts.
+	 * When null, will not install them.
 	 * 
 	 * @param sourceDir
-	 *        The source root directory
+	 *        The source directory
 	 */
 	public void setSourceDir( FileResource sourceDir )
 	{
@@ -139,19 +161,9 @@ public class RunTask extends Task
 	}
 
 	/**
-	 * The other destination root directory.
-	 * 
-	 * @param otherDir
-	 *        The other root directory
-	 */
-	public void setOtherDir( FileResource otherDir )
-	{
-		this.otherDir = otherDir;
-	}
-
-	/**
-	 * Where to store state. Will default to a file named ".creel" in the root
-	 * directory.
+	 * Where to store state. Will default to a file named ".creel" in the other
+	 * artifact directory, or the current directory if the other artifact
+	 * directory was not set.
 	 * 
 	 * @param state
 	 *        The state file
@@ -173,7 +185,7 @@ public class RunTask extends Task
 	}
 
 	/**
-	 * Whether we should use a flat file structure under the root directory (no
+	 * Whether we should use a flat file structure under the directories (no
 	 * sub-directories). Defaults to false.
 	 * 
 	 * @param flat
@@ -230,7 +242,7 @@ public class RunTask extends Task
 	}
 
 	/**
-	 * The verbosity level. A higher number means more verbose. Defaults to 1.
+	 * The verbosity level. A higher number means more verbose. Defaults to 0.
 	 * 
 	 * @param verbosity
 	 *        The verbosity level
@@ -238,6 +250,17 @@ public class RunTask extends Task
 	public void setVerbosity( int verbosity )
 	{
 		this.verbosity = verbosity;
+	}
+
+	/**
+	 * Set to true to execute the task even if it already ran.
+	 * 
+	 * @param force
+	 *        Whether we should always execute
+	 */
+	public void setForce( boolean force )
+	{
+		this.force = force;
 	}
 
 	//
@@ -292,32 +315,36 @@ public class RunTask extends Task
 		if( !quiet )
 			( (EventHandlers) engine.getEventHandler() ).add( new ConsoleEventHandler( false, verbosity > 1 ) );
 
-		if( properties != null )
+		if( configuration != null )
 		{
 			try
 			{
-				Properties properties = new Properties( this.properties.getFile() );
-				modules = properties.getModuleSpecificationConfigs();
-				repositories = properties.getRepositoryConfigs();
+				Configuration configuration = new Configuration( this.configuration.getFile() );
+				modules = configuration.getModuleSpecificationConfigs();
+				repositories = configuration.getRepositoryConfigs();
 			}
 			catch( IOException x )
 			{
-				throw new BuildException( "Could not load properties: " + properties.getFile(), x );
+				throw new BuildException( "Could not load configuration: " + configuration.getFile(), x );
 			}
 		}
 
+		boolean run;
+
 		try
 		{
+			if( defaultDir != null )
+				engine.getDirectories().setDefault( defaultDir.getFile() );
 			if( libraryDir != null )
-				engine.getRootDirectories().setLibrary( libraryDir.getFile() );
-			if( referenceDir != null )
-				engine.getRootDirectories().setReference( referenceDir.getFile() );
+				engine.getDirectories().setLibrary( libraryDir.getFile() );
+			if( apiDir != null )
+				engine.getDirectories().setApi( apiDir.getFile() );
 			if( sourceDir != null )
-				engine.getRootDirectories().setSource( sourceDir.getFile() );
-			if( otherDir != null )
-				engine.getRootDirectories().setOther( otherDir.getFile() );
+				engine.getDirectories().setSource( sourceDir.getFile() );
 			if( state != null )
 				engine.setStateFile( state.getFile() );
+
+			run = force || !engine.getStateFile().exists();
 		}
 		catch( IOException x )
 		{
@@ -335,14 +362,18 @@ public class RunTask extends Task
 		engine.setRepositories( repositories );
 		engine.setRules( rules );
 
-		engine.run();
+		if( run )
+			engine.run();
+		else
+			engine.load();
 
-		if( pathId != null )
+		if( ref != null )
 		{
 			Path path = new Path( getProject() );
 			for( Artifact artifact : engine.getInstalledArtifacts() )
-				path.createPathElement().setLocation( artifact.getFile() );
-			getProject().getReferences().put( pathId, path );
+				if( artifact.getType() == Artifact.Type.LIBRARY )
+					path.createPathElement().setLocation( artifact.getFile() );
+			getProject().addReference( ref, path );
 		}
 	}
 
@@ -355,17 +386,17 @@ public class RunTask extends Task
 
 	private Collection<Map<String, ?>> rules = new ArrayList<Map<String, ?>>();
 
-	private FileResource properties;
+	private FileResource configuration;
 
-	private String pathId;
+	private String ref;
 
-	private FileResource libraryDir = new FileResource( new File( "lib" ) );
+	private FileResource libraryDir = new FileResource( new File( new File( "libraries" ), "jars" ) );
 
-	private FileResource referenceDir = null;
+	private FileResource apiDir = null;
 
 	private FileResource sourceDir = null;
 
-	private FileResource otherDir = null;
+	private FileResource defaultDir = null;
 
 	private FileResource state = null;
 
@@ -381,5 +412,7 @@ public class RunTask extends Task
 
 	private boolean quiet;
 
-	private int verbosity = 1;
+	private int verbosity = 0;
+
+	private boolean force;
 }

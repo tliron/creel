@@ -31,13 +31,12 @@ import com.threecrickets.creel.downloader.Downloader;
 import com.threecrickets.creel.event.EventHandlers;
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.exception.UnsupportedPlatformException;
-import com.threecrickets.creel.internal.ArtifactDatabase;
 import com.threecrickets.creel.internal.ArtifactsClassLoader;
 import com.threecrickets.creel.internal.ConcurrentIdentificationContext;
 import com.threecrickets.creel.internal.Conflicts;
 import com.threecrickets.creel.internal.IdentificationContext;
 import com.threecrickets.creel.internal.Modules;
-import com.threecrickets.creel.packaging.Package;
+import com.threecrickets.creel.internal.State;
 import com.threecrickets.creel.packaging.PackagingUtil;
 import com.threecrickets.creel.util.ClassUtil;
 import com.threecrickets.creel.util.ConfigHelper;
@@ -112,7 +111,11 @@ public class Engine extends Notifier implements Runnable
 		/**
 		 * Delete redundant (fourth stage).
 		 */
-		DELETE_REDUNDANT( 4 );
+		DELETE_REDUNDANT( 4 ),
+		/**
+		 * All stages.
+		 */
+		ALL( Integer.MAX_VALUE );
 
 		public int getValue()
 		{
@@ -125,6 +128,11 @@ public class Engine extends Notifier implements Runnable
 				if( value == stage.getValue() )
 					return stage;
 			return null;
+		}
+
+		public static Stage valueOfNonStrict( String value )
+		{
+			return ClassUtil.valueOfNonStrict( Stage.class, value );
 		}
 
 		private Stage( int value )
@@ -272,19 +280,82 @@ public class Engine extends Notifier implements Runnable
 	}
 
 	/**
-	 * The root directories in which to install artifacts.
+	 * Number of threads per host. Defaults to 4.
 	 * 
-	 * @return The root directories
+	 * @return Number of threads per host
 	 */
-	public RootDirectories getRootDirectories()
+	public int getThreadsPerHost()
 	{
-		return rootDirectories;
+		return threadsPerHost;
 	}
 
 	/**
-	 * Where to store state. Will default to a file named ".creel" in the
-	 * unknown artifact root directory, or the current directory if the unknown
-	 * artifact root directory was not set.
+	 * Number of threads per host. Defaults to 4.
+	 * 
+	 * @param threadsPerHost
+	 *        Number of threads per host
+	 */
+	public void setThreadsPerHost( int threadsPerHost )
+	{
+		this.threadsPerHost = threadsPerHost;
+	}
+
+	/**
+	 * Number of chunks per file. Defaults to 4.
+	 * 
+	 * @return Number of chunks per file
+	 */
+	public int getChunksPerFile()
+	{
+		return chunksPerFile;
+	}
+
+	/**
+	 * Number of chunks per file. Defaults to 4.
+	 * 
+	 * @param chunksPerFile
+	 *        Number of chunks per file
+	 */
+	public void setChunksPerFile( int chunksPerFile )
+	{
+		this.chunksPerFile = chunksPerFile;
+	}
+
+	/**
+	 * Stream size in bytes required to enable chunking. Defaults to 1Mb.
+	 * 
+	 * @return Stream size in bytes required to enable chunking
+	 */
+	public int getMinimumSizeForChunking()
+	{
+		return minimumSizeForChunking;
+	}
+
+	/**
+	 * Stream size in bytes required to enable chunking. Defaults to 1Mb.
+	 * 
+	 * @param minimumSizeForChunking
+	 *        Stream size in bytes required to enable chunking
+	 */
+	public void setMinimumSizeForChunking( int minimumSizeForChunking )
+	{
+		this.minimumSizeForChunking = minimumSizeForChunking;
+	}
+
+	/**
+	 * The directories in which to install artifacts.
+	 * 
+	 * @return The directories
+	 */
+	public Directories getDirectories()
+	{
+		return directories;
+	}
+
+	/**
+	 * Where to store state. Will default to a file named ".creel" in the other
+	 * artifact root directory, or the current directory if the other artifact
+	 * root directory was not set.
 	 * 
 	 * @return The state file
 	 * @throws IOException
@@ -295,8 +366,8 @@ public class Engine extends Notifier implements Runnable
 		File stateFile = this.stateFile;
 		if( stateFile == null )
 		{
-			if( getRootDirectories().getOther() != null )
-				stateFile = new File( getRootDirectories().getOther(), ".creel" ).getCanonicalFile();
+			if( getDirectories().getDefault() != null )
+				stateFile = new File( getDirectories().getDefault(), ".creel" ).getCanonicalFile();
 			else
 				stateFile = new File( ".creel" ).getCanonicalFile();
 		}
@@ -354,7 +425,7 @@ public class Engine extends Notifier implements Runnable
 	}
 
 	/**
-	 * Whether we should use a flat file structure under the root directory (no
+	 * Whether we should use a flat file structure under the directories (no
 	 * sub-directories). Defaults to false.
 	 * 
 	 * @return True if flat
@@ -365,7 +436,7 @@ public class Engine extends Notifier implements Runnable
 	}
 
 	/**
-	 * Whether we should use a flat file structure under the root directory (no
+	 * Whether we should use a flat file structure under the directories (no
 	 * sub-directories). Defaults to false.
 	 * 
 	 * @param flat
@@ -577,6 +648,32 @@ public class Engine extends Notifier implements Runnable
 	//
 
 	/**
+	 * Loads the known artifacts from the state file.
+	 */
+	public void load()
+	{
+		try
+		{
+			for( Artifact artifact : new State( getStateFile(), getDirectories() ).getArtifacts() )
+				installedArtifacts.add( artifact );
+		}
+		catch( FileNotFoundException x )
+		{
+		}
+		catch( IOException x )
+		{
+			try
+			{
+				error( "Could not load state from " + getStateFile(), x );
+			}
+			catch( IOException xx )
+			{
+				error( xx );
+			}
+		}
+	}
+
+	/**
 	 * Runs the engine up to a certain stage.
 	 * 
 	 * @param stage
@@ -595,7 +692,7 @@ public class Engine extends Notifier implements Runnable
 	 */
 	public void run( String stage )
 	{
-		run( Stage.valueOf( stage ) );
+		run( Stage.valueOfNonStrict( stage ) );
 	}
 
 	/**
@@ -608,247 +705,230 @@ public class Engine extends Notifier implements Runnable
 	{
 		info( "Creel " + getVersion() );
 
+		State state = loadState();
+		boolean stateChanged = false;
+
 		// Identification
 
-		if( stage.getValue() < Stage.IDENTIFICATION.getValue() )
-			return;
-
-		String id = begin( "Identifying" );
-
-		if( isMultithreaded() )
+		if( stage.getValue() >= Stage.IDENTIFICATION.getValue() )
 		{
-			ConcurrentIdentificationContext concurrentContext = new ConcurrentIdentificationContext( 10 );
-			try
+			String id = begin( "Identifying" );
+
+			if( isMultithreaded() )
+			{
+				ConcurrentIdentificationContext concurrentContext = new ConcurrentIdentificationContext( 10 );
+				try
+				{
+					for( Module explicitModule : getExplicitModules() )
+						concurrentContext.identifyModule( new IdentifyModule( explicitModule, true, concurrentContext ) );
+				}
+				finally
+				{
+					concurrentContext.close();
+				}
+			}
+			else
 			{
 				for( Module explicitModule : getExplicitModules() )
-					concurrentContext.identifyModule( new IdentifyModule( explicitModule, true, concurrentContext ) );
+					identifyModule( explicitModule, true, null );
 			}
-			finally
+
+			int identifiedCount = identifiedModules.size();
+
+			// Resolve conflicts
+			conflicts.find( getIdentifiedModules() );
+			conflicts.resolve( getConflictPolicy(), getVerbosity() > 0 ? this : null );
+			for( Conflict conflict : getConflicts() )
 			{
-				concurrentContext.close();
+				for( Module reject : conflict.getRejects() )
+				{
+					identifiedModules.remove( reject.getIdentifier() );
+					replaceModule( reject, conflict.getChosen() );
+				}
 			}
+
+			// Sort for human readability
+			identifiedModules.sortByIdentifiers();
+			unidentifiedModules.sortBySpecifications();
+
+			if( identifiedCount == 0 )
+				end( id, "No modules identified" );
+			else
+				end( id, "Made " + identifiedCount + ( identifiedCount != 1 ? " identifications" : " identification" ) );
 		}
-		else
-		{
-			for( Module explicitModule : getExplicitModules() )
-				identifyModule( explicitModule, true, null );
-		}
-
-		int count = identifiedModules.size();
-
-		// Resolve conflicts
-		conflicts.find( getIdentifiedModules() );
-		conflicts.resolve( getConflictPolicy(), getVerbosity() > 0 ? this : null );
-		for( Conflict conflict : getConflicts() )
-		{
-			for( Module reject : conflict.getRejects() )
-			{
-				identifiedModules.remove( reject.getIdentifier() );
-				replaceModule( reject, conflict.getChosen() );
-			}
-		}
-
-		// Sort for human readability
-		identifiedModules.sortByIdentifiers();
-		unidentifiedModules.sortBySpecifications();
-
-		if( count == 0 )
-			end( id, "No modules identified" );
-		else
-			end( id, "Made " + count + ( count != 1 ? " identifications" : " identification" ) );
-
-		if( getUnidentifiedModules().iterator().hasNext() )
-			throw new RuntimeException( "Cannot install because could not identify all modules" );
 
 		// Installation
 
-		if( stage.getValue() < Stage.INSTALLATION.getValue() )
-			return;
-
-		id = begin( "Installing" );
-
-		int threadsPerHost = isMultithreaded() ? 4 : 1;
-		int chunksPerFile = isMultithreaded() ? 4 : 1;
-		Downloader downloader = new Downloader( threadsPerHost, chunksPerFile, this );
-		try
+		if( stage.getValue() >= Stage.INSTALLATION.getValue() )
 		{
-			downloader.setDelay( getDelay() );
-			for( Module module : identifiedModules )
+			if( !getIdentifiedModules().iterator().hasNext() )
 			{
-				for( Artifact artifact : module.getIdentifier().getArtifacts( getRootDirectories(), isFlat() ) )
-				{
-					if( isOverwrite() || !artifact.getFile().exists() )
-						downloader.submit( artifact.getSourceUrl(), artifact.getFile(), module.getIdentifier().getRepository().validateArtifactTask( module.getIdentifier(), artifact, this ) );
-					else
-						// Only validate
-						module.getIdentifier().getRepository().validateArtifact( module.getIdentifier(), artifact, this );
-					installedArtifacts.add( artifact );
-				}
+				deleteState();
+				throw new RuntimeException( "Cannot install because no modules have been identified" );
 			}
-			downloader.waitUntilDone();
-		}
-		finally
-		{
-			downloader.close();
-		}
 
-		count = 0;
-		for( Iterator<Throwable> i = downloader.getExceptions().iterator(); i.hasNext(); i.next() )
-			count++;
+			if( getUnidentifiedModules().iterator().hasNext() )
+			{
+				deleteState();
+				throw new RuntimeException( "Cannot install because could not identify all modules" );
+			}
 
-		if( count > 0 )
-		{
-			String message = "Had " + count + ( count != 1 ? " errors during installation" : " error during installation" );
-			fail( id, message );
-			throw new RuntimeException( message );
-		}
+			String installingId = begin( "Installing" );
 
-		count = downloader.getCount();
-
-		if( stage.getValue() < Stage.UNPACKING.getValue() )
-		{
-			if( count == 0 )
-				end( id, "No new artifacts to install" );
-			else
-				end( id, "Installed " + count + ( count != 1 ? " new artifacts" : " new artifact" ) );
-			return;
-		}
-
-		ArtifactDatabase knownArtifacts = null;
-		try
-		{
-			knownArtifacts = new ArtifactDatabase( getStateFile(), getRootDirectories() );
-		}
-		catch( FileNotFoundException x )
-		{
-		}
-		catch( IOException x )
-		{
+			Downloader downloader = new Downloader( isMultithreaded() ? getThreadsPerHost() : 1, isMultithreaded() ? getChunksPerFile() : 1, getMinimumSizeForChunking(), this );
 			try
 			{
-				error( "Could not load state from " + getStateFile(), x );
-			}
-			catch( IOException xx )
-			{
-				error( xx );
-			}
-		}
-
-		// Unpacking
-
-		if( getRootDirectories().getOther() != null )
-		{
-			ClassLoader classLoader = new ArtifactsClassLoader( installedArtifacts );
-			Iterable<Package> packages = null;
-			try
-			{
-				packages = PackagingUtil.getPackages( classLoader, getRootDirectories().getOther() );
-			}
-			catch( IOException x )
-			{
-				error( "Could not scan for packages", x );
-			}
-
-			if( packages != null )
-			{
-				for( Package thePackage : packages )
+				downloader.setDelay( getDelay() );
+				for( Module module : identifiedModules )
 				{
-					if( !thePackage.iterator().hasNext() )
-						continue;
-
-					String pId = begin( "Unpacking " + thePackage.getSourceFile() );
-					try
+					for( Artifact artifact : module.getIdentifier().getArtifacts( getDirectories(), isFlat() ) )
 					{
-						int pCount = 0;
-						for( Artifact artifact : thePackage )
-						{
-							boolean copy = false;
+						if( isOverwrite() || !artifact.getFile().exists() )
+							// Download and validate
+							downloader.submit( artifact.getSourceUrl(), artifact.getFile(), module.getIdentifier().getRepository().validateArtifactTask( module.getIdentifier(), artifact, this ) );
+						else
+							// Only validate
+							downloader.submit( module.getIdentifier().getRepository().validateArtifactTask( module.getIdentifier(), artifact, this ) );
+						installedArtifacts.add( artifact );
+					}
+				}
+				downloader.waitUntilDone();
+			}
+			finally
+			{
+				downloader.close();
+			}
 
-							if( isOverwrite() || !artifact.exists() )
-								copy = true;
-							else
+			int errorCount = 0;
+			for( Iterator<Throwable> i = downloader.getExceptions().iterator(); i.hasNext(); i.next() )
+				errorCount++;
+
+			if( errorCount > 0 )
+			{
+				deleteState(); // TODO: good idea?
+				String message = "Had " + errorCount + ( errorCount != 1 ? " errors during installation" : " error during installation" );
+				fail( installingId, message );
+				throw new RuntimeException( message );
+			}
+
+			int installedCount = downloader.getCount();
+
+			// Unpacking
+
+			if( ( stage.getValue() >= Stage.UNPACKING.getValue() ) && ( getDirectories().getDefault() != null ) )
+			{
+				ClassLoader classLoader = new ArtifactsClassLoader( getInstalledArtifacts() );
+
+				Iterable<com.threecrickets.creel.packaging.Package> packages = null;
+				try
+				{
+					packages = PackagingUtil.getPackages( classLoader, getDirectories().getDefault() );
+				}
+				catch( IOException x )
+				{
+					error( "Could not scan for packages", x );
+				}
+
+				if( packages != null )
+				{
+					for( com.threecrickets.creel.packaging.Package thePackage : packages )
+					{
+						if( !thePackage.iterator().hasNext() )
+							continue;
+
+						String unpackingId = begin( "Unpacking " + thePackage.getSourceFile() );
+						try
+						{
+							int unpackedCount = 0;
+							for( Artifact artifact : thePackage )
 							{
-								Artifact knownArtifact = knownArtifacts != null ? knownArtifacts.getArtifact( artifact.getFile() ) : null;
-								if( knownArtifact == null )
+								boolean copy = false;
+
+								if( isOverwrite() || !artifact.exists() )
 									copy = true;
 								else
 								{
-									if( !knownArtifact.isVolatile() )
-										copy = artifact.isDifferent();
+									Artifact knownArtifact = state != null ? state.getArtifact( artifact.getFile() ) : null;
+									if( knownArtifact == null )
+										copy = true;
 									else
 									{
-										if( !knownArtifact.wasModified() )
+										if( !knownArtifact.isVolatile() )
 											copy = artifact.isDifferent();
 										else
-											info( "Modified, so not overwriting " + artifact.getFile() );
+										{
+											if( !knownArtifact.wasModified() )
+												copy = artifact.isDifferent();
+											else
+												info( "Modified, so not overwriting " + artifact.getFile() );
+										}
 									}
 								}
+
+								if( copy )
+								{
+									artifact.copy( null );
+									if( artifact.isVolatile() )
+										artifact.updateDigest();
+									if( getVerbosity() > 1 )
+										info( "Unpacked " + artifact.getFile() );
+									unpackedCount++;
+									installedCount++;
+								}
+
+								installedArtifacts.add( artifact );
 							}
 
-							if( copy )
+							if( unpackedCount == 0 )
+								end( unpackingId, "No new files to unpack from " + thePackage.getSourceFile() );
+							else
+								end( unpackingId, "Unpacked " + unpackedCount + ( unpackedCount != 1 ? " new files from " : " file from " ) + thePackage.getSourceFile() );
+						}
+						catch( IOException x )
+						{
+							fail( unpackingId, "Could not unpack " + thePackage.getSourceFile(), x );
+						}
+					}
+
+					// Run installers
+
+					for( com.threecrickets.creel.packaging.Package thePackage : packages )
+					{
+						String installer = thePackage.getInstaller();
+						if( installer != null )
+						{
+							try
 							{
-								artifact.copy( null );
-								if( artifact.isVolatile() )
-									artifact.updateDigest();
-								if( getVerbosity() > 1 )
-									info( "Unpacked " + artifact.getFile() );
-								pCount++;
-								count++;
+								ClassUtil.main( classLoader, installer.split( " " ) );
 							}
-
-							installedArtifacts.add( artifact );
+							catch( Throwable x )
+							{
+								error( "Could not run installer: " + installer, x );
+							}
 						}
+					}
 
-						if( pCount == 0 )
-							end( pId, "No new files unpacked from " + thePackage.getSourceFile() );
-						else
-							end( pId, "Unpacked " + pCount + ( pCount != 1 ? " new files from " : " file from " ) + thePackage.getSourceFile() );
-					}
-					catch( IOException x )
-					{
-						fail( pId, "Could not unpack " + thePackage.getSourceFile(), x );
-					}
+					// TODO: uninstallers?
 				}
-
-				// Run installers
-
-				for( Package thePackage : packages )
-				{
-					String installer = thePackage.getInstaller();
-					if( installer != null )
-					{
-						try
-						{
-							ClassUtil.main( classLoader, installer.split( " " ) );
-						}
-						catch( Throwable x )
-						{
-							error( "Could not run installer: " + installer, x );
-						}
-					}
-				}
-
-				// TODO: uninstallers?
 			}
-		}
 
-		if( count == 0 )
-			end( id, "No new artifacts to install" );
-		else
-			end( id, "Installed " + count + ( count != 1 ? " new artifacts" : " new artifact" ) );
+			if( installedCount == 0 )
+				end( installingId, "No new artifacts to install" );
+			else
+				end( installingId, "Installed " + installedCount + ( installedCount != 1 ? " new artifacts" : " new artifact" ) );
+		}
 
 		// Delete redundant
 
-		if( stage.getValue() < Stage.DELETE_REDUNDANT.getValue() )
-			return;
-
-		if( knownArtifacts != null )
+		if( ( stage.getValue() >= Stage.DELETE_REDUNDANT.getValue() ) && ( state != null ) )
 		{
-			Iterable<Artifact> redundantArtifacts = knownArtifacts.getRedundantArtifacts( installedArtifacts );
+			Iterable<Artifact> redundantArtifacts = state.getRedundantArtifacts( getInstalledArtifacts() );
 			if( redundantArtifacts.iterator().hasNext() )
 			{
-				id = begin( "Deleting redundant artifacts" );
+				String id = begin( "Deleting redundant artifacts" );
+
 				int deletedCount = 0;
+
 				for( Artifact redundantArtifact : redundantArtifacts )
 				{
 					boolean delete = false;
@@ -872,11 +952,12 @@ public class Engine extends Notifier implements Runnable
 
 					if( delete )
 					{
-						if( redundantArtifact.delete( getRootDirectories() ) )
+						if( redundantArtifact.delete( getDirectories() ) )
 						{
 							if( getVerbosity() > 1 )
 								info( "Deleted " + redundantArtifact.getFile() );
-							knownArtifacts.removeArtifact( redundantArtifact );
+							if( state.removeArtifact( redundantArtifact ) )
+								stateChanged = true;
 							deletedCount++;
 						}
 						else
@@ -889,28 +970,13 @@ public class Engine extends Notifier implements Runnable
 				else
 					end( id, "No redundant artifacts to delete" );
 			}
-
-			knownArtifacts.addArtifacts( installedArtifacts );
-
-			try
-			{
-				knownArtifacts.save();
-				if( getVerbosity() > 0 )
-					info( "Saved state to " + getStateFile() );
-			}
-			catch( IOException x )
-			{
-				try
-				{
-					error( "Could not save state to " + getStateFile(), x );
-				}
-				catch( IOException xx )
-				{
-					error( xx );
-				}
-
-			}
 		}
+
+		if( state.addArtifacts( getInstalledArtifacts() ) )
+			stateChanged = true;
+
+		if( stateChanged )
+			saveState( state );
 	}
 
 	//
@@ -919,7 +985,7 @@ public class Engine extends Notifier implements Runnable
 
 	public void run()
 	{
-		run( Stage.DELETE_REDUNDANT );
+		run( Stage.ALL );
 	}
 
 	//
@@ -1001,7 +1067,13 @@ public class Engine extends Notifier implements Runnable
 
 	private boolean multithreaded = true;
 
-	private RootDirectories rootDirectories = new RootDirectories();
+	private int threadsPerHost = 4;
+
+	private int chunksPerFile = 4;
+
+	private int minimumSizeForChunking = 1024 * 1024;
+
+	private Directories directories = new Directories();
 
 	private File stateFile;
 
@@ -1125,12 +1197,6 @@ public class Engine extends Notifier implements Runnable
 					identifyModule( dependency, true, null );
 			}
 		}
-		else
-		{
-			// Add dependencies as is (unidentified)
-			for( Module dependency : module.getDependencies() )
-				addModule( dependency );
-		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1185,7 +1251,7 @@ public class Engine extends Notifier implements Runnable
 							ids.append( id );
 						}
 				if( ( getVerbosity() > 0 ) && !context.getRepositories().isEmpty() )
-					info( "Forced " + module.getSpecification() + " to identify in " + ids + ( context.getRepositories().size() != 1 ? " repositories" : " repository" ) );
+					info( "Forced " + module.getSpecification() + " to " + ids + ( context.getRepositories().size() != 1 ? " repositories" : " repository" ) );
 			}
 			else
 				error( "Unsupported command: " + command.getType() );
@@ -1212,6 +1278,78 @@ public class Engine extends Notifier implements Runnable
 				explicitModule.setExplicit( true );
 			}
 			explicitModule.replaceModule( oldModule, newModule, true );
+		}
+	}
+
+	private State loadState()
+	{
+		try
+		{
+			State state = new State( getStateFile(), getDirectories() );
+			if( getVerbosity() > 0 )
+				info( "Loaded state from " + getStateFile() );
+			return state;
+		}
+		catch( FileNotFoundException x )
+		{
+		}
+		catch( IOException x )
+		{
+			try
+			{
+				throw new RuntimeException( "Could not load state from " + getStateFile(), x );
+			}
+			catch( IOException xx )
+			{
+				throw new RuntimeException( xx );
+			}
+		}
+		return null;
+	}
+
+	private void deleteState()
+	{
+		if( getUnidentifiedModules().iterator().hasNext() )
+		{
+			try
+			{
+				getStateFile().delete();
+			}
+			catch( FileNotFoundException x )
+			{
+			}
+			catch( IOException x )
+			{
+				try
+				{
+					throw new RuntimeException( "Could not delete state at " + getStateFile(), x );
+				}
+				catch( IOException xx )
+				{
+					throw new RuntimeException( xx );
+				}
+			}
+		}
+	}
+
+	private void saveState( State state )
+	{
+		try
+		{
+			state.save();
+			if( getVerbosity() > 0 )
+				info( "Saved state to " + getStateFile() );
+		}
+		catch( IOException x )
+		{
+			try
+			{
+				throw new RuntimeException( "Could not save state to " + getStateFile(), x );
+			}
+			catch( IOException xx )
+			{
+				throw new RuntimeException( xx );
+			}
 		}
 	}
 

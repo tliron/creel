@@ -97,7 +97,7 @@ public class DownloadTask extends Task implements ProgressListener
 			return;
 		}
 
-		if( chunksStreamSize != -1 )
+		if( chunksStreamSize >= getDownloader().getMinimumSizeForChunk() )
 		{
 			// We support chunks, so split into tasks
 			AtomicInteger counter = new AtomicInteger( chunksPerFile );

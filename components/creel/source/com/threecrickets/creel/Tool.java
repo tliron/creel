@@ -16,7 +16,7 @@ import java.io.PrintStream;
 
 import com.threecrickets.creel.event.ConsoleEventHandler;
 import com.threecrickets.creel.event.EventHandlers;
-import com.threecrickets.creel.internal.Properties;
+import com.threecrickets.creel.internal.Configuration;
 import com.threecrickets.creel.util.ArgumentsHelper;
 
 /**
@@ -53,74 +53,74 @@ public class Tool
 				return;
 			}
 
-			String propertiesPath = argumentsHelper.getString( "properties", "p", "creel.properties" );
-			File propertiesFile = new File( propertiesPath ).getCanonicalFile();
-			if( !propertiesFile.exists() )
+			String configPath = argumentsHelper.getString( "config", "c", "creel.properties" );
+			File configFile = new File( configPath ).getCanonicalFile();
+			if( !configFile.exists() )
 			{
 				help( System.out );
 				return;
 			}
 
-			Properties properties = new Properties( propertiesFile );
+			Configuration configuration = new Configuration( configFile );
 
-			String libraryPath = properties.getProperty( "library", "libraries" );
+			String defaultPath = configuration.getProperty( "default", null );
+			defaultPath = argumentsHelper.getString( "default", "d", defaultPath );
+
+			String libraryPath = configuration.getProperty( "library", "libraries" + File.pathSeparatorChar + "jars" );
 			libraryPath = argumentsHelper.getString( "library", "l", libraryPath );
 
-			String referencePath = properties.getProperty( "reference", null );
-			referencePath = argumentsHelper.getString( "reference", "r", referencePath );
+			String apiPath = configuration.getProperty( "api", null );
+			apiPath = argumentsHelper.getString( "api", "i", apiPath );
 
-			String sourcePath = properties.getProperty( "source", null );
+			String sourcePath = configuration.getProperty( "source", null );
 			sourcePath = argumentsHelper.getString( "source", "s", sourcePath );
 
-			String otherPath = properties.getProperty( "other", null );
-			otherPath = argumentsHelper.getString( "other", "o", otherPath );
-
-			String statePath = properties.getProperty( "state", null );
+			String statePath = configuration.getProperty( "state", null );
 			statePath = argumentsHelper.getString( "state", "t", statePath );
 
-			int end = properties.getInteger( "end", 4 );
+			int end = configuration.getInteger( "end", Engine.Stage.ALL.getValue() );
 			end = argumentsHelper.getInteger( "end", "e", end );
 
-			String defaultPlatform = properties.getProperty( "platform", "mvn" );
+			String defaultPlatform = configuration.getProperty( "platform", "mvn" );
 			defaultPlatform = argumentsHelper.getString( "platform", "p", defaultPlatform );
 
-			boolean quiet = properties.getBoolean( "quiet", false );
+			boolean quiet = configuration.getBoolean( "quiet", false );
 			quiet = quiet || argumentsHelper.hasSwitch( "quiet", "q" );
 
-			int verbosity = properties.getInteger( "verbosity", 1 );
+			int verbosity = configuration.getInteger( "verbosity", 1 );
 			verbosity = argumentsHelper.getInteger( "verbosity", "v", verbosity );
 
-			boolean ansi = properties.getBoolean( "ansi", false );
+			boolean ansi = configuration.getBoolean( "ansi", false );
 			ansi = ansi || argumentsHelper.hasSwitch( "ansi", "a" );
 
-			boolean overwrite = properties.getBoolean( "overwrite", false );
-			overwrite = overwrite || argumentsHelper.hasSwitch( "overwrite", "o" );
+			boolean overwrite = configuration.getBoolean( "overwrite", false );
+			overwrite = overwrite || argumentsHelper.hasSwitch( "overwrite", "w" );
 
-			boolean flat = properties.getBoolean( "flat", false );
+			boolean flat = configuration.getBoolean( "flat", false );
 			flat = flat || argumentsHelper.hasSwitch( "flat", "f" );
 
-			boolean multithreaded = properties.getBoolean( "multithreaded", true );
+			boolean multithreaded = configuration.getBoolean( "multithreaded", true );
 			multithreaded = argumentsHelper.getBoolean( "multithreaded", "m", multithreaded );
 
 			engine = new Engine();
 			if( !quiet )
 				( (EventHandlers) engine.getEventHandler() ).add( new ConsoleEventHandler( ansi, verbosity > 1 ) );
 
-			engine.info( "Using " + propertiesFile );
+			engine.info( "Configuration: " + configFile );
 
-			engine.getRootDirectories().setLibrary( libraryPath );
-			engine.getRootDirectories().setReference( referencePath );
-			engine.getRootDirectories().setSource( sourcePath );
-			engine.getRootDirectories().setOther( otherPath );
+			engine.getDirectories().setDefault( defaultPath );
+			engine.getDirectories().setLibrary( libraryPath );
+			engine.getDirectories().setApi( apiPath );
+			engine.getDirectories().setSource( sourcePath );
 			engine.setStateFile( statePath );
 			engine.setDefaultPlatform( defaultPlatform );
 			engine.setVerbosity( verbosity );
 			engine.setOverwrite( overwrite );
 			engine.setFlat( flat );
 			engine.setMultithreaded( multithreaded );
-			engine.setExplicitModules( properties.getModuleSpecificationConfigs() );
-			engine.setRepositories( properties.getRepositoryConfigs() );
-			engine.setRules( properties.getRuleConfigs() );
+			engine.setExplicitModules( configuration.getModuleSpecificationConfigs() );
+			engine.setRepositories( configuration.getRepositoryConfigs() );
+			engine.setRules( configuration.getRuleConfigs() );
 
 			engine.run( end );
 		}
@@ -146,18 +146,18 @@ public class Tool
 		out.println();
 		out.println( "Options:" );
 		out.println( "  --help, -h              Show this help" );
-		out.println( "  --properties=, -p       Use properties file (default: creel.properties)" );
-		out.println( "  --library=, -l          Download/unpack library artifacts to directory (default: libraries)" );
-		out.println( "  --reference=, -r        Download/unpack reference artifacts to directory" );
-		out.println( "  --source=, -s           Download/unpack source artifacts to directory" );
-		out.println( "  --other=, -o            Download/unpack artifacts of unknown type to directory" );
-		out.println( "  --state=, -t            State file (default: [other]/.creel, or .creel if there is no other not set)" );
+		out.println( "  --config=, -c           Load config file (default: creel.properties)" );
+		out.println( "  --default=, -d          Unpack artifacts by default to directory (do not unpack by default)" );
+		out.println( "  --library=, -l          Download library artifacts to directory (default: libraries/jars)" );
+		out.println( "  --api=, -i              Download API artifacts to directory (do not download by default)" );
+		out.println( "  --source=, -s           Download source artifacts to directory (do not download by default)" );
+		out.println( "  --state=, -t            State file (default: [default dir]/.creel, or [current dir]/.creel if default not set)" );
 		out.println( "  --end=, -e              At which stage to end: 1=identify, 2=install, 3=unpack, 4=delete redundant (default: 4)" );
 		out.println( "  --platform=, -p         Set default platform (default: mvn)" );
 		out.println( "  --quiet, -q             Quiet mode: don't output anything" );
 		out.println( "  --verbosity=, -v        Output verbosity (default: 1)" );
 		out.println( "  --ansi, -a              ANSI terminal output: pretty colors and animations" );
-		out.println( "  --overwrite, -o         Overwrite files if they already exist" );
+		out.println( "  --overwrite, -w         Overwrite files if they already exist" );
 		out.println( "  --flat, -f              Flat file structure (no subdirectories)" );
 		out.println( "  --multithreaded=, -m    Set multi-threaded mode (default: true)" );
 		out.println();

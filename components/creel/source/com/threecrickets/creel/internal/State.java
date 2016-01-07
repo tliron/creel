@@ -28,8 +28,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.threecrickets.creel.Artifact;
+import com.threecrickets.creel.Directories;
 import com.threecrickets.creel.Engine;
-import com.threecrickets.creel.RootDirectories;
 import com.threecrickets.creel.util.IoUtil;
 import com.threecrickets.creel.util.MultiValueProperties;
 
@@ -39,7 +39,7 @@ import com.threecrickets.creel.util.MultiValueProperties;
  * 
  * @author Tal Liron
  */
-public class ArtifactDatabase
+public class State
 {
 	//
 	// Construction
@@ -50,12 +50,12 @@ public class ArtifactDatabase
 	 * 
 	 * @param file
 	 *        The JVM properties file
-	 * @param rootDirectories
-	 *        The root directories in which to install artifacts
+	 * @param directories
+	 *        The directories in which to install artifacts
 	 * @throws IOException
 	 *         In case of an I/O error
 	 */
-	public ArtifactDatabase( File file, RootDirectories rootDirectories ) throws IOException
+	public State( File file, Directories directories ) throws IOException
 	{
 		try
 		{
@@ -66,7 +66,7 @@ public class ArtifactDatabase
 			throw new RuntimeException( "Could not access properties file: " + file, x );
 		}
 
-		this.rootDirectories = rootDirectories;
+		this.directories = directories;
 
 		try
 		{
@@ -77,7 +77,7 @@ public class ArtifactDatabase
 			{
 				try
 				{
-					addArtifact( new Artifact( config, rootDirectories ) );
+					addArtifact( new Artifact( config, directories ) );
 				}
 				catch( RuntimeException x )
 				{
@@ -94,23 +94,23 @@ public class ArtifactDatabase
 	//
 
 	/**
-	 * The database file.
+	 * The state file.
 	 * 
-	 * @return The database file
+	 * @return The state file
 	 */
-	public File getDatabaseFile()
+	public File getFile()
 	{
 		return file;
 	}
 
 	/**
-	 * The root directories in which to install artifacts.
+	 * The directories in which to install artifacts.
 	 * 
-	 * @return The root directories
+	 * @return The directories
 	 */
-	public RootDirectories getRootDirectories()
+	public Directories getDirectories()
 	{
-		return rootDirectories;
+		return directories;
 	}
 
 	//
@@ -159,11 +159,15 @@ public class ArtifactDatabase
 	 * 
 	 * @param artifacts
 	 *        The artifacts
+	 * @return True if anything was added
 	 */
-	public void addArtifacts( Iterable<Artifact> artifacts )
+	public boolean addArtifacts( Iterable<Artifact> artifacts )
 	{
+		boolean added = false;
 		for( Artifact artifact : artifacts )
-			addArtifact( artifact );
+			if( addArtifact( artifact ) )
+				added = true;
+		return added;
 	}
 
 	/**
@@ -206,10 +210,11 @@ public class ArtifactDatabase
 		Files.createDirectories( file.toPath().getParent() );
 
 		MultiValueProperties properties = new MultiValueProperties();
+
 		int index = 0;
 		for( Artifact artifact : getArtifacts() )
 		{
-			Map<String, Object> config = artifact.toConfig( getRootDirectories() );
+			Map<String, Object> config = artifact.toConfig( getDirectories() );
 			properties.putMap( index++, config );
 		}
 
@@ -229,7 +234,7 @@ public class ArtifactDatabase
 
 	private final File file;
 
-	private final RootDirectories rootDirectories;
+	private final Directories directories;
 
 	private final SortedSet<Artifact> artifacts = new TreeSet<Artifact>();
 }

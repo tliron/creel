@@ -49,15 +49,16 @@ public class Artifact implements Comparable<Artifact>
 	public enum Type
 	{
 		/**
-		 * Contains JVM ".class" files.
+		 * Contains executable code and related resources (".class" files,
+		 * etc.).
 		 */
 		LIBRARY,
 		/**
-		 * Contains reference materials (JavaDocs, manuals, etc.)
+		 * Contains API reference material (JavaDocs, manuals, etc.).
 		 */
-		REFERENCE,
+		API,
 		/**
-		 * Contains source code (".java" files, etc.)
+		 * Contains source code (".java" files, etc.).
 		 */
 		SOURCE;
 
@@ -112,15 +113,15 @@ public class Artifact implements Comparable<Artifact>
 	 * 
 	 * @param config
 	 *        The config
-	 * @param rootDirectories
-	 *        The root directories in which to install artifacts
-	 * @see Artifact#toConfig(RootDirectories)
+	 * @param directories
+	 *        The directories in which to install artifacts
+	 * @see Artifact#toConfig(Directories)
 	 */
-	public Artifact( Map<String, String> config, RootDirectories rootDirectories )
+	public Artifact( Map<String, String> config, Directories directories )
 	{
 		String type = config.get( "type" );
 		this.type = Type.valueOfNonStrict( type );
-		File rootDir = rootDirectories.getRootFor( this );
+		File rootDir = directories.getFor( this );
 		if( rootDir == null )
 			throw new RuntimeException( "Unsupported type: " + type );
 		String url = config.get( "url" );
@@ -206,19 +207,19 @@ public class Artifact implements Comparable<Artifact>
 	/**
 	 * Converts the artifact to a config.
 	 * 
-	 * @param rootDirectories
-	 *        The root directories in which to install artifacts
+	 * @param directories
+	 *        The directories in which to install artifacts
 	 * @return The config
-	 * @see Artifact#Artifact(Map, RootDirectories)
+	 * @see Artifact#Artifact(Map, Directories)
 	 */
-	public Map<String, Object> toConfig( RootDirectories rootDirectories )
+	public Map<String, Object> toConfig( Directories directories )
 	{
 		Map<String, Object> config = new HashMap<String, Object>();
 		if( getType() != null )
 			config.put( "type", getType().toString() );
 		config.put( "url", getSourceUrl().toString() );
 		Path path = getFile().toPath();
-		File rootDir = rootDirectories.getRootFor( this );
+		File rootDir = directories.getFor( this );
 		if( rootDir != null )
 		{
 			try
@@ -298,13 +299,13 @@ public class Artifact implements Comparable<Artifact>
 	 * Deletes the file, including empty parent directories up to the root
 	 * directory.
 	 * 
-	 * @param rootDirectories
-	 *        The root directories in which to install artifacts
+	 * @param directories
+	 *        The directories in which to install artifacts
 	 * @return True if deleted
 	 */
-	public boolean delete( RootDirectories rootDirectories )
+	public boolean delete( Directories directories )
 	{
-		File rootDir = rootDirectories.getRootFor( this );
+		File rootDir = directories.getFor( this );
 		if( rootDir != null )
 			return IoUtil.deleteWithParentDirectories( getFile(), rootDir );
 		else
@@ -329,12 +330,16 @@ public class Artifact implements Comparable<Artifact>
 	public int compareTo( Artifact artifact )
 	{
 		int c;
-		if( getType() == null )
+		Type t1 = getType();
+		Type t2 = artifact.getType();
+		if( ( t1 == null ) && ( t2 == null ) )
+			c = 0;
+		else if( t1 == null )
 			c = 1;
-		else if( artifact.getType() == null )
+		else if( t2 == null )
 			c = -1;
 		else
-			c = getType().compareTo( artifact.getType() );
+			c = t1.compareTo( t2 );
 		return c == 0 ? getFile().compareTo( artifact.getFile() ) : c;
 	}
 

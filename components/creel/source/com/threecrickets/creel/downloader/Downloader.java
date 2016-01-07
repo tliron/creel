@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.threecrickets.creel.downloader.internal.CopyFileTask;
 import com.threecrickets.creel.downloader.internal.DownloadTask;
+import com.threecrickets.creel.downloader.internal.WrappedTask;
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.internal.DaemonThreadFactory;
 import com.threecrickets.creel.util.IoUtil;
@@ -46,19 +47,43 @@ public class Downloader implements Closeable
 	//
 
 	/**
+	 * Constructor: threadsPerHost=4, chunksPerFile=4,
+	 * minimumSizeForChunking=1Mb.
+	 */
+	public Downloader()
+	{
+		this( null );
+	}
+
+	/**
+	 * Constructor: threadsPerHost=4, chunksPerFile=4,
+	 * minimumSizeForChunking=1Mb.
+	 * 
+	 * @param notifier
+	 *        The notifier or null
+	 */
+	public Downloader( Notifier notifier )
+	{
+		this( 4, 4, 1024 * 1024, notifier );
+	}
+
+	/**
 	 * Constructor.
 	 * 
 	 * @param threadsPerHost
 	 *        Number of threads per host
 	 * @param chunksPerFile
 	 *        Number of chunks per file
+	 * @param minimumSizeForChunking
+	 *        Stream size in bytes required to enable chunking
 	 * @param notifier
 	 *        The notifier or null
 	 */
-	public Downloader( int threadsPerHost, int chunksPerFile, Notifier notifier )
+	public Downloader( int threadsPerHost, int chunksPerFile, int minimumSizeForChunking, Notifier notifier )
 	{
 		this.threadsPerHost = threadsPerHost;
 		this.chunksPerFile = chunksPerFile;
+		this.minimumSizeForChunking = minimumSizeForChunking;
 		this.notifier = notifier != null ? notifier : new Notifier();
 	}
 
@@ -84,6 +109,16 @@ public class Downloader implements Closeable
 	public int getChunksPerFile()
 	{
 		return chunksPerFile;
+	}
+
+	/**
+	 * Stream size in bytes required to enable chunking.
+	 * 
+	 * @return Stream size in bytes required to enable chunking
+	 */
+	public int getMinimumSizeForChunk()
+	{
+		return minimumSizeForChunking;
 	}
 
 	/**
@@ -220,6 +255,19 @@ public class Downloader implements Closeable
 	}
 
 	/**
+	 * Submits a task.
+	 * 
+	 * @param task
+	 *        The task
+	 */
+	public void submit( Runnable task )
+	{
+		ExecutorService executor = getExecutor( "" );
+		getPhaser().register();
+		executor.submit( new WrappedTask( task, this ) );
+	}
+
+	/**
 	 * Blocks until all downloads are done.
 	 */
 	public void waitUntilDone()
@@ -245,6 +293,8 @@ public class Downloader implements Closeable
 	private final int threadsPerHost;
 
 	private final int chunksPerFile;
+
+	private final int minimumSizeForChunking;
 
 	private final Notifier notifier;
 

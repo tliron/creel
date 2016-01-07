@@ -41,7 +41,8 @@ import com.threecrickets.creel.util.ConfigHelper;
  * </pre>
  * 
  * Note that for the equals() override to work this way, we had to implement
- * dynamic class checking in the base class, like so:
+ * dynamic class checking in the base class, like so:<br>
+ * <br>
  * 
  * <pre>
  * if((object == null) || (getClass() != object.getClass())) return false;

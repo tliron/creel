@@ -36,7 +36,8 @@ import java.util.Objects;
  * </pre>
  * 
  * Note that for the equals() override to work this way, we had to implement
- * dynamic class checking in the base class, like so:
+ * dynamic class checking in the base class, like so:<br>
+ * <br>
  * 
  * <pre>
  * if((object == null) || (getClass() != object.getClass())) return false;
@@ -85,14 +86,14 @@ public abstract class ModuleIdentifier implements Comparable<ModuleIdentifier>, 
 	 * The artifacts. Note that there is no guarantee that the artifacts
 	 * actually exist in the repository.
 	 * 
-	 * @param rootDirectories
-	 *        The root directories
+	 * @param directories
+	 *        The directories
 	 * @param flat
 	 *        Whether we should use a flat file structure under the root
 	 *        directories (no sub-directories)
 	 * @return The artifacts
 	 */
-	public abstract Iterable<Artifact> getArtifacts( RootDirectories rootDirectories, boolean flat );
+	public abstract Iterable<Artifact> getArtifacts( Directories directories, boolean flat );
 
 	//
 	// Cloneable

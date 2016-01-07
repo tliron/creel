@@ -19,7 +19,8 @@ package com.threecrickets.creel.event;
 public interface EventHandler
 {
 	/**
-	 * Handle the event.
+	 * Handle the event. Note that events may arrive from several threads at
+	 * once, so they must be handled in a thread-safe manner.
 	 * 
 	 * @param event
 	 *        The event

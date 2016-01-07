@@ -26,11 +26,11 @@ import java.util.TreeMap;
 import com.threecrickets.creel.util.IoUtil;
 
 /**
- * Creel's JVM properties.
+ * Creel's configuration, formatted as a JVM properties file.
  * 
  * @author Tal Liron
  */
-public class Properties extends java.util.Properties
+public class Configuration extends java.util.Properties
 {
 	//
 	// Construction
@@ -44,7 +44,7 @@ public class Properties extends java.util.Properties
 	 * @throws IOException
 	 *         In case of an I/O error
 	 */
-	public Properties( File file ) throws IOException
+	public Configuration( File file ) throws IOException
 	{
 		this( new BufferedReader( new FileReader( file ), IoUtil.bufferSize ) );
 	}
@@ -57,7 +57,7 @@ public class Properties extends java.util.Properties
 	 * @throws IOException
 	 *         In case of an I/O error
 	 */
-	public Properties( Reader reader ) throws IOException
+	public Configuration( Reader reader ) throws IOException
 	{
 		load( reader );
 	}
