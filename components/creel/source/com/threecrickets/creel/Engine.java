@@ -33,6 +33,7 @@ import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.exception.UnsupportedPlatformException;
 import com.threecrickets.creel.internal.ArtifactsClassLoader;
 import com.threecrickets.creel.internal.ConcurrentIdentificationContext;
+import com.threecrickets.creel.internal.Configuration;
 import com.threecrickets.creel.internal.Conflicts;
 import com.threecrickets.creel.internal.IdentificationContext;
 import com.threecrickets.creel.internal.Modules;
@@ -569,6 +570,52 @@ public class Engine extends Notifier implements Runnable
 	}
 
 	/**
+	 * The installed artifacts, organized by module identifier. These will be
+	 * available <i>after</i> calling {@link Engine#run()}.
+	 * 
+	 * @return The installed artifacts
+	 */
+	public Map<String, Iterable<Artifact>> getInstalledArtifactsByModuleIdentifier()
+	{
+		Map<String, Iterable<Artifact>> artifacts = new HashMap<String, Iterable<Artifact>>();
+		for( Artifact artifact : getInstalledArtifacts() )
+		{
+			String moduleIdentifier = artifact.getModuleIdentifier();
+			Collection<Artifact> collection = (Collection<Artifact>) artifacts.get( moduleIdentifier );
+			if( collection == null )
+			{
+				collection = new ArrayList<Artifact>();
+				artifacts.put( moduleIdentifier, collection );
+			}
+			collection.add( artifact );
+		}
+		return artifacts;
+	}
+
+	/**
+	 * The installed artifacts, organized by type. These will be available
+	 * <i>after</i> calling {@link Engine#run()}.
+	 * 
+	 * @return The installed artifacts
+	 */
+	public Map<Artifact.Type, Iterable<Artifact>> getInstalledArtifactsByType()
+	{
+		Map<Artifact.Type, Iterable<Artifact>> artifacts = new HashMap<Artifact.Type, Iterable<Artifact>>();
+		for( Artifact artifact : getInstalledArtifacts() )
+		{
+			Artifact.Type type = artifact.getType();
+			Collection<Artifact> collection = (Collection<Artifact>) artifacts.get( type );
+			if( collection == null )
+			{
+				collection = new ArrayList<Artifact>();
+				artifacts.put( type, collection );
+			}
+			collection.add( artifact );
+		}
+		return artifacts;
+	}
+
+	/**
 	 * The module identification conflicts. These will be available <i>after</i>
 	 * calling {@link Engine#run()}.
 	 * 
@@ -646,6 +693,35 @@ public class Engine extends Notifier implements Runnable
 	//
 	// Operations
 	//
+
+	/**
+	 * Loads a configuration.
+	 * 
+	 * @param configurationFile
+	 *        The configuration file
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
+	public void loadConfiguration( String configurationFile ) throws IOException
+	{
+		loadConfiguration( new File( configurationFile ) );
+	}
+
+	/**
+	 * Loads a configuration.
+	 * 
+	 * @param configurationFile
+	 *        The configuration file
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
+	public void loadConfiguration( File configurationFile ) throws IOException
+	{
+		Configuration configuration = new Configuration( configurationFile );
+		setExplicitModules( configuration.getModuleSpecificationConfigs() );
+		setRepositories( configuration.getRepositoryConfigs() );
+		setRules( configuration.getRuleConfigs() );
+	}
 
 	/**
 	 * Loads the known artifacts from the state file.
@@ -977,6 +1053,19 @@ public class Engine extends Notifier implements Runnable
 
 		if( stateChanged )
 			saveState( state );
+	}
+
+	/**
+	 * Deletes all installed artifacts and the state.
+	 * 
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
+	public void clean() throws IOException
+	{
+		for( Artifact artifact : getInstalledArtifacts() )
+			artifact.delete( getDirectories() );
+		getStateFile().delete();
 	}
 
 	//

@@ -84,6 +84,23 @@ public class Artifact implements Comparable<Artifact>
 	/**
 	 * Constructor.
 	 * 
+	 * @param file
+	 *        The file
+	 * @param sourceUrl
+	 *        The source URL
+	 * @param isVolatile
+	 *        Whether the artifact is volatile
+	 */
+	public Artifact( File file, URL sourceUrl, boolean isVolatile )
+	{
+		this( null, null, file, sourceUrl, isVolatile );
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param moduleIdentifier
+	 *        The module identifier
 	 * @param type
 	 *        The type
 	 * @param file
@@ -93,7 +110,7 @@ public class Artifact implements Comparable<Artifact>
 	 * @param isVolatile
 	 *        Whether the artifact is volatile
 	 */
-	public Artifact( Type type, File file, URL sourceUrl, boolean isVolatile )
+	public Artifact( ModuleIdentifier moduleIdentifier, Type type, File file, URL sourceUrl, boolean isVolatile )
 	{
 		try
 		{
@@ -103,6 +120,7 @@ public class Artifact implements Comparable<Artifact>
 		{
 			throw new RuntimeException( "Could not access artifact file: " + file, x );
 		}
+		this.moduleIdentifier = moduleIdentifier != null ? moduleIdentifier.toString() : null;
 		this.type = type;
 		this.sourceUrl = sourceUrl;
 		this.isVolatile = isVolatile;
@@ -119,11 +137,16 @@ public class Artifact implements Comparable<Artifact>
 	 */
 	public Artifact( Map<String, String> config, Directories directories )
 	{
+		moduleIdentifier = config.get( "module" );
 		String type = config.get( "type" );
 		this.type = Type.valueOfNonStrict( type );
 		File rootDir = directories.getFor( this );
 		if( rootDir == null )
 			throw new RuntimeException( "Unsupported type: " + type );
+		String file = config.get( "file" );
+		if( file == null )
+			throw new RuntimeException( "Missing file" );
+		this.file = new File( rootDir, file );
 		String url = config.get( "url" );
 		if( url == null )
 			throw new RuntimeException( "Missing URL" );
@@ -135,10 +158,6 @@ public class Artifact implements Comparable<Artifact>
 		{
 			throw new RuntimeException( "Bad URL: " + url );
 		}
-		String file = config.get( "file" );
-		if( file == null )
-			throw new RuntimeException( "Missing file" );
-		this.file = new File( rootDir, file );
 		String isVolatile = config.get( "volatile" );
 		this.isVolatile = isVolatile != null ? Boolean.valueOf( isVolatile ) : false;
 		String digest = config.get( "digest" );
@@ -149,6 +168,16 @@ public class Artifact implements Comparable<Artifact>
 	//
 	// Attributes
 	//
+
+	/**
+	 * The module identifier.
+	 * 
+	 * @return The module identifier
+	 */
+	public String getModuleIdentifier()
+	{
+		return moduleIdentifier;
+	}
 
 	/**
 	 * The type.
@@ -215,6 +244,8 @@ public class Artifact implements Comparable<Artifact>
 	public Map<String, Object> toConfig( Directories directories )
 	{
 		Map<String, Object> config = new HashMap<String, Object>();
+		if( moduleIdentifier != null )
+			config.put( "module", moduleIdentifier );
 		if( getType() != null )
 			config.put( "type", getType().toString() );
 		config.put( "url", getSourceUrl().toString() );
@@ -376,6 +407,8 @@ public class Artifact implements Comparable<Artifact>
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private final String moduleIdentifier;
 
 	private final Type type;
 

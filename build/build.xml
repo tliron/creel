@@ -9,7 +9,10 @@
 	<property name="component.source" location="${root}/components/${component}/source" />
 	<property name="component.resources" value="${root}/components/${component}/resources" />
 	<property name="component.notices" location="${root}/components/notices" />
+	<property name="ant.source" location="${root}/components/${component}-ant/source" />
+	<property name="ant.resources" value="${root}/components/${component}-ant/resources" />
 	<property name="eclipse.source" location="${root}/components/${component}-eclipse/source" />
+	<property name="eclipse.resources" value="${root}/components/${component}-eclipse/resources" />
 
 	<property name="dependencies" location="${root}/dependencies" />
 
@@ -26,18 +29,56 @@
 	<property name="distribution.reference" value="${distribution.content}/reference" />
 	<property name="distribution.api" value="${distribution.reference}/api/${component.group}/${component.artifact}/${component.version}${component.version.postfix}" />
 	<property name="distribution.source" value="${distribution.reference}/source" />
+
+	<resources id="require-bundle">
+		<string>org.eclipse.core.runtime</string>
+		<string>org.eclipse.core.variables</string>
+		<string>org.eclipse.debug.ui</string>
+		<string>org.eclipse.jdt.core</string>
+		<string>org.eclipse.jdt.debug.ui</string>
+		<string>org.eclipse.jdt.launching</string>
+		<string>org.eclipse.jdt.ui</string>
+		<string>org.eclipse.ui</string>
+	</resources>
+	<pathconvert property="require-bundle" refid="require-bundle" pathsep="," />
 	
+	<resources id="export-package-uses">
+		<string>com.threecrickets.creel.eclipse.internal</string>
+		<string>org.eclipse.core.resources</string>
+		<string>org.eclipse.core.runtime</string>
+		<string>org.eclipse.core.runtime.preferences</string>
+		<string>org.eclipse.core.commands</string>
+		<string>org.eclipse.core.variables</string>
+		<string>org.eclipse.debug.core</string>
+		<string>org.eclipse.debug.ui</string>
+		<string>org.eclipse.jdt.core</string>
+		<string>org.eclipse.jdt.debug.ui.launchConfigurations</string>
+		<string>org.eclipse.jdt.launching</string>
+		<string>org.eclipse.jface.viewers</string>
+		<string>org.eclipse.swt.widgets</string>
+		<string>org.eclipse.ui</string>
+		<string>org.eclipse.ui.plugin</string>
+		<string>org.osgi.framework</string>
+	</resources>
+	<pathconvert property="export-package-uses" refid="export-package-uses" pathsep="," />
+
 	<taskdef resource="com/threecrickets/creel/ant/antlib.xml" uri="antlib:com.threecrickets.creel.ant" classpath="${dependencies}/libraries/jars/com.threecrickets.creel/creel/${creel.version}/creel.jar" />
 
 	<target name="dependencies" description="Resolve dependencies">
 		<creel:run ref="dependencies" libraryDir="${cache.jars}" state="${cache.jars}/.creel">
-			<module group="org.apache.ant" name="ant" version="1.9.6+" />
 			<module group="jline" name="jline" version="2.13+" />
 			<repository id="repo" url="${dependencies.repo}" />
 		</creel:run>
 	</target>
 
-	<target name="eclipse-dependencies" description="Resolve Eclipse dependencies" if="eclipse.plugin">
+	<target name="ant-dependencies" description="Resolve Ant tasks dependencies" if="ant-tasks">
+		<creel:run ref="ant-dependencies" libraryDir="${cache.jars}" state="${cache.jars}/.creel-ant">
+			<module group="org.apache.ant" name="ant" version="1.9.6+" />
+			<repository id="repo" url="${dependencies.repo}" />
+		</creel:run>
+	</target>
+
+	<target name="eclipse-dependencies" description="Resolve Eclipse plugin dependencies" if="eclipse-plugin">
 		<creel:run ref="eclipse-dependencies" libraryDir="${cache.jars}" state="${cache.jars}/.creel-eclipse">
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.core.commands" />
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.core.jobs" />
@@ -55,9 +96,11 @@
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.swt.win32.win32.x86" />
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.ui.workbench" />
 			 <!-- Unfortunately the following two modules are not being deployed to Maven Central with Scout SDK -->
+			<module group="org.eclipse.core" name="core-variables" />
 			<module group="org.eclipse.debug" name="debug-core" />
 			<module group="org.eclipse.debug" name="debug-ui" />
 			<rule type="excludeDependencies" />
+			<rule type="repositories" group="org.eclipse.core" repositories="repo" />
 			<rule type="repositories" group="org.eclipse.debug" repositories="repo" />
 			<repository id="central" url="https://repo1.maven.org/maven2" />
 			<repository id="repo" url="${dependencies.repo}" all="false" />
@@ -68,20 +111,27 @@
 		<mkdir dir="${cache.classes}" />
 		<javac srcdir="${component.source}" destdir="${cache.classes}" source="${compile.version}" target="${compile.version}" includeAntRuntime="no" debug="${compile.debug}" bootclasspath="${compile.boot}">
 			<classpath refid="dependencies" />
-			<exclude name="${compile.exclude.nashorn}" />
 		</javac>
 		<copy todir="${cache.classes}">
 			<fileset dir="${component.resources}" />
 		</copy>
 	</target>
 
-	<target name="eclipse-classes" depends="eclipse-dependencies, classes" description="Compile Eclipse Java code" if="eclipse.plugin">
-		<javac srcdir="${eclipse.source}" destdir="${cache.classes}" source="${compile.version}" target="${compile.version}" includeAntRuntime="no" debug="${compile.debug}" bootclasspath="${compile.boot}">
-			<classpath refid="eclipse-dependencies" />
-			<exclude name="${compile.exclude.nashorn}" />
+	<target name="ant-classes" depends="ant-dependencies, classes" description="Compile Ant tasks Java code" if="ant-tasks">
+		<javac srcdir="${ant.source}" destdir="${cache.classes}" source="${compile.version}" target="${compile.version}" includeAntRuntime="no" debug="${compile.debug}" bootclasspath="${compile.boot}">
+			<classpath refid="ant-dependencies" />
 		</javac>
 		<copy todir="${cache.classes}">
-			<fileset dir="${component.resources}" />
+			<fileset dir="${ant.resources}" />
+		</copy>
+	</target>
+
+	<target name="eclipse-classes" depends="eclipse-dependencies, classes" description="Compile Eclipse plugin Java code" if="eclipse-plugin">
+		<javac srcdir="${eclipse.source}" destdir="${cache.classes}" source="${compile.version}" target="${compile.version}" includeAntRuntime="no" debug="${compile.debug}" bootclasspath="${compile.boot}">
+			<classpath refid="eclipse-dependencies" />
+		</javac>
+		<copy todir="${cache.classes}">
+			<fileset dir="${eclipse.resources}" />
 		</copy>
 	</target>
 
@@ -106,8 +156,20 @@
 			</bottom>
 		</javadoc>
 	</target>
+
+	<target name="libraries" depends="classes, ant-classes" description="Create jar" unless="eclipse-plugin">
+		<mkdir dir="${distribution.jars}" />
+		<jar destfile="${distribution.jars}/${component.group}/${component.artifact}/${component.version}${component.version.postfix}/${component.artifact}.jar" basedir="${cache.classes}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${component.group}:${component.artifact}" />
+				<attribute name="Implementation-Version" value="${component.version}${component.version.postfix}" />
+				<attribute name="Implementation-Vendor" value="Three Crickets" />
+				<attribute name="Main-Class" value="com.threecrickets.creel.Tool" />
+			</manifest>
+		</jar>
+	</target>
 	
-	<target name="libraries" depends="classes, eclipse-classes" description="Create jar">
+	<target name="eclipse-libraries" depends="eclipse-classes" description="Create Eclipse plugin jar" if="eclipse-plugin">
 		<mkdir dir="${distribution.jars}" />
 		<jar destfile="${distribution.jars}/${component.group}/${component.artifact}/${component.version}${component.version.postfix}/${component.artifact}.jar" basedir="${cache.classes}">
 			<manifest>
@@ -116,22 +178,26 @@
 				<attribute name="Implementation-Vendor" value="Three Crickets" />
 				<attribute name="Main-Class" value="com.threecrickets.creel.Tool" />
 				
-				<!-- Eclipse Plugin -->
+				<!-- OSGi bundle for Eclipse plugin -->
 				<attribute name="Bundle-ManifestVersion" value="2" />
-				<attribute name="Bundle-Name" value="Creel Plugin" />
-				<attribute name="Bundle-SymbolicName" value="com.threecrickets.creel.plugin;singleton:=true" />
-				<attribute name="Bundle-Version" value="${component.version}${component.version.postfix}" />
-				<attribute name="Bundle-Activator" value="com.threecrickets.sincerity.creel.Plugin" />
+				<attribute name="Bundle-Name" value="Creel" />
+				<attribute name="Bundle-Description" value="Creel is a lightweight and lightning-fast library for resolving and downloading JVM dependencies from Maven repositories." />
 				<attribute name="Bundle-Vendor" value="Three Crickets" />
+				<attribute name="Bundle-Copyright" value="Copyright 2015-2016 Three Crickets LLC." />
+				<attribute name="Bundle-License" value="https://www.gnu.org/licenses/lgpl.html;description=GNU Lesser General Public License, Version 3" />
+				<attribute name="Bundle-Version" value="${component.version}${component.version.postfix}" />
+				<attribute name="Bundle-Icon" value="/icons/creel.png" />
+				<attribute name="Bundle-SymbolicName" value="com.threecrickets.creel;singleton:=true" />
 				<attribute name="Bundle-RequiredExecutionEnvironment" value="JavaSE-1.7" />
+				<attribute name="Bundle-Activator" value="com.threecrickets.creel.eclipse.Plugin" />
 				<attribute name="Bundle-ActivationPolicy" value="lazy" />
-				<attribute name="Require-Bundle" value="org.eclipse.ui,org.eclipse.core.runtime,org.eclipse.jdt.core,org.eclipse.jdt.launching,org.eclipse.debug.ui,org.eclipse.jdt.debug.ui,org.eclipse.jdt.ui" />
-				<attribute name="Export-Package" value="com.threecrickets.creel.eclipse;uses:=&quot;com.threecrickets.creel.eclipse.internal,org.eclipse.debug.core,org.eclipse.debug.ui,org.eclipse.core.runtime,org.eclipse.ui,org.eclipse.ui.plugin,org.eclipse.core.commands,org.eclipse.core.runtime.preferences,org.eclipse.jdt.debug.ui.launchConfigurations,org.eclipse.jdt.launching,org.eclipse.jdt.core,org.eclipse.core.resources,org.eclipse.jface.viewers,org.osgi.framework,org.eclipse.swt.widgets&quot;" />
+				<attribute name="Require-Bundle" value="${require-bundle}" />
+				<attribute name="Export-Package" value="com.threecrickets.creel.eclipse;uses:=&quot;${export-package-uses}&quot;" />
 			</manifest>
 		</jar>
 	</target>
 
-	<target name="distribution" depends="libraries, javadocs" description="Assemble distribution">
+	<target name="distribution" depends="libraries, eclipse-libraries, javadocs" description="Assemble distribution">
 		<copy todir="${distribution.source}/${component.group}/${component.artifact}/${component.version}${component.version.postfix}">
 			<fileset dir="${component.source}" />
 		</copy>

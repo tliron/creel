@@ -37,10 +37,8 @@ import com.threecrickets.creel.internal.Configuration;
  * classpath for compilation.
  * <p>
  * The task purposely does not run again if it was already completed
- * successfully. If you've made modifications to your build.xml and want the
- * task to run again, then you should delete the Creel state file and all
- * installed artifacts. This is likely what you'd do normally when your "clean"
- * task runs.
+ * successfully. If you've made want the task to run again, then you should run
+ * {@link CleanTask}.
  * <p>
  * An example build.xml:
  * 
@@ -48,7 +46,7 @@ import com.threecrickets.creel.internal.Configuration;
  * &lt;?xml version="1.0"?&gt;
  * &lt;project name="Sincerity" default="compile" xmlns:creel="antlib:com.threecrickets.creel.ant"&gt;
  * 	&lt;taskdef uri="antlib:com.threecrickets.creel.ant" resource="com/threecrickets/creel/ant/antlib.xml" classpath="creel.jar"/&gt;
- *  &lt;target name="dependencies&gt;
+ *  &lt;target name="dependencies"&gt;
  * 	  &lt;creel:run conflictPolicy="newest" libraryDir="lib" ref="my.dependencies.classpath"&gt;
  * 	    &lt;module group="com.github.sommeri" name="less4j" version="(,1.15.2)"/&gt;
  * 	    &lt;module group="org.jsoup" name="jsoup" version="1.8.1"/&gt;
@@ -322,6 +320,7 @@ public class RunTask extends Task
 				Configuration configuration = new Configuration( this.configuration.getFile() );
 				modules = configuration.getModuleSpecificationConfigs();
 				repositories = configuration.getRepositoryConfigs();
+				rules = configuration.getRuleConfigs();
 			}
 			catch( IOException x )
 			{

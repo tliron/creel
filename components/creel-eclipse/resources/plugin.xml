@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Menus -->
+
+<extension-point
+	id="org.eclipse.ui.menus"
+	name="org.eclipse.ui.menus"
+	schema="schema/menus.exsd"/>
+
+<extension
+	point="org.eclipse.ui.menus">
+	<menuContribution
+		locationURI="popup:org.eclipse.ui.projectConfigure?after=additions">
+		<command
+			id="com.threecrickets.creel.popup.addNature"
+			commandId="com.threecrickets.creel.commands.addNature">
+			<visibleWhen checkEnabled="true"/>
+		</command>
+	</menuContribution>
+</extension>
+
+<!-- Preferences -->
+
+<extension-point
+	id="org.eclipse.ui.preferencePages"
+	name="org.eclipse.ui.preferencePages"
+	schema="schema/preferencePages.exsd"/>
+
+<extension-point
+	id="org.eclipse.core.runtime.preferences"
+	name="org.eclipse.core.runtime.preferences"
+	schema="schema/preferences.exsd"/>
+
+<extension
+	point="org.eclipse.ui.preferencePages">
+ 	<page
+ 		id="com.threecrickets.creel.preferencesPage"
+ 		name="Creel Preferences"
+		class="com.threecrickets.creel.eclipse.PreferencesPage"/>
+</extension>
+
+<extension
+	point="org.eclipse.core.runtime.preferences">
+	<initializer class="com.threecrickets.creel.eclipse.PreferencesInitializer"/>
+</extension>
+
+<!-- Project Nature and Builder -->
+
+<extension-point
+	id="org.eclipse.core.resources.natures"
+	name="org.eclipse.core.resources.natures"
+	schema="schema/natures.exsd"/>
+
+<extension-point
+	id="org.eclipse.core.resources.builders"
+	name="org.eclipse.core.resources.builders"
+	schema="schema/builders.exsd"/>
+
+<extension
+	point="org.eclipse.core.resources.natures"
+	id="nature"
+	name="Creel Nature">
+	<runtime>
+		<run class="com.threecrickets.creel.eclipse.Nature"/> 
+	</runtime>
+</extension>
+
+<extension
+	point="org.eclipse.core.resources.builders"
+	id="builder"
+	name="Creel Builder">
+	<builder>
+		<run class="com.threecrickets.creel.eclipse.Builder">
+			<parameter name="optimize" value="true"/>
+			<parameter name="comment" value="Builder comment"/>
+		</run>
+	</builder>
+</extension>
+
+<!-- Classpath Containers -->
+
+<extension-point
+	id="org.eclipse.jdt.core.classpathContainerInitializer"
+	name="org.eclipse.jdt.core.classpathContainerInitializer"
+	schema="schema/classpathContainerInitializer.exsd"/>
+
+<extension-point
+	id="org.eclipse.jdt.ui.classpathContainerPage"
+	name="org.eclipse.jdt.ui.classpathContainerPage"
+	schema="schema/classpathContainerPage.exsd"/>
+
+<extension
+	point="org.eclipse.jdt.core.classpathContainerInitializer"
+	id="classpathContainer">
+	<classpathContainerInitializer
+		id="com.threecrickets.creel.classpath"
+		class="com.threecrickets.creel.eclipse.ClasspathContainerInitializer"/>
+</extension>
+
+<extension
+	point="org.eclipse.jdt.ui.classpathContainerPage">
+	<classpathContainerPage
+		id="com.threecrickets.creel.classpath"
+		name="Managed Dependencies"
+		class="com.threecrickets.creel.eclipse.ClasspathContainerPage"/>
+</extension>
+
+<!-- Commands and Handlers -->
+
+<extension-point
+	id="org.eclipse.ui.commands"
+	name="org.eclipse.ui.commands"
+	schema="schema/commands.exsd"/>
+
+<extension-point
+	id="org.eclipse.ui.handlers"
+	name="org.eclipse.ui.handlers"
+	schema="schema/handlers.exsd"/>
+
+<extension
+	point="org.eclipse.ui.commands">
+	<category
+		id="com.threecrickets.creel.commands"
+		name="Creel"/>
+	<command
+		categoryId="com.threecrickets.creel.commands"
+		id="com.threecrickets.creel.commands.addNature"
+		name="Manage dependencies with Creel..."/>
+</extension>
+
+<extension
+	point="org.eclipse.ui.handlers">
+	<handler
+		class="com.threecrickets.creel.eclipse.AddNatureCommand"
+		commandId="com.threecrickets.creel.commands.addNature">
+		<enabledWhen>
+			<iterate ifEmpty="false">
+				<adapt type="org.eclipse.core.resources.IProject">
+					<not>
+						<test property="org.eclipse.core.resources.projectNature" value="com.threecrickets.creel.nature"/>
+					</not>
+				</adapt>
+			</iterate>
+		</enabledWhen>
+	</handler>
+</extension>
+
+</plugin>

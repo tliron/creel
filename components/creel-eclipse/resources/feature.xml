@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+	id="com.threecrickets.creel"
+	label="Creel"
+	version="0.9"
+	provider-name="Three Crickets">
+
+	<description url="https://github.com/tliron/creel">
+		Creel is a lightweight and lightning-fast library for resolving and downloading JVM dependencies from Maven repositories.
+	</description>
+
+	<copyright>
+		Copyright 2015-2016 Three Crickets LLC.
+	</copyright>
+
+	<license url="http://www.gnu.org/copyleft/lesser.html">
+		GNU Lesser General Public License, Version 3
+	</license>
+
+	<url>
+		<update label="Three Crickets Repository" url="http://repository.threecrickets.com/eclipse/"/>
+	</url>
+
+	<requires>
+		<import plugin="org.eclipse.ui"/>
+		<import plugin="org.eclipse.core.runtime"/>
+		<import plugin="org.eclipse.debug.ui"/>
+		<import plugin="org.eclipse.jdt.core"/>
+		<import plugin="org.eclipse.jdt.debug.ui"/>
+		<import plugin="org.eclipse.jdt.launching"/>
+	</requires>
+
+	<plugin
+			id="com.threecrickets.creel"
+			download-size="0"
+			install-size="0"
+			version="0.9"
+			unpack="false"/>
+
+</feature>

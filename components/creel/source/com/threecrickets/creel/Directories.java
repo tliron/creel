@@ -13,6 +13,7 @@ package com.threecrickets.creel;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +27,11 @@ public class Directories
 	//
 	// Attributes
 	//
+
+	public Map<Artifact.Type, File> getAll()
+	{
+		return Collections.unmodifiableMap( directories );
+	}
 
 	/**
 	 * The directory according to the artifact's type.
@@ -82,6 +88,28 @@ public class Directories
 			directories.put( type, directory.getCanonicalFile() );
 		else
 			directories.remove( type );
+	}
+
+	/**
+	 * Sets all the directories.
+	 * 
+	 * @param directories
+	 *        The directories
+	 */
+	public void set( Map<Artifact.Type, File> directories )
+	{
+		this.directories.putAll( directories );
+	}
+
+	/**
+	 * Sets all the directories.
+	 * 
+	 * @param directories
+	 *        The directories
+	 */
+	public void set( Directories directories )
+	{
+		set( directories.getAll() );
 	}
 
 	/**

@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
 <antlib>
 	<typedef name="run" classname="com.threecrickets.creel.ant.RunTask" />
+	<typedef name="clean" classname="com.threecrickets.creel.ant.CleanTask" />
 </antlib>

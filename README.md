@@ -46,6 +46,7 @@ Here's a simple example in JavaScript, let's call it `creel.js`. If you have JVM
     
     engine.repositories = [
         {id: 'central', url: 'https://repo1.maven.org/maven2/'},
+        {id: '3c', url: 'http://repository.threecrickets.com/maven'},
         {id: 'restlet', url: 'http://maven.restlet.com', all: false}]
     
     engine.rules = [
@@ -82,11 +83,10 @@ By default it will look for a file called `creel.properties` in the current dire
     module.1.name=less4j
     module.1.version=(,1.15.2)
     
-    module.2.group=com.fasterxml.jackson
-    module.2.name=jackson
+    module.2.group=org.jsoup
+    module.2.name=jsoup
     
-    repository.1.url=file:/Depot/Repository/
-    repository.2.url=https://repo1.maven.org/maven2/
+    repository.1.url=https\://repo1.maven.org/maven2/
     
     rule.1.type=exclude
     rule.1.name=*annotations*
@@ -94,6 +94,8 @@ By default it will look for a file called `creel.properties` in the current dire
 Use `--help` to get a list of command line options.
 
 Note that the properties file can define all of the same attributes we used in the JavaScript example above, but we omitted them here for brevity. You may also set long-form command line options in the properties file, such as `library=` above. (Command line options would override these.) 
+
+Also note that in properties files you should escape colons: `\:`.
 
 
 Ant Task
@@ -111,11 +113,14 @@ Use Creel to download your dependency Jars and include them in the classpath. He
                 <module group="com.fasterxml.jackson" name="jackson"/>
                 <module group="com.threecrickets.prudence" name="prudence"/>
                 <module group="jsslutils" name="jsslutils"/>
+                <repository id="central" url="https://repo1.maven.org/maven2/"/>
                 <repository id="3c" url="http://repository.threecrickets.com/maven"/>
                 <repository id="restlet" url="http://maven.restlet.com" all="false"/>
-                <repository id="central" url="https://repo1.maven.org/maven2/"/>
                 <rule type="exclude" name="*annotations*"/>
             </creel:run>
+        </target>
+        <target name="clean">
+            <creel:clean/>
         </target>
         <target name="compile" depends="dependencies">
             <javac srcdir="." classpathref="dependencies">
@@ -126,9 +131,9 @@ Use Creel to download your dependency Jars and include them in the classpath. He
 
 Note how lovely it is that you can include everything in your single `build.xml` file. (Still, if you prefer a separate file, the task supports loading a `creel.properties` as with the command line tool.)
 
-The task purposely does not run again if it was already completed successfully. If you've made modifications to your `build.xml` and want the task to run again, then you should delete the Creel state file and all installed artifacts. This is likely what you'd do normally when your "clean" task runs.
+The task purposely does not run again if it was already completed successfully. If you've made want the task to run again, then you should run the clean task.
 
-See the [online documentation](http://threecrickets.com/api/java/creel/index.html?com/threecrickets/creel/ant/RunTask.html) for all available task attributes.
+See the [online documentation](http://threecrickets.com/api/java/creel/index.html?com/threecrickets/creel/ant/package-summary.html) for all available tasks and attributes.
 
 
 Rules

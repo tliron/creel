@@ -138,11 +138,11 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 		MavenRepository repository = (MavenRepository) getRepository();
 		Collection<Artifact> artifacts = new ArrayList<Artifact>();
 		if( directories.getLibrary() != null )
-			artifacts.add( new Artifact( Artifact.Type.LIBRARY, repository.getFile( this, "jar", null, directories.getLibrary(), flat ), repository.getUrl( this, "jar", null ), false ) );
+			artifacts.add( new Artifact( this, Artifact.Type.LIBRARY, repository.getFile( this, "jar", null, directories.getLibrary(), flat ), repository.getUrl( this, "jar", null ), false ) );
 		if( directories.getApi() != null )
-			artifacts.add( new Artifact( Artifact.Type.API, repository.getFile( this, "jar", "javadoc", directories.getApi(), flat ), repository.getUrl( this, "jar", "javadoc" ), false ) );
+			artifacts.add( new Artifact( this, Artifact.Type.API, repository.getFile( this, "jar", "javadoc", directories.getApi(), flat ), repository.getUrl( this, "jar", "javadoc" ), false ) );
 		if( directories.getSource() != null )
-			artifacts.add( new Artifact( Artifact.Type.SOURCE, repository.getFile( this, "jar", "sources", directories.getSource(), flat ), repository.getUrl( this, "jar", "sources" ), false ) );
+			artifacts.add( new Artifact( this, Artifact.Type.SOURCE, repository.getFile( this, "jar", "sources", directories.getSource(), flat ), repository.getUrl( this, "jar", "sources" ), false ) );
 		return Collections.unmodifiableCollection( artifacts );
 	}
 

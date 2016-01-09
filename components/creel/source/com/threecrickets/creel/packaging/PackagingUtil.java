@@ -147,7 +147,7 @@ public abstract class PackagingUtil
 							if( name.startsWith( prefix ) && name.length() > prefixLength )
 							{
 								URL url = new URL( urlContext, name );
-								artifacts.add( new Artifact( null, new File( rootDir, name.substring( prefixLength ) ), url, volatiles.contains( name ) ) );
+								artifacts.add( new Artifact( new File( rootDir, name.substring( prefixLength ) ), url, volatiles.contains( name ) ) );
 							}
 						}
 					}
@@ -170,7 +170,7 @@ public abstract class PackagingUtil
 							if( packageFile.equals( entry.getName() ) )
 							{
 								URL url = new URL( "jar:" + jar.getUrl() + "!/" + packageFile );
-								artifacts.add( new Artifact( null, new File( rootDir, packageFile ), url, volatiles.contains( packageFile ) ) );
+								artifacts.add( new Artifact( new File( rootDir, packageFile ), url, volatiles.contains( packageFile ) ) );
 								found = true;
 								break;
 							}
@@ -195,7 +195,7 @@ public abstract class PackagingUtil
 						if( url == null )
 							throw new RuntimeException( "Could not find packaged resource " + name + " from " + jar.getFile() );
 
-						artifacts.add( new Artifact( null, new File( rootDir, name ), url, volatiles.contains( name ) ) );
+						artifacts.add( new Artifact( new File( rootDir, name ), url, volatiles.contains( name ) ) );
 					}
 				}
 			}
