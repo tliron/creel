@@ -50,7 +50,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
 
-import com.threecrickets.creel.eclipse.ClasspathContainer;
+import com.threecrickets.creel.eclipse.Classpath;
 
 /**
  * Utilities for Eclipse.
@@ -140,12 +140,12 @@ public abstract class EclipseUtil
 		}
 
 		ICommand[] newCommands = new ICommand[commands.length + 1];
-		System.arraycopy( commands, 0, newCommands, 0, commands.length );
+		System.arraycopy( commands, 0, newCommands, 1, commands.length );
 		ICommand command = projectDescription.newCommand();
 		command.setBuilderName( id );
 		if( arguments != null )
 			command.setArguments( arguments );
-		newCommands[newCommands.length - 1] = command;
+		newCommands[0] = command;
 		projectDescription.setBuildSpec( newCommands );
 		project.setDescription( projectDescription, null );
 	}
@@ -207,7 +207,7 @@ public abstract class EclipseUtil
 			project.setRawClasspath( entries, null );
 		}
 
-		JavaCore.setClasspathContainer( ClasspathContainer.ID, new IJavaProject[]
+		JavaCore.setClasspathContainer( Classpath.ID, new IJavaProject[]
 		{
 			project
 		}, new IClasspathContainer[]

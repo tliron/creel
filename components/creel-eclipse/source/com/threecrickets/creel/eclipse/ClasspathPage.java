@@ -22,22 +22,22 @@ import org.eclipse.swt.widgets.Composite;
 import com.threecrickets.creel.eclipse.internal.Text;
 
 /**
- * Descriptor for {@link ClasspathContainer}.
+ * Properties page for {@link Classpath}.
  * 
  * @author Tal Liron
  */
-public class ClasspathContainerPage extends WizardPage implements IClasspathContainerPage
+public class ClasspathPage extends WizardPage implements IClasspathContainerPage
 {
 	//
 	// Construction
 	//
 
-	public ClasspathContainerPage()
+	public ClasspathPage()
 	{
 		super( Text.ClasspathName, Text.ClasspathName, null );
 		setDescription( Text.ClasspathDescription );
 		setPageComplete( true );
-		this.id = ClasspathContainer.ID;
+		this.id = Classpath.ID;
 	}
 
 	//

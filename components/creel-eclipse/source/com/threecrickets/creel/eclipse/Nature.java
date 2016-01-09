@@ -23,7 +23,8 @@ import org.eclipse.jdt.core.JavaCore;
 import com.threecrickets.creel.eclipse.internal.EclipseUtil;
 
 /**
- * Creel nature. Will configure the project to have a Creel {@link Builder}.
+ * Creel nature. Will configure the project to have a Creel {@link Builder}, and
+ * if its a JDT project a {@link Classpath}.
  * 
  * @author Tal Liron
  */
@@ -44,7 +45,7 @@ public class Nature implements IProjectNature
 		if( project.hasNature( JavaCore.NATURE_ID ) )
 		{
 			IJavaProject javaProject = JavaCore.create( project );
-			EclipseUtil.setClasspathContainer( javaProject, new ClasspathContainer( project ) );
+			EclipseUtil.setClasspathContainer( javaProject, new Classpath( project ) );
 		}
 
 		Map<String, String> arguments = new HashMap<String, String>();

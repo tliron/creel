@@ -194,7 +194,7 @@ public class Builder extends IncrementalProjectBuilder
 		{
 			// Update classpath
 			IJavaProject javaProject = JavaCore.create( project );
-			EclipseUtil.setClasspathContainer( javaProject, new ClasspathContainer( project ) );
+			EclipseUtil.setClasspathContainer( javaProject, new Classpath( project ) );
 		}
 
 		// Update folders
@@ -224,7 +224,7 @@ public class Builder extends IncrementalProjectBuilder
 			{
 				// Update classpath
 				IJavaProject javaProject = JavaCore.create( project );
-				EclipseUtil.setClasspathContainer( javaProject, new ClasspathContainer( project ) );
+				EclipseUtil.setClasspathContainer( javaProject, new Classpath( project ) );
 			}
 
 			// Update folders

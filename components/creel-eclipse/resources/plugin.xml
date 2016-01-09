@@ -96,7 +96,7 @@
 	id="classpathContainer">
 	<classpathContainerInitializer
 		id="com.threecrickets.creel.classpath"
-		class="com.threecrickets.creel.eclipse.ClasspathContainerInitializer"/>
+		class="com.threecrickets.creel.eclipse.ClasspathInitializer"/>
 </extension>
 
 <extension
@@ -104,7 +104,7 @@
 	<classpathContainerPage
 		id="com.threecrickets.creel.classpath"
 		name="Managed Dependencies"
-		class="com.threecrickets.creel.eclipse.ClasspathContainerPage"/>
+		class="com.threecrickets.creel.eclipse.ClasspathPage"/>
 </extension>
 
 <!-- Commands and Handlers -->

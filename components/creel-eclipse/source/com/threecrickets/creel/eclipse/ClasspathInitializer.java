@@ -13,16 +13,17 @@ package com.threecrickets.creel.eclipse;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.jdt.core.ClasspathContainerInitializer;
 import org.eclipse.jdt.core.IClasspathContainer;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 
 /**
- * Initializes {@link ClasspathContainer}.
+ * Initializes {@link Classpath}.
  * 
  * @author Tal Liron
  */
-public class ClasspathContainerInitializer extends org.eclipse.jdt.core.ClasspathContainerInitializer
+public class ClasspathInitializer extends ClasspathContainerInitializer
 {
 	//
 	// ClasspathContainerInitializer
@@ -30,7 +31,7 @@ public class ClasspathContainerInitializer extends org.eclipse.jdt.core.Classpat
 
 	public void initialize( IPath path, IJavaProject project ) throws CoreException
 	{
-		ClasspathContainer container = new ClasspathContainer( project.getProject() );
+		Classpath container = new Classpath( project.getProject() );
 		JavaCore.setClasspathContainer( path, new IJavaProject[]
 		{
 			project

@@ -37,7 +37,7 @@ import com.threecrickets.creel.eclipse.internal.Text;
  * 
  * @author Tal Liron
  */
-public class ClasspathContainer implements IClasspathContainer
+public class Classpath implements IClasspathContainer
 {
 	//
 	// Constants
@@ -49,7 +49,7 @@ public class ClasspathContainer implements IClasspathContainer
 	// Construction
 	//
 
-	public ClasspathContainer( IProject project )
+	public Classpath( IProject project )
 	{
 		this.project = project;
 	}
