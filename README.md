@@ -4,7 +4,7 @@ Creel
 
 Creel is a lightweight and lightning-fast library for resolving and downloading JVM dependencies from [Maven](https://maven.apache.org/) repositories.
 
-It can be run as a command line tool, via an [Ant](http://ant.apache.org/) task, or embedded into any program.
+It can be run as a command line tool, via [Ant](http://ant.apache.org/) tasks, an [Eclipse](https://eclipse.org/) plugin, or embedded into any program.
 
 Features:
 
@@ -14,17 +14,27 @@ Features:
 * Resolves version conflicts according to policy, your choice of newest (cutting-edge) or oldest (conservative).
 * Define your own rules for rewriting versions, names, exclusions, etc. Create your own custom rule code if necessary.
 * Elegantly handles upgrades and other changes: keeps a tiny database of previously installed dependencies, and will remove them if they are no longer needed.
-* Supports Maven-style ("m2" a.k.a. "ibiblio") repositories out of the box, but is easily extensible if you'd like to support others. (Ivy, or your own custom technology.)
+* Supports Maven-style ("m2" a.k.a. "ibiblio") repositories out of the box, but is easily extensible if you'd like to support others. (Ivy, Eclipse p2, or your own custom technology.)
 * SHA-1 and MD5 validation of all downloaded files (and also pom.xml and maven-metadata.xml while processing them).
-* Extends the Maven spec with convenient pattern globbing ("*" and "?") and also supports Ivy's "+" suffix.
-* Supports an innovative, straightforward [packaging format](PACKAGE.md) that allows you to easily distribute arbitrary files (not just Jars) in a Maven repo.
+* Extends the Maven spec with convenient pattern globbing ("*" and "?") and also supports Ivy/Gradle's "+" version suffix.
+* Supports an innovative, straightforward [packaging format](PACKAGE.md) that allows you to easily distribute arbitrary files (not just Jars) in any repo.
 * Colorful, animated ANSI terminal feedback where supported. See your downloads woosh!
+
+TODO: [![Download](http://threecrickets.com/media/download.png "Download")](https://drive.google.com/folderview?id=0B5XU4AmCevRXYVVhbWhCbUM1NjQ)
+
+The above is for complete distributions. Other options for downloading:
+
+* TODO: Maven: Creel is published in [Maven Central](http://mvnrepository.com/artifact/com.threecrickets.creel) and in the [Three Crickets Repository](https://threecrickets.com/repository/maven/)
+* TODO: Eclipse Update Site: for easy updating of the Eclipse plugin, add [http://repository.threecrickets.com/eclipse/](http://repository.threecrickets.com/eclipse/) in "Help -> Install New Software" (hosted by Three Crickets)
+* JavaDocs: browse them [here](http://threecrickets.com/api/java/creel/) (hosted by Three Crickets)
 
 How does Creel compare to [Gradle](http://gradle.org/)? Well, Creel is _much_ lighter and _much_ faster, but it's also a one-trick pony designed only for resolving and downloading dependencies, while Gradle can be used for complete project development and management. Note that Creel could be a great choice as a library with which to build your own Gradle-like tool.
 
 And, actually, that's precisely the context in which Creel was created: it was spun off as an independent library out of [Sincerity](http://threecrickets.com/sincerity/). Sincerity is a terrific tool for managing and bootstrapping application containers. Check it out!
 
-How does Creel compare to [Ivy](http://ant.apache.org/ivy/)? Well, Ivy can also be used to download Maven dependencies and integrates with Ant, but it's heavier (1.3Mb!) and _much_ more complex. We actually used Ivy for a long time, but found it too cumbersome to embed and extend. Creel was conceived as a lighter, faster, and simpler replacement for Ivy.  
+How does Creel compare to [Ivy](http://ant.apache.org/ivy/)? Well, Ivy can also be used to download Maven dependencies and integrates with Ant, but it's heavier (1.3Mb!) and _much_ more complex. We actually used Ivy for a long time, but found it too cumbersome to embed and extend. Creel was conceived as a lighter, faster, and simpler replacement for Ivy.
+
+How does Creel compare to [Aether](https://www.eclipse.org/aether/)? Aether isn't too bad, but it's still more complex than Creel, consisting of several libraries, as well as requiring the external `maven-aether-provider` to do anything useful.
 
 
 Embedded
@@ -134,6 +144,22 @@ Note how lovely it is that you can include everything in your single `build.xml`
 The task purposely does not run again if it was already completed successfully. If you've made want the task to run again, then you should run the clean task.
 
 See the [online documentation](http://threecrickets.com/api/java/creel/index.html?com/threecrickets/creel/ant/package-summary.html) for all available tasks and attributes.
+
+
+Eclipse Plugin
+--------------
+
+Use Creel to manage the classpath for your Eclipse projects, with access to source and JavaDocs.
+
+You can install it just by putting the Jar in your Eclipse `dropins` directory, or use the Eclipse Update Site in "Download" above.
+
+To add Creel support to an Eclipse project, right click on it, and choose "Configure -> Manage dependencies with Creel". You will have the option of using a `creel.properties`. If you don't already have one, a default one will be generated for you. Otherwise, you can choose to manage Creel on your own (for example, if you are using the Ant tasks).
+
+For both options, a "Managed Dependencies" classpath will be added for you. Feel free to browse it.
+
+A "Creel Builder" will be added to your project. If you chose the first option, by default it will pull in library Jars, JavaDocs, and sources, as well as unpack into your project's base directory. The builder will detect any change to your `creel.properties` and will silently run Creel to update the classpath. It will also clean the dependencies if you clean your project.
+
+TODO: If you chose to manage Creel on your own, the builder will detect changes to the Creel state and update the classpath accordingly.
 
 
 Rules

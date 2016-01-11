@@ -4,11 +4,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.threecrickets.creel</groupId>
-	<artifactId>creel</artifactId>
+	<artifactId>creel-eclipse-feature</artifactId>
 	<version>@VERSION@</version>
 	<packaging>pom</packaging>
 
-	<name>Creel</name>
+	<name>Creel: Eclipse Feature</name>
 	<description>A lightweight and lightning-fast library for resolving and downloading JVM dependencies from Maven repositories.</description>
 	<url>https://github.com/tliron/creel</url>
 	<inceptionYear>2015</inceptionYear>
@@ -44,89 +44,29 @@
 		<directory>@CACHE@</directory>
 
 		<plugins>
-			<!-- Delegate to the Ant build script -->
-			<!--
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.7</version>
-				<executions>
-					<execution>
-						<phase>generate-resources</phase>
-						<configuration>
-							<tasks>
-								<ant dir=".." antfile="build.xml" target="libraries" />
-							</tasks>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-				<dependencies>
-					<dependency>
-						<groupId>com.sun</groupId>
-						<artifactId>tools</artifactId>
-						<version>${java.vm.version}</version>
-						<scope>system</scope>
-						<systemPath>${java.home}/../lib/tools.jar</systemPath>
-					</dependency>
-				</dependencies>
-			</plugin>
-			-->
 
 			<!-- jar artifact -->
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>1.9.1</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.6</version>
 				<executions>
 					<execution>
 						<id>jar</id>
 						<phase>package</phase>
 						<goals>
-							<goal>attach-artifact</goal>
+							<goal>single</goal>
 						</goals>
 						<configuration>
-							<artifacts>
-								<artifact>
-									<type>jar</type>
-									<file>@CONTENT@/libraries/jars/${project.groupId}/${project.artifactId}/${project.version}/${project.artifactId}.jar</file>
-								</artifact>
-							</artifacts>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.3.2</version>
-				<executions>
-					<!-- javadoc artifact -->
-					<execution>
-						<id>javadoc</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<classifier>javadoc</classifier>
-							<classesDirectory>@CONTENT@/reference/documentation/api</classesDirectory>
-						</configuration>
-					</execution>
-
-					<!-- sources artifact -->
-					<execution>
-						<id>source</id>
-						<phase>package</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<classifier>sources</classifier>
-							<classesDirectory>@CONTENT@/reference/source/${project.groupId}/${project.artifactId}/${project.version}</classesDirectory>
+							<appendAssemblyId>false</appendAssemblyId>
+							<archive>
+								<manifestEntries>
+									<Package-Folders>package</Package-Folders>
+								</manifestEntries>
+							</archive>
+							<descriptors>
+								<descriptor>package.xml</descriptor>
+							</descriptors>
 						</configuration>
 					</execution>
 				</executions>
@@ -161,7 +101,7 @@
 					</execution>
 				</executions>
 			</plugin>
-
+      
 		</plugins>
 	</build>
 
@@ -171,9 +111,5 @@
 			<url>@DEPENDENCIES@</url>
 		</repository>
 	</repositories>
-	
-	<modules>
-		<module>eclipse</module>
-	</modules>
 
 </project>

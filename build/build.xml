@@ -21,6 +21,7 @@
 	<property name="cache.jars" location="${cache}/jars" />
 	<property name="cache.maven.pom" location="${cache}/maven/pom" />
 	<property name="cache.maven.build" location="${cache}/maven/build" />
+	<property name="cache.maven.eclipse" location="${cache}/maven/eclipse" />
 
 	<property name="distribution" location="${root}/build/distribution" />
 	<property name="distribution.content" location="${distribution}/content" />
@@ -205,10 +206,12 @@
 			<fileset dir="${component.notices}" />
 		</copy>
 	</target>
-	
+
 	<target name="deploy-maven" if="maven" depends="distribution" description="Deploy to Maven repository">
 		<delete dir="${cache.maven.pom}" />
+		<delete dir="${cache.maven.eclipse}" />
 		<delete dir="${cache.maven.build}" />
+		<mkdir dir="${cache.maven.build}" />
 		<copy todir="${cache.maven.pom}">
 			<fileset dir="${root}/build/maven" excludes="**/*~" />
 			<filterchain>
@@ -216,13 +219,27 @@
 					<token key="VERSION" value="${component.version}${component.version.postfix}" />
 					<token key="DEPENDENCIES" value="${dependencies.repo}" />
 					<token key="CACHE" value="${cache.maven.build}" />
+					<token key="ECLIPSE_CACHE" value="${cache.maven.eclipse}" />
 					<token key="CONTENT" value="${distribution.content}" />
+				</replacetokens>
+			</filterchain>
+		</copy>
+		<copy todir="${cache.maven.eclipse}">
+			<fileset dir="${root}/build/eclipse" excludes="**/*~" />
+			<filterchain>
+				<replacetokens>
+					<token key="VERSION" value="${component.version}${component.version.postfix}" />
 				</replacetokens>
 			</filterchain>
 		</copy>
 		<exec executable="${maven}" dir="${cache.maven.pom}">
 			<arg value="deploy" />
 			<arg value="-DaltDeploymentRepository=default::default::${distribution.repo}" />
+			<arg value="-Djarsigner.keystore=${sign.keystore}" />
+			<arg value="-Djarsigner.storepass=${sign.storepass}" />
+			<arg value="-Djarsigner.alias=${sign.alias}" />
+			<arg value="-Djarsigner.keypass=${sign.keypass}" />
+			<arg value="-Djarsigner.tsa=http://timestamp.digicert.com" />
 		</exec>
 	</target>
 
