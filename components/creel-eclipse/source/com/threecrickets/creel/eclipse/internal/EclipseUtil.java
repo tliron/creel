@@ -27,19 +27,12 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.debug.core.ILaunchManager;
-import org.eclipse.debug.core.Launch;
 import org.eclipse.jdt.core.IClasspathContainer;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.launching.IVMInstall;
-import org.eclipse.jdt.launching.IVMRunner;
-import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
@@ -169,25 +162,25 @@ public abstract class EclipseUtil
 		}
 	}
 
-	public static IClasspathContainer getClasspathContainer( IJavaProject project, Path id ) throws JavaModelException
+	public static IClasspathContainer getClasspathContainer( IJavaProject project, IPath path ) throws JavaModelException
 	{
 		IClasspathEntry[] entries = project.getRawClasspath();
 		for( IClasspathEntry entry : entries )
-			if( ( entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER ) && ( entry.getPath().equals( id ) ) )
+			if( ( entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER ) && ( entry.getPath().equals( path ) ) )
 				return (IClasspathContainer) entry;
 		return null;
 	}
 
 	public static void setClasspathContainer( IJavaProject project, IClasspathContainer container ) throws JavaModelException
 	{
-		IPath id = container.getPath();
+		IPath path = container.getPath();
 		IClasspathEntry[] entries = project.getRawClasspath();
 
 		int found = -1;
 		for( int i = 0, length = entries.length; i < length; i++ )
 		{
 			IClasspathEntry entry = entries[i];
-			if( ( entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER ) && ( entry.getPath().equals( id ) ) )
+			if( ( entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER ) && ( entry.getPath().equals( path ) ) )
 			{
 				found = i;
 				break;
@@ -203,17 +196,42 @@ public abstract class EclipseUtil
 		}
 		else
 		{
-			entries[found] = JavaCore.newContainerEntry( container.getPath() );
+			entries[found] = JavaCore.newContainerEntry( path );
 			project.setRawClasspath( entries, null );
 		}
 
-		JavaCore.setClasspathContainer( Classpath.ID, new IJavaProject[]
+		JavaCore.setClasspathContainer( Classpath.PATH, new IJavaProject[]
 		{
 			project
 		}, new IClasspathContainer[]
 		{
 			container
 		}, null );
+	}
+
+	public static void removeClasspathContainer( IJavaProject project, IPath path ) throws JavaModelException
+	{
+		IClasspathEntry[] entries = project.getRawClasspath();
+
+		int found = -1;
+		for( int i = 0, length = entries.length; i < length; i++ )
+		{
+			IClasspathEntry entry = entries[i];
+			if( ( entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER ) && ( entry.getPath().equals( path ) ) )
+			{
+				found = i;
+				break;
+			}
+		}
+
+		if( found != -1 )
+		{
+			IClasspathEntry[] newEntries = new IClasspathEntry[entries.length - 1];
+			System.arraycopy( entries, 0, newEntries, 0, found );
+			if( found != entries.length )
+				System.arraycopy( entries, found + 1, newEntries, found, entries.length - found - 1 );
+			project.setRawClasspath( newEntries, null );
+		}
 	}
 
 	public static void log( ILog log, String id, int severity, Throwable x )
@@ -267,15 +285,6 @@ public abstract class EclipseUtil
 			combo.setItems( items );
 		combo.select( 0 );
 		return combo;
-	}
-
-	public static void run( IVMInstall install, String[] classpath, String mainClass, String... arguments ) throws CoreException
-	{
-		IVMRunner runner = install.getVMRunner( ILaunchManager.RUN_MODE );
-		VMRunnerConfiguration configuration = new VMRunnerConfiguration( mainClass, classpath );
-		configuration.setProgramArguments( arguments );
-		Launch launch = new Launch( null, ILaunchManager.RUN_MODE, null );
-		runner.run( configuration, launch, new NullProgressMonitor() );
 	}
 
 	public static void waitUntilDisposed( Shell shell )

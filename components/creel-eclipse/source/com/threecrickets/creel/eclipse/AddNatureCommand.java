@@ -34,6 +34,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 
 import com.threecrickets.creel.eclipse.internal.EclipseUtil;
+import com.threecrickets.creel.eclipse.internal.Text;
 
 /**
  * Command to add the Creel {@link Nature} to the selected project.
@@ -83,7 +84,7 @@ public class AddNatureCommand extends AbstractHandler
 	{
 		Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 		final Shell dialog = new Shell( shell, SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM );
-		dialog.setText( "Manage dependencies with Creel" );
+		dialog.setText( Text.AddNatureTitle );
 		FillLayout layout = new FillLayout();
 		layout.marginHeight = 10;
 		layout.marginWidth = 10;
@@ -95,7 +96,7 @@ public class AddNatureCommand extends AbstractHandler
 		final AtomicBoolean isUseConfigurationFile = new AtomicBoolean( true );
 
 		Button useConfigurationFile = new Button( main, SWT.RADIO );
-		useConfigurationFile.setText( Builder.hasDefaultConfigurationFile( project ) ? "Use existing creel.properties file" : "Create and use a creel.properties file" );
+		useConfigurationFile.setText( Builder.hasDefaultConfigurationFile( project ) ? Text.AddNatureUseExistingConfiguration : Text.AddNatureCreateConfiguration );
 		useConfigurationFile.setSelection( true );
 		useConfigurationFile.addListener( SWT.Selection, new Listener()
 		{
@@ -106,7 +107,7 @@ public class AddNatureCommand extends AbstractHandler
 		} );
 
 		Button selfManaged = new Button( main, SWT.RADIO );
-		selfManaged.setText( "Manage dependencies otherwise (Ant, etc.)" );
+		selfManaged.setText( Text.AddNatureOtherwise );
 		useConfigurationFile.addListener( SWT.Selection, new Listener()
 		{
 			public void handleEvent( Event event )
@@ -121,7 +122,7 @@ public class AddNatureCommand extends AbstractHandler
 
 		final AtomicBoolean add = new AtomicBoolean();
 		Button addButton = new Button( buttons, SWT.PUSH );
-		addButton.setText( "Add" );
+		addButton.setText( Text.AddNatureAdd );
 		addButton.addListener( SWT.Selection, new Listener()
 		{
 			public void handleEvent( Event event )
@@ -132,7 +133,7 @@ public class AddNatureCommand extends AbstractHandler
 		} );
 
 		Button cancelButton = new Button( buttons, SWT.PUSH );
-		cancelButton.setText( "Cancel" );
+		cancelButton.setText( Text.AddNatureCancel );
 		cancelButton.addListener( SWT.Selection, new Listener()
 		{
 			public void handleEvent( Event event )

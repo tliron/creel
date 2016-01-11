@@ -53,8 +53,6 @@
 		<string>org.eclipse.debug.core</string>
 		<string>org.eclipse.debug.ui</string>
 		<string>org.eclipse.jdt.core</string>
-		<string>org.eclipse.jdt.debug.ui.launchConfigurations</string>
-		<string>org.eclipse.jdt.launching</string>
 		<string>org.eclipse.jface.viewers</string>
 		<string>org.eclipse.swt.widgets</string>
 		<string>org.eclipse.ui</string>
@@ -91,7 +89,6 @@
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.jdt.core" />
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.jdt.ui" />
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.jdt.debug.ui" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.jdt.launching" />
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.jface" />
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.osgi" />
 			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.swt.win32.win32.x86" />

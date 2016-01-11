@@ -162,6 +162,10 @@ public class Builder extends IncrementalProjectBuilder
 		IProject project = getProject();
 		IFile configurationFile = getConfigurationFile( project, arguments );
 
+		if( !configurationFile.exists() )
+			// No configuration file, nothing to do
+			return null;
+
 		IResourceDelta delta = getDelta( project );
 		if( delta != null ) // is null when cleaning
 		{
@@ -170,10 +174,6 @@ public class Builder extends IncrementalProjectBuilder
 				// No change, nothing to do
 				return null;
 		}
-
-		if( !configurationFile.exists() )
-			// No configuration file, nothing to do
-			return null;
 
 		// Run Creel
 		Map<Artifact.Type, IContainer> folders = getFolders( project );

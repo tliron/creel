@@ -33,7 +33,7 @@ import com.threecrickets.creel.eclipse.internal.Text;
 /**
  * Represents the artifacts installed by Creel as a JDT classpath.
  * <p>
- * Path ID: "com.threecrickets.creel.classpath"
+ * Path: "com.threecrickets.creel.classpath"
  * 
  * @author Tal Liron
  */
@@ -43,7 +43,7 @@ public class Classpath implements IClasspathContainer
 	// Constants
 	//
 
-	public final static Path ID = new Path( Plugin.ID + ".classpath" );
+	public final static Path PATH = new Path( Plugin.ID + ".classpath" );
 
 	//
 	// Construction
@@ -137,7 +137,7 @@ public class Classpath implements IClasspathContainer
 
 	public IPath getPath()
 	{
-		return ID;
+		return PATH;
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

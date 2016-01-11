@@ -11,7 +11,6 @@
 
 package com.threecrickets.creel.eclipse;
 
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ui.wizards.IClasspathContainerPage;
@@ -37,7 +36,6 @@ public class ClasspathPage extends WizardPage implements IClasspathContainerPage
 		super( Text.ClasspathName, Text.ClasspathName, null );
 		setDescription( Text.ClasspathDescription );
 		setPageComplete( true );
-		this.id = Classpath.ID;
 	}
 
 	//
@@ -56,15 +54,10 @@ public class ClasspathPage extends WizardPage implements IClasspathContainerPage
 
 	public IClasspathEntry getSelection()
 	{
-		return JavaCore.newContainerEntry( id );
+		return JavaCore.newContainerEntry( Classpath.PATH );
 	}
 
 	public void setSelection( IClasspathEntry containerEntry )
 	{
 	}
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Private
-
-	private final IPath id;
 }

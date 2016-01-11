@@ -31,24 +31,31 @@ public class ClasspathInitializer extends ClasspathContainerInitializer
 
 	public void initialize( IPath path, IJavaProject project ) throws CoreException
 	{
-		Classpath container = new Classpath( project.getProject() );
+		Classpath classpath = new Classpath( project.getProject() );
 		JavaCore.setClasspathContainer( path, new IJavaProject[]
 		{
 			project
 		}, new IClasspathContainer[]
 		{
-			container
+			classpath
 		}, null );
 	}
 
 	@Override
-	public void requestClasspathContainerUpdate( IPath path, IJavaProject project, IClasspathContainer containerSuggestion ) throws CoreException
+	public void requestClasspathContainerUpdate( IPath path, IJavaProject project, IClasspathContainer suggestion ) throws CoreException
 	{
+		JavaCore.setClasspathContainer( path, new IJavaProject[]
+		{
+			project
+		}, new IClasspathContainer[]
+		{
+			suggestion
+		}, null );
 	}
 
 	@Override
 	public boolean canUpdateClasspathContainer( IPath path, IJavaProject project )
 	{
-		return false;
+		return true;
 	}
 }
