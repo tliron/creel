@@ -28,6 +28,8 @@ public abstract class Text extends NLS
 
 	public static String ClasspathDescription;
 
+	public static String ClasspathRefresh;
+
 	public static String AddNatureTitle;
 
 	public static String AddNatureUseExistingConfiguration;

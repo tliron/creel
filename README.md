@@ -151,15 +151,15 @@ Eclipse Plugin
 
 Use Creel to manage the classpath for your Eclipse projects, with access to source and JavaDocs.
 
-You can install it just by putting the Jar in your Eclipse `dropins` directory, or use the Eclipse Update Site in "Download" above.
+You can install it by using the Eclipse Update Site in "Download" above, or just by put the Jar in your Eclipse `dropins` or `plugins` directory.
 
 To add Creel support to an Eclipse project, right click on it, and choose "Configure -> Manage dependencies with Creel". You will have the option of using a `creel.properties`. If you don't already have one, a default one will be generated for you. Otherwise, you can choose to manage Creel on your own (for example, if you are using the Ant tasks).
 
-For both options, a "Managed Dependencies" classpath will be added for you. Feel free to browse it.
+For both options, a "Creel Managed Dependencies" classpath will be added for you. Feel free to browse it. You can also add it manually in any project via properties: "Java Build Path -> Add Library".
 
 A "Creel Builder" will be added to your project. If you chose the first option, by default it will pull in library Jars, JavaDocs, and sources, as well as unpack into your project's base directory. The builder will detect any change to your `creel.properties` and will silently run Creel to update the classpath. It will also clean the dependencies if you clean your project.
 
-TODO: If you chose to manage Creel on your own, the builder will detect changes to the Creel state and update the classpath accordingly.
+If you chose to manage Creel on your own, the builder will not do anything. Instead, you will need to manually refresh the "Creel Managed Dependencies" classpath from its properties page.
 
 
 Rules

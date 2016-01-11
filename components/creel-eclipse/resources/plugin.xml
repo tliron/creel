@@ -103,7 +103,7 @@
 	point="org.eclipse.jdt.ui.classpathContainerPage">
 	<classpathContainerPage
 		id="com.threecrickets.creel.classpath"
-		name="Managed Dependencies"
+		name="Creel Managed Dependencies"
 		class="com.threecrickets.creel.eclipse.ClasspathPage"/>
 </extension>
 

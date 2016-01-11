@@ -12,12 +12,19 @@
 package com.threecrickets.creel.eclipse;
 
 import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ui.wizards.IClasspathContainerPage;
+import org.eclipse.jdt.ui.wizards.IClasspathContainerPageExtension;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 
+import com.threecrickets.creel.eclipse.internal.EclipseUtil;
 import com.threecrickets.creel.eclipse.internal.Text;
 
 /**
@@ -25,7 +32,7 @@ import com.threecrickets.creel.eclipse.internal.Text;
  * 
  * @author Tal Liron
  */
-public class ClasspathPage extends WizardPage implements IClasspathContainerPage
+public class ClasspathPage extends WizardPage implements IClasspathContainerPage, IClasspathContainerPageExtension
 {
 	//
 	// Construction
@@ -35,7 +42,6 @@ public class ClasspathPage extends WizardPage implements IClasspathContainerPage
 	{
 		super( Text.ClasspathName, Text.ClasspathName, null );
 		setDescription( Text.ClasspathDescription );
-		setPageComplete( true );
 	}
 
 	//
@@ -44,20 +50,55 @@ public class ClasspathPage extends WizardPage implements IClasspathContainerPage
 
 	public void createControl( Composite parent )
 	{
-		setControl( new Composite( parent, SWT.NULL ) );
+		Composite top = EclipseUtil.createComposite( parent, 1, 1, true, false );
+		Button refresh = new Button( top, SWT.PUSH );
+		refresh.setText( Text.ClasspathRefresh );
+		refresh.addListener( SWT.Selection, new Listener()
+		{
+			public void handleEvent( Event event )
+			{
+				try
+				{
+					EclipseUtil.setClasspathContainer( project, new Classpath( project.getProject() ) );
+				}
+				catch( JavaModelException x )
+				{
+					throw new RuntimeException( x );
+				}
+			}
+		} );
+		setControl( top );
 	}
 
 	public boolean finish()
 	{
+		entry = JavaCore.newContainerEntry( Classpath.PATH );
 		return true;
 	}
 
 	public IClasspathEntry getSelection()
 	{
-		return JavaCore.newContainerEntry( Classpath.PATH );
+		return entry;
 	}
 
-	public void setSelection( IClasspathEntry containerEntry )
+	public void setSelection( IClasspathEntry entry )
 	{
+		this.entry = entry;
 	}
+
+	//
+	// IClasspathContainerPageExtension
+	//
+
+	public void initialize( IJavaProject project, IClasspathEntry[] entries )
+	{
+		this.project = project;
+	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
+	private IJavaProject project;
+
+	private IClasspathEntry entry;
 }
