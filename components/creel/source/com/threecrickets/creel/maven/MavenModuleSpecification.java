@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 import com.threecrickets.creel.ModuleIdentifier;
 import com.threecrickets.creel.ModuleSpecification;
+import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.exception.IncompatiblePlatformException;
 import com.threecrickets.creel.maven.internal.SpecificationOption;
 import com.threecrickets.creel.util.ConfigHelper;
@@ -119,12 +120,29 @@ public class MavenModuleSpecification extends ModuleSpecification
 	public MavenModuleSpecification( Map<String, ?> config )
 	{
 		ConfigHelper configHelper = new ConfigHelper( config );
+		strict = configHelper.getBoolean( "strict", false );
+		String id = configHelper.getString( "id" );
+		if( id != null )
+		{
+			String[] parts = id.split( ":" );
+			if( parts.length == 3 )
+			{
+				options.add( new SpecificationOption( parts[0], parts[1], parts[2], strict ) );
+				return;
+			}
+			else if( parts.length == 2 )
+			{
+				options.add( new SpecificationOption( parts[0], parts[1], null, strict ) );
+				return;
+			}
+			else
+				throw new CreelException( "Bad Maven specification format" );
+		}
 		String group = configHelper.getString( "group" );
 		String name = configHelper.getString( "name" );
 		if( ( group == null ) || ( name == null ) )
-			throw new RuntimeException();
+			throw new CreelException( "Bad Maven specification format" );
 		String version = configHelper.getString( "version" );
-		strict = configHelper.getBoolean( "strict", false );
 		options.add( new SpecificationOption( group, name, version, strict ) );
 	}
 

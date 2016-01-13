@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.util.ClassUtil;
 import com.threecrickets.creel.util.DigestUtil;
 import com.threecrickets.creel.util.HexUtil;
@@ -118,7 +119,7 @@ public class Artifact implements Comparable<Artifact>
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( "Could not access artifact file: " + file, x );
+			throw new CreelException( "Could not access artifact file: " + file, x );
 		}
 		this.moduleIdentifier = moduleIdentifier != null ? moduleIdentifier.toString() : null;
 		this.type = type;
@@ -142,21 +143,21 @@ public class Artifact implements Comparable<Artifact>
 		this.type = Type.valueOfNonStrict( type );
 		File rootDir = directories.getFor( this );
 		if( rootDir == null )
-			throw new RuntimeException( "Unsupported type: " + type );
+			throw new CreelException( "Unsupported type: " + type );
 		String file = config.get( "file" );
 		if( file == null )
-			throw new RuntimeException( "Missing file" );
+			throw new CreelException( "Missing file" );
 		this.file = new File( rootDir, file );
 		String url = config.get( "url" );
 		if( url == null )
-			throw new RuntimeException( "Missing URL" );
+			throw new CreelException( "Missing URL" );
 		try
 		{
 			this.sourceUrl = new URL( url );
 		}
 		catch( MalformedURLException x )
 		{
-			throw new RuntimeException( "Bad URL: " + url );
+			throw new CreelException( "Bad URL: " + url );
 		}
 		String isVolatile = config.get( "volatile" );
 		this.isVolatile = isVolatile != null ? Boolean.valueOf( isVolatile ) : false;

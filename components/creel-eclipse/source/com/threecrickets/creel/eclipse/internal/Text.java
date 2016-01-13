@@ -32,6 +32,10 @@ public abstract class Text extends NLS
 
 	public static String AddNatureTitle;
 
+	public static String AddNatureUseExistingScript;
+
+	public static String AddNatureCreateScript;
+
 	public static String AddNatureUseExistingConfiguration;
 
 	public static String AddNatureCreateConfiguration;

@@ -23,6 +23,8 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import com.threecrickets.creel.exception.CreelException;
+
 /**
  * Utility class for working with Jars.
  * 
@@ -47,7 +49,7 @@ public class Jar
 	public Jar( URL manifestUrl, File rootDir, String errorMessage )
 	{
 		if( !"jar".equalsIgnoreCase( manifestUrl.getProtocol() ) )
-			throw new RuntimeException( errorMessage + " is not in a jar file: " + manifestUrl );
+			throw new CreelException( errorMessage + " is not in a jar file: " + manifestUrl );
 
 		JarURLConnection connection;
 		try
@@ -56,7 +58,7 @@ public class Jar
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( "Could not read jar file: " + manifestUrl, x );
+			throw new CreelException( "Could not read jar file: " + manifestUrl, x );
 		}
 
 		url = connection.getJarFileURL();
@@ -66,7 +68,7 @@ public class Jar
 		}
 		catch( URISyntaxException x )
 		{
-			throw new RuntimeException( "Parsing error in package: " + manifestUrl, x );
+			throw new CreelException( "Parsing error in package: " + manifestUrl, x );
 		}
 
 		try
@@ -82,7 +84,7 @@ public class Jar
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( "Could not unpack jar file: " + file, x );
+			throw new CreelException( "Could not unpack jar file: " + file, x );
 		}
 	}
 

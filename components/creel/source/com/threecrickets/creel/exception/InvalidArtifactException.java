@@ -14,11 +14,11 @@ package com.threecrickets.creel.exception;
 import com.threecrickets.creel.Artifact;
 
 /**
- * Throws when an artifact fails validation.
+ * Thrown when an artifact fails validation.
  * 
  * @author Tal Liron
  */
-public class InvalidArtifactException extends RuntimeException
+public class InvalidArtifactException extends CreelException
 {
 	//
 	// Construction

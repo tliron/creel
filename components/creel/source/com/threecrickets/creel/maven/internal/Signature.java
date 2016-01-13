@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 
+import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.util.DigestUtil;
 import com.threecrickets.creel.util.HexUtil;
 import com.threecrickets.creel.util.IoUtil;
@@ -52,7 +53,7 @@ public class Signature
 			content = IoUtil.readText( signatureUrl, null );
 			content = content.substring( 0, 40 ).toUpperCase();
 			if( content.length() != 40 )
-				throw new RuntimeException( "SHA-1 signatures must have 40 characters" );
+				throw new CreelException( "SHA-1 signatures must have 40 characters" );
 			algorithm = "SHA-1";
 		}
 		catch( IOException x )
@@ -64,7 +65,7 @@ public class Signature
 				content = IoUtil.readText( signatureUrl, null );
 				content = content.substring( 0, 32 );
 				if( content.length() != 32 )
-					throw new RuntimeException( "MD5 signatures must have 32 characters" );
+					throw new CreelException( "MD5 signatures must have 32 characters" );
 				algorithm = "MD5";
 			}
 			else

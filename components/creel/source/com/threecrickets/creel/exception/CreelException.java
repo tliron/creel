@@ -12,12 +12,11 @@
 package com.threecrickets.creel.exception;
 
 /**
- * Thrown when a module identifier, module specification, or repository
- * reference a platform that is not supported by the engine.
+ * Throws when the engine fails.
  * 
  * @author Tal Liron
  */
-public class UnsupportedPlatformException extends CreelException
+public class CreelException extends RuntimeException
 {
 	//
 	// Construction
@@ -26,33 +25,40 @@ public class UnsupportedPlatformException extends CreelException
 	/**
 	 * Constructor.
 	 * 
-	 * @param platform
-	 *        The unsupported platform
+	 * @param message
+	 *        The message
 	 */
-	public UnsupportedPlatformException( String platform )
+	public CreelException( String message )
 	{
-		super( "Unsupported platform: " + platform );
-		this.platform = platform;
+		super( message );
 	}
 
-	//
-	// Attributes
-	//
+	/**
+	 * Constructor.
+	 * 
+	 * @param message
+	 *        The message
+	 * @param cause
+	 *        The cause
+	 */
+	public CreelException( String message, Throwable cause )
+	{
+		super( message, cause );
+	}
 
 	/**
-	 * The unsupported platform.
+	 * Constructor.
 	 * 
-	 * @return The unsupported platform
+	 * @param cause
+	 *        The cause
 	 */
-	public String getPlatform()
+	public CreelException( Throwable cause )
 	{
-		return platform;
+		super( cause );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
 	private static final long serialVersionUID = 1L;
-
-	private final String platform;
 }

@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.JavaCore;
 
 import com.threecrickets.creel.Artifact;
 import com.threecrickets.creel.Engine;
+import com.threecrickets.creel.eclipse.internal.ConfigurationUtil;
 import com.threecrickets.creel.eclipse.internal.Text;
 
 /**
@@ -76,8 +77,7 @@ public class Classpath implements IClasspathContainer
 	{
 		try
 		{
-			Engine engine = new Engine();
-			engine.getDirectories().set( Builder.toDirectories( Builder.getFolders( project ) ) );
+			Engine engine = ConfigurationUtil.createEngine( project );
 			engine.load();
 
 			Collection<IClasspathEntry> entries = new ArrayList<IClasspathEntry>();

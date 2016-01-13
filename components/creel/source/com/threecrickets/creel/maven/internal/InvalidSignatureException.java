@@ -11,13 +11,27 @@
 
 package com.threecrickets.creel.maven.internal;
 
+import com.threecrickets.creel.exception.CreelException;
+
 /**
  * Thrown when downloaded files from a Maven repository don't match their
  * signature.
  * 
  * @author Tal Liron
  */
-public class InvalidSignatureException extends RuntimeException
+public class InvalidSignatureException extends CreelException
 {
+	//
+	// Construction
+	//
+
+	public InvalidSignatureException()
+	{
+		super( "Invalid signature for Maven file" );
+	}
+
+	// //////////////////////////////////////////////////////////////////////////
+	// Private
+
 	private static final long serialVersionUID = 1L;
 }

@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 
+import com.threecrickets.creel.eclipse.internal.ConfigurationUtil;
 import com.threecrickets.creel.eclipse.internal.EclipseUtil;
 
 /**
@@ -49,7 +50,12 @@ public class Nature implements IProjectNature
 		}
 
 		Map<String, String> arguments = new HashMap<String, String>();
-		if( Builder.hasDefaultConfigurationFile( getProject() ) )
+		if( ConfigurationUtil.hasDefaultScriptFile( project ) )
+		{
+			arguments.put( Builder.SCRIPT_ARGUMENT, "creel.js" );
+			arguments.put( Builder.SCRIPT_ENGINE_ARGUMENT, "JavaScript" );
+		}
+		else if( ConfigurationUtil.hasDefaultConfigurationFile( project ) )
 			arguments.put( Builder.CONFIGURATION_ARGUMENT, "creel.properties" );
 		arguments.put( Builder.DEFAULT_ARGUMENT, "" );
 		arguments.put( Builder.LIBRARY_ARGUMENT, "libraries/jars" );
@@ -83,5 +89,5 @@ public class Nature implements IProjectNature
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private IProject project;
+	private volatile IProject project;
 }

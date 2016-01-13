@@ -193,7 +193,7 @@ public abstract class IoUtil
 	// Copy
 
 	/**
-	 * Copies entire channels.
+	 * Copies entire channels. Does <i>not</> close the channels when done.
 	 * 
 	 * @param source
 	 *        The source channel
@@ -223,7 +223,7 @@ public abstract class IoUtil
 	}
 
 	/**
-	 * Copies entire streams.
+	 * Copies entire streams. Does <i>not</> close the streams when done.
 	 * 
 	 * @param source
 	 *        The source input stream
@@ -250,7 +250,8 @@ public abstract class IoUtil
 	}
 
 	/**
-	 * Copies an entire stream to a file at a specific location.
+	 * Copies an entire stream to a file at a specific location. Does <i>not</>
+	 * close the stream when done.
 	 * 
 	 * @param source
 	 *        The source input stream
@@ -355,6 +356,38 @@ public abstract class IoUtil
 	// Read
 
 	/**
+	 * Reads all bytes from a stream. Does <i>not</> close the stream when done.
+	 * If you know the stream is of a file and you don't absolutely need an
+	 * array of bytes, use {@link IoUtil#readBuffer(File)}, which is more
+	 * efficient.
+	 * 
+	 * @param source
+	 *        The source input stream
+	 * @param progressListener
+	 *        The progress listener or null
+	 * @param length
+	 *        The source length or -1 if unknown (used for progress listener)
+	 * @return The bytes
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
+	public static byte[] readBytes( InputStream source, ProgressListener progressListener, int length ) throws IOException
+	{
+		ReadableByteChannel fromChannel = Channels.newChannel( source );
+		try
+		{
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream( bufferSize );
+			WritableByteChannel toChannel = Channels.newChannel( buffer );
+			copy( fromChannel, toChannel, progressListener, length );
+			return buffer.toByteArray();
+		}
+		finally
+		{
+			fromChannel.close();
+		}
+	}
+
+	/**
 	 * Reads all bytes from a URL. If you know the URL is of a file and you
 	 * don't absolutely need an array of bytes, use
 	 * {@link IoUtil#readBuffer(File)}, which is more efficient.
@@ -376,18 +409,7 @@ public abstract class IoUtil
 			return readBytes( file );
 
 		URLConnection connection = open( url );
-		ReadableByteChannel fromChannel = Channels.newChannel( connection.getInputStream() );
-		try
-		{
-			ByteArrayOutputStream buffer = new ByteArrayOutputStream( bufferSize );
-			WritableByteChannel toChannel = Channels.newChannel( buffer );
-			copy( fromChannel, toChannel, progressListener, connection.getContentLength() );
-			return buffer.toByteArray();
-		}
-		finally
-		{
-			fromChannel.close();
-		}
+		return readBytes( connection.getInputStream(), progressListener, connection.getContentLength() );
 	}
 
 	/**
@@ -460,6 +482,23 @@ public abstract class IoUtil
 		{
 			input.close();
 		}
+	}
+
+	/**
+	 * Reads all UTF-8 text from a stream. Does <i>not</> close the stream when
+	 * done.
+	 * 
+	 * @param source
+	 *        The source input stream
+	 * @param progressListener
+	 *        The progress listener or null
+	 * @return The content
+	 * @throws IOException
+	 *         In case of an I/O error
+	 */
+	public static String readText( InputStream source, ProgressListener progressListener ) throws IOException
+	{
+		return new String( readBytes( source, progressListener, -1 ), StandardCharsets.UTF_8 );
 	}
 
 	/**

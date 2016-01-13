@@ -30,6 +30,7 @@ import java.util.TreeSet;
 import com.threecrickets.creel.Artifact;
 import com.threecrickets.creel.Directories;
 import com.threecrickets.creel.Engine;
+import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.util.IoUtil;
 import com.threecrickets.creel.util.MultiValueProperties;
 
@@ -63,7 +64,7 @@ public class State
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( "Could not access properties file: " + file, x );
+			throw new CreelException( "Could not access properties file: " + file, x );
 		}
 
 		this.directories = directories;
@@ -79,7 +80,7 @@ public class State
 				{
 					addArtifact( new Artifact( config, directories ) );
 				}
-				catch( RuntimeException x )
+				catch( CreelException x )
 				{
 				}
 			}

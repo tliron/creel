@@ -98,7 +98,7 @@ public class ClasspathPage extends WizardPage implements IClasspathContainerPage
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private IJavaProject project;
+	private volatile IJavaProject project;
 
-	private IClasspathEntry entry;
+	private volatile IClasspathEntry entry;
 }

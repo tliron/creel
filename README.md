@@ -77,6 +77,8 @@ To run it:
 
 Creel keeps a small hidden state file in which it keeps track what it downloaded. This is used mostly for deleting old files during upgrades. By default, the file will be `.creel` in `directories.default`, or in the current directory if that is not set. 
 
+You can specify modules either by a colon-separated "id" (the version can be omitted), or by "group", "name", and optionally "version" separately, as we did in this example.
+
 
 Command Line
 ------------
@@ -89,12 +91,8 @@ By default it will look for a file called `creel.properties` in the current dire
 
     library=lib
 
-    module.1.group=com.github.sommeri
-    module.1.name=less4j
-    module.1.version=(,1.15.2)
-    
-    module.2.group=org.jsoup
-    module.2.name=jsoup
+    module.1.id=com.github.sommeri:less4j:(,1.15.2)
+    module.2.id=org.jsoup:jsoup
     
     repository.1.url=https\://repo1.maven.org/maven2/
     
@@ -103,7 +101,7 @@ By default it will look for a file called `creel.properties` in the current dire
 
 Use `--help` to get a list of command line options.
 
-Note that the properties file can define all of the same attributes we used in the JavaScript example above, but we omitted them here for brevity. You may also set long-form command line options in the properties file, such as `library=` above. (Command line options would override these.) 
+Note that the properties file can define all of the same attributes we used in the JavaScript example above, but we omitted them here for brevity. You may also set long-form command line options in the properties file, such as `library=` above. (Command line options would override these.)
 
 Also note that in properties files you should escape colons: `\:`.
 
@@ -160,6 +158,8 @@ For both options, a "Creel Managed Dependencies" classpath will be added for you
 A "Creel Builder" will be added to your project. If you chose the first option, by default it will pull in library Jars, JavaDocs, and sources, as well as unpack into your project's base directory. The builder will detect any change to your `creel.properties` and will silently run Creel to update the classpath. It will also clean the dependencies if you clean your project.
 
 If you chose to manage Creel on your own, the builder will not do anything. Instead, you will need to manually refresh the "Creel Managed Dependencies" classpath from its properties page.
+
+All Creel output will be to the "Creel" console. You can configure verbosity, turn it off, and otherwise configure Creel defaults in "Windows -> Preferences -> Creel".
 
 
 Rules

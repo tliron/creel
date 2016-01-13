@@ -16,6 +16,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import com.threecrickets.creel.exception.CreelException;
+
 /**
  * Class and instantiation utilities.
  * 
@@ -49,31 +51,31 @@ public abstract class ClassUtil
 		}
 		catch( ClassNotFoundException x )
 		{
-			throw new RuntimeException( "Could not find class: " + className, x );
+			throw new CreelException( "Could not find class: " + className, x );
 		}
 		catch( NoSuchMethodException x )
 		{
-			throw new RuntimeException( "Class does not have a config constructor: " + className, x );
+			throw new CreelException( "Class does not have a config constructor: " + className, x );
 		}
 		catch( SecurityException x )
 		{
-			throw new RuntimeException( "Could not access class: " + className, x );
+			throw new CreelException( "Could not access class: " + className, x );
 		}
 		catch( InstantiationException x )
 		{
-			throw new RuntimeException( "Class error: " + className, x );
+			throw new CreelException( "Class error: " + className, x );
 		}
 		catch( IllegalAccessException x )
 		{
-			throw new RuntimeException( "Could not access class: " + className, x );
+			throw new CreelException( "Could not access class: " + className, x );
 		}
 		catch( IllegalArgumentException x )
 		{
-			throw new RuntimeException( "Class error: " + className, x );
+			throw new CreelException( "Class error: " + className, x );
 		}
 		catch( InvocationTargetException x )
 		{
-			throw new RuntimeException( x.getCause().getMessage(), x.getCause() );
+			throw new CreelException( x.getCause().getMessage(), x.getCause() );
 		}
 	}
 
@@ -113,27 +115,27 @@ public abstract class ClassUtil
 		}
 		catch( ClassNotFoundException x )
 		{
-			throw new RuntimeException( "Could not find class: " + className, x );
+			throw new CreelException( "Could not find class: " + className, x );
 		}
 		catch( SecurityException x )
 		{
-			throw new RuntimeException( "Could not access class: " + className, x );
+			throw new CreelException( "Could not access class: " + className, x );
 		}
 		catch( NoSuchMethodException x )
 		{
-			throw new RuntimeException( "Class does not have a main method: " + className, x );
+			throw new CreelException( "Class does not have a main method: " + className, x );
 		}
 		catch( IllegalArgumentException x )
 		{
-			throw new RuntimeException( "Class error: " + className, x );
+			throw new CreelException( "Class error: " + className, x );
 		}
 		catch( IllegalAccessException x )
 		{
-			throw new RuntimeException( "Could not access class: " + className, x );
+			throw new CreelException( "Could not access class: " + className, x );
 		}
 		catch( InvocationTargetException x )
 		{
-			throw new RuntimeException( x.getCause().getMessage(), x.getCause() );
+			throw new CreelException( x.getCause().getMessage(), x.getCause() );
 		}
 	}
 

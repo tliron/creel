@@ -25,6 +25,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.Manifest;
 
 import com.threecrickets.creel.Artifact;
+import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.packaging.internal.Jar;
 import com.threecrickets.creel.packaging.internal.Volatiles;
 
@@ -176,7 +177,7 @@ public abstract class PackagingUtil
 							}
 						}
 						if( !found )
-							throw new RuntimeException( "Package file " + packageFile + " not found in " + jar.getFile() );
+							throw new CreelException( "Package file " + packageFile + " not found in " + jar.getFile() );
 					}
 				}
 
@@ -193,7 +194,7 @@ public abstract class PackagingUtil
 					{
 						URL url = classLoader.getResource( name );
 						if( url == null )
-							throw new RuntimeException( "Could not find packaged resource " + name + " from " + jar.getFile() );
+							throw new CreelException( "Could not find packaged resource " + name + " from " + jar.getFile() );
 
 						artifacts.add( new Artifact( new File( rootDir, name ), url, volatiles.contains( name ) ) );
 					}
@@ -206,7 +207,7 @@ public abstract class PackagingUtil
 		}
 		catch( MalformedURLException x )
 		{
-			throw new RuntimeException( "Parsing error in package: " + manifestUrl, x );
+			throw new CreelException( "Parsing error in package: " + manifestUrl, x );
 		}
 
 		if( ( installer != null ) || ( uninstaller != null ) || !artifacts.isEmpty() )

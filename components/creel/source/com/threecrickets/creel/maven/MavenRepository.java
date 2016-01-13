@@ -31,6 +31,7 @@ import com.threecrickets.creel.ModuleSpecification;
 import com.threecrickets.creel.Repository;
 import com.threecrickets.creel.Rule;
 import com.threecrickets.creel.event.Notifier;
+import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.exception.IncompatiblePlatformException;
 import com.threecrickets.creel.exception.InvalidArtifactException;
 import com.threecrickets.creel.maven.internal.MetaData;
@@ -143,7 +144,7 @@ public class MavenRepository extends Repository
 		}
 		catch( MalformedURLException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 		checkSignatures = configHelper.getBoolean( "checkSignatures", true );
 		allowMd5 = configHelper.getBoolean( "allowMd5" );
@@ -209,7 +210,7 @@ public class MavenRepository extends Repository
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( "Could not access directory: " + rootDir );
+			throw new CreelException( "Could not access directory: " + rootDir );
 		}
 
 		if( flat )
@@ -245,7 +246,7 @@ public class MavenRepository extends Repository
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( "Could not access file: " + file );
+			throw new CreelException( "Could not access file: " + file );
 		}
 	}
 
@@ -292,11 +293,11 @@ public class MavenRepository extends Repository
 		}
 		catch( MalformedURLException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 		catch( URISyntaxException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 	}
 
@@ -329,11 +330,11 @@ public class MavenRepository extends Repository
 		}
 		catch( MalformedURLException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 		catch( URISyntaxException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 	}
 
@@ -377,7 +378,7 @@ public class MavenRepository extends Repository
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 	}
 
@@ -423,7 +424,7 @@ public class MavenRepository extends Repository
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 	}
 
@@ -511,7 +512,7 @@ public class MavenRepository extends Repository
 		}
 		catch( IOException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 	}
 

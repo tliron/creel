@@ -173,7 +173,7 @@
 	</repositories>
 	
 	<modules>
-		<module>eclipse</module>
+		<module>eclipse-feature</module>
 	</modules>
 
 </project>

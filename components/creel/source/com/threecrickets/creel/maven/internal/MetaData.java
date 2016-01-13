@@ -25,6 +25,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.maven.MavenModuleIdentifier;
 import com.threecrickets.creel.maven.MavenRepository;
 import com.threecrickets.creel.util.IoUtil;
@@ -67,17 +68,17 @@ public class MetaData
 		}
 		catch( ParserConfigurationException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 		catch( SAXException x )
 		{
-			throw new RuntimeException( "Invalid metadata", x );
+			throw new CreelException( "Invalid metadata", x );
 		}
 
 		// <metadata>
 		Element metadata = XmlUtil.getElement( document, "metadata" );
 		if( metadata == null )
-			throw new RuntimeException( "Invalid metadata: no <metadata>" );
+			throw new CreelException( "Invalid metadata: no <metadata>" );
 
 		groupId = XmlUtil.getFirstElementText( metadata, "groupId" );
 		artifactId = XmlUtil.getFirstElementText( metadata, "artifactId" );

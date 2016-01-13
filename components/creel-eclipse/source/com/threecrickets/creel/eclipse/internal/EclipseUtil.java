@@ -19,15 +19,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.ICommand;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.variables.IStringVariableManager;
+import org.eclipse.core.variables.VariablesPlugin;
 import org.eclipse.jdt.core.IClasspathContainer;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
@@ -42,6 +42,10 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
+import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.console.IOConsole;
 
 import com.threecrickets.creel.eclipse.Classpath;
 
@@ -52,6 +56,23 @@ import com.threecrickets.creel.eclipse.Classpath;
  */
 public abstract class EclipseUtil
 {
+	// Files
+
+	public static IFile getInterpolatedFile( IProject project, String name ) throws CoreException
+	{
+		IStringVariableManager manager = VariablesPlugin.getDefault().getStringVariableManager();
+		name = manager.performStringSubstitution( name );
+		return project.getFile( name );
+	}
+
+	public static IContainer getInterpolatedFolder( IProject project, String name ) throws CoreException
+	{
+		IStringVariableManager manager = VariablesPlugin.getDefault().getStringVariableManager();
+		name = manager.performStringSubstitution( name );
+		// Note: project.getFolder cannot get the root! (?)
+		return name.isEmpty() ? project : project.getFolder( name );
+	}
+
 	public static void write( String content, IFile file ) throws CoreException
 	{
 		write( content.getBytes( StandardCharsets.UTF_8 ), file );
@@ -61,6 +82,8 @@ public abstract class EclipseUtil
 	{
 		file.create( new ByteArrayInputStream( content ), false, null );
 	}
+
+	// Selections
 
 	public static List<IProject> getSelectedProjects( ISelection selection, boolean hasNature, String nature ) throws CoreException
 	{
@@ -80,6 +103,8 @@ public abstract class EclipseUtil
 		}
 		return projects;
 	}
+
+	// Natures
 
 	public static void addNature( IProject project, String id ) throws CoreException
 	{
@@ -109,6 +134,8 @@ public abstract class EclipseUtil
 			}
 		}
 	}
+
+	// Builders
 
 	public static ICommand getBuilder( IProject project, String id ) throws CoreException
 	{
@@ -161,6 +188,8 @@ public abstract class EclipseUtil
 			}
 		}
 	}
+
+	// Classpath containers
 
 	public static IClasspathContainer getClasspathContainer( IJavaProject project, IPath path ) throws JavaModelException
 	{
@@ -234,15 +263,29 @@ public abstract class EclipseUtil
 		}
 	}
 
-	public static void log( ILog log, String id, int severity, Throwable x )
+	// Consoles
+
+	public static IOConsole getConsole( String name )
 	{
-		log.log( new Status( severity, id, IStatus.OK, x.getMessage(), x ) );
+		IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+		IConsole[] consoles = manager.getConsoles();
+		for( IConsole console : consoles )
+			if( name.equals( console.getName() ) )
+			{
+				if( console instanceof IOConsole )
+					return (IOConsole) console;
+				else
+					break;
+			}
+		IOConsole console = new IOConsole( name, null );
+		manager.addConsoles( new IConsole[]
+		{
+			console
+		} );
+		return console;
 	}
 
-	public static void log( ILog log, String id, int severity, String message )
-	{
-		log.log( new Status( severity, id, IStatus.OK, message, null ) );
-	}
+	// SWT
 
 	public static Composite createComposite( Composite parent, int columns, int hspan, boolean grabExcessHorizontalSpace, boolean grabExcessVerticalSpace )
 	{

@@ -25,6 +25,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.maven.MavenModuleIdentifier;
 import com.threecrickets.creel.maven.MavenModuleSpecification;
 import com.threecrickets.creel.maven.MavenRepository;
@@ -66,17 +67,17 @@ public class POM
 		}
 		catch( ParserConfigurationException x )
 		{
-			throw new RuntimeException( x );
+			throw new CreelException( x );
 		}
 		catch( SAXException x )
 		{
-			throw new RuntimeException( "Invalid POM", x );
+			throw new CreelException( "Invalid POM", x );
 		}
 
 		// <project>
 		Element project = XmlUtil.getElement( document, "project" );
 		if( project == null )
-			throw new RuntimeException( "Invalid POM: no <project>" );
+			throw new CreelException( "Invalid POM: no <project>" );
 
 		// <properties>
 		properties = new Properties( XmlUtil.getFirstElement( project, "properties" ) );

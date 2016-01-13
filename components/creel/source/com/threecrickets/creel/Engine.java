@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.threecrickets.creel.downloader.Downloader;
 import com.threecrickets.creel.event.EventHandlers;
 import com.threecrickets.creel.event.Notifier;
+import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.exception.UnsupportedPlatformException;
 import com.threecrickets.creel.internal.ArtifactsClassLoader;
 import com.threecrickets.creel.internal.ConcurrentIdentificationContext;
@@ -255,7 +256,7 @@ public class Engine extends Notifier implements Runnable
 	{
 		ConflictPolicy conflictPolicyValue = ConflictPolicy.valueOfNonStrict( conflictPolicy );
 		if( conflictPolicyValue == null )
-			throw new RuntimeException( "Unsupported conflict policy: " + conflictPolicy );
+			throw new CreelException( "Unsupported conflict policy: " + conflictPolicy );
 		setConflictPolicy( conflictPolicyValue );
 	}
 
@@ -837,161 +838,159 @@ public class Engine extends Notifier implements Runnable
 
 		if( stage.getValue() >= Stage.INSTALLATION.getValue() )
 		{
-			if( !getIdentifiedModules().iterator().hasNext() )
+			if( getIdentifiedModules().iterator().hasNext() && !getUnidentifiedModules().iterator().hasNext() )
 			{
-				deleteState();
-				throw new RuntimeException( "Cannot install because no modules have been identified" );
-			}
+				String installingId = begin( "Installing" );
 
-			if( getUnidentifiedModules().iterator().hasNext() )
-			{
-				deleteState();
-				throw new RuntimeException( "Cannot install because could not identify all modules" );
-			}
-
-			String installingId = begin( "Installing" );
-
-			Downloader downloader = new Downloader( isMultithreaded() ? getThreadsPerHost() : 1, isMultithreaded() ? getChunksPerFile() : 1, getMinimumSizeForChunking(), this );
-			try
-			{
-				downloader.setDelay( getDelay() );
-				for( Module module : identifiedModules )
-				{
-					for( Artifact artifact : module.getIdentifier().getArtifacts( getDirectories(), isFlat() ) )
-					{
-						if( isOverwrite() || !artifact.getFile().exists() )
-							// Download and validate
-							downloader.submit( artifact.getSourceUrl(), artifact.getFile(), module.getIdentifier().getRepository().validateArtifactTask( module.getIdentifier(), artifact, this ) );
-						else
-							// Only validate
-							downloader.submit( module.getIdentifier().getRepository().validateArtifactTask( module.getIdentifier(), artifact, this ) );
-						installedArtifacts.add( artifact );
-					}
-				}
-				downloader.waitUntilDone();
-			}
-			finally
-			{
-				downloader.close();
-			}
-
-			int errorCount = 0;
-			for( Iterator<Throwable> i = downloader.getExceptions().iterator(); i.hasNext(); i.next() )
-				errorCount++;
-
-			if( errorCount > 0 )
-			{
-				deleteState(); // TODO: good idea?
-				String message = "Had " + errorCount + ( errorCount != 1 ? " errors during installation" : " error during installation" );
-				fail( installingId, message );
-				throw new RuntimeException( message );
-			}
-
-			int installedCount = downloader.getCount();
-
-			// Unpacking
-
-			if( ( stage.getValue() >= Stage.UNPACKING.getValue() ) && ( getDirectories().getDefault() != null ) )
-			{
-				ClassLoader classLoader = new ArtifactsClassLoader( getInstalledArtifacts() );
-
-				Iterable<com.threecrickets.creel.packaging.Package> packages = null;
+				Downloader downloader = new Downloader( isMultithreaded() ? getThreadsPerHost() : 1, isMultithreaded() ? getChunksPerFile() : 1, getMinimumSizeForChunking(), this );
 				try
 				{
-					packages = PackagingUtil.getPackages( classLoader, getDirectories().getDefault() );
-				}
-				catch( IOException x )
-				{
-					error( "Could not scan for packages", x );
-				}
-
-				if( packages != null )
-				{
-					for( com.threecrickets.creel.packaging.Package thePackage : packages )
+					downloader.setDelay( getDelay() );
+					for( Module module : identifiedModules )
 					{
-						if( !thePackage.iterator().hasNext() )
-							continue;
-
-						String unpackingId = begin( "Unpacking " + thePackage.getSourceFile() );
-						try
+						for( Artifact artifact : module.getIdentifier().getArtifacts( getDirectories(), isFlat() ) )
 						{
-							int unpackedCount = 0;
-							for( Artifact artifact : thePackage )
-							{
-								boolean copy = false;
+							if( isOverwrite() || !artifact.getFile().exists() )
+								// Download and validate
+								downloader.submit( artifact.getSourceUrl(), artifact.getFile(), module.getIdentifier().getRepository().validateArtifactTask( module.getIdentifier(), artifact, this ) );
+							else
+								// Only validate
+								downloader.submit( module.getIdentifier().getRepository().validateArtifactTask( module.getIdentifier(), artifact, this ) );
+							installedArtifacts.add( artifact );
+						}
+					}
+					downloader.waitUntilDone();
+				}
+				finally
+				{
+					downloader.close();
+				}
 
-								if( isOverwrite() || !artifact.exists() )
-									copy = true;
-								else
+				int errorCount = 0;
+				for( Iterator<Throwable> i = downloader.getExceptions().iterator(); i.hasNext(); i.next() )
+					errorCount++;
+
+				if( errorCount > 0 )
+				{
+					deleteState(); // TODO: good idea?
+					String message = "Had " + errorCount + ( errorCount != 1 ? " errors during installation" : " error during installation" );
+					fail( installingId, message );
+					throw new CreelException( message );
+				}
+
+				int installedCount = downloader.getCount();
+
+				// Unpacking
+
+				if( ( stage.getValue() >= Stage.UNPACKING.getValue() ) && ( getDirectories().getDefault() != null ) )
+				{
+					ClassLoader classLoader = new ArtifactsClassLoader( getInstalledArtifacts() );
+
+					Iterable<com.threecrickets.creel.packaging.Package> packages = null;
+					try
+					{
+						packages = PackagingUtil.getPackages( classLoader, getDirectories().getDefault() );
+					}
+					catch( IOException x )
+					{
+						error( "Could not scan for packages", x );
+					}
+
+					if( packages != null )
+					{
+						for( com.threecrickets.creel.packaging.Package thePackage : packages )
+						{
+							if( !thePackage.iterator().hasNext() )
+								continue;
+
+							String unpackingId = begin( "Unpacking " + thePackage.getSourceFile() );
+							try
+							{
+								int unpackedCount = 0;
+								for( Artifact artifact : thePackage )
 								{
-									Artifact knownArtifact = state != null ? state.getArtifact( artifact.getFile() ) : null;
-									if( knownArtifact == null )
+									boolean copy = false;
+
+									if( isOverwrite() || !artifact.exists() )
 										copy = true;
 									else
 									{
-										if( !knownArtifact.isVolatile() )
-											copy = artifact.isDifferent();
+										Artifact knownArtifact = state != null ? state.getArtifact( artifact.getFile() ) : null;
+										if( knownArtifact == null )
+											copy = true;
 										else
 										{
-											if( !knownArtifact.wasModified() )
+											if( !knownArtifact.isVolatile() )
 												copy = artifact.isDifferent();
 											else
-												info( "Modified, so not overwriting " + artifact.getFile() );
+											{
+												if( !knownArtifact.wasModified() )
+													copy = artifact.isDifferent();
+												else
+													info( "Modified, so not overwriting " + artifact.getFile() );
+											}
 										}
 									}
+
+									if( copy )
+									{
+										artifact.copy( null );
+										if( artifact.isVolatile() )
+											artifact.updateDigest();
+										if( getVerbosity() > 1 )
+											info( "Unpacked " + artifact.getFile() );
+										unpackedCount++;
+										installedCount++;
+									}
+
+									installedArtifacts.add( artifact );
 								}
 
-								if( copy )
+								if( unpackedCount == 0 )
+									end( unpackingId, "No new files to unpack from " + thePackage.getSourceFile() );
+								else
+									end( unpackingId, "Unpacked " + unpackedCount + ( unpackedCount != 1 ? " new files from " : " file from " ) + thePackage.getSourceFile() );
+							}
+							catch( IOException x )
+							{
+								fail( unpackingId, "Could not unpack " + thePackage.getSourceFile(), x );
+							}
+						}
+
+						// Run installers
+
+						for( com.threecrickets.creel.packaging.Package thePackage : packages )
+						{
+							String installer = thePackage.getInstaller();
+							if( installer != null )
+							{
+								try
 								{
-									artifact.copy( null );
-									if( artifact.isVolatile() )
-										artifact.updateDigest();
-									if( getVerbosity() > 1 )
-										info( "Unpacked " + artifact.getFile() );
-									unpackedCount++;
-									installedCount++;
+									ClassUtil.main( classLoader, installer.split( " " ) );
 								}
-
-								installedArtifacts.add( artifact );
+								catch( Throwable x )
+								{
+									error( "Could not run installer: " + installer, x );
+								}
 							}
+						}
 
-							if( unpackedCount == 0 )
-								end( unpackingId, "No new files to unpack from " + thePackage.getSourceFile() );
-							else
-								end( unpackingId, "Unpacked " + unpackedCount + ( unpackedCount != 1 ? " new files from " : " file from " ) + thePackage.getSourceFile() );
-						}
-						catch( IOException x )
-						{
-							fail( unpackingId, "Could not unpack " + thePackage.getSourceFile(), x );
-						}
+						// TODO: uninstallers?
 					}
-
-					// Run installers
-
-					for( com.threecrickets.creel.packaging.Package thePackage : packages )
-					{
-						String installer = thePackage.getInstaller();
-						if( installer != null )
-						{
-							try
-							{
-								ClassUtil.main( classLoader, installer.split( " " ) );
-							}
-							catch( Throwable x )
-							{
-								error( "Could not run installer: " + installer, x );
-							}
-						}
-					}
-
-					// TODO: uninstallers?
 				}
-			}
 
-			if( installedCount == 0 )
-				end( installingId, "No new artifacts to install" );
+				if( installedCount == 0 )
+					end( installingId, "No new artifacts to install" );
+				else
+					end( installingId, "Installed " + installedCount + ( installedCount != 1 ? " new artifacts" : " new artifact" ) );
+			}
 			else
-				end( installingId, "Installed " + installedCount + ( installedCount != 1 ? " new artifacts" : " new artifact" ) );
+			{
+				if( !getIdentifiedModules().iterator().hasNext() )
+					info( "Not installing because no modules have been identified" );
+				else if( getUnidentifiedModules().iterator().hasNext() )
+					info( "Not installing because could not identify all modules" );
+			}
 		}
 
 		// Delete redundant
@@ -1386,11 +1385,11 @@ public class Engine extends Notifier implements Runnable
 		{
 			try
 			{
-				throw new RuntimeException( "Could not load state from " + getStateFile(), x );
+				throw new CreelException( "Could not load state from " + getStateFile(), x );
 			}
 			catch( IOException xx )
 			{
-				throw new RuntimeException( xx );
+				throw new CreelException( xx );
 			}
 		}
 		return null;
@@ -1411,11 +1410,11 @@ public class Engine extends Notifier implements Runnable
 			{
 				try
 				{
-					throw new RuntimeException( "Could not delete state at " + getStateFile(), x );
+					throw new CreelException( "Could not delete state at " + getStateFile(), x );
 				}
 				catch( IOException xx )
 				{
-					throw new RuntimeException( xx );
+					throw new CreelException( xx );
 				}
 			}
 		}
@@ -1433,11 +1432,11 @@ public class Engine extends Notifier implements Runnable
 		{
 			try
 			{
-				throw new RuntimeException( "Could not save state to " + getStateFile(), x );
+				throw new CreelException( "Could not save state to " + getStateFile(), x );
 			}
 			catch( IOException xx )
 			{
-				throw new RuntimeException( xx );
+				throw new CreelException( xx );
 			}
 		}
 	}

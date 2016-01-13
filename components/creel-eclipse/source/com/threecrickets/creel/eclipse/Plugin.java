@@ -15,7 +15,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-import com.threecrickets.creel.eclipse.internal.SimpleLog;
+import com.threecrickets.creel.eclipse.internal.LogHelper;
 
 /**
  * The Creel plugin. This class also functions as an OSGi bundle activator.
@@ -43,11 +43,11 @@ public class Plugin extends AbstractUIPlugin
 		return plugin;
 	}
 
-	public static SimpleLog getSimpleLog()
+	public static LogHelper getLogHelper()
 	{
-		if( log == null )
-			log = new SimpleLog( ID );
-		return log;
+		if( logHelper == null )
+			logHelper = new LogHelper( ID );
+		return logHelper;
 	}
 
 	//
@@ -63,7 +63,7 @@ public class Plugin extends AbstractUIPlugin
 	{
 		super.start( context );
 		plugin = this;
-		getSimpleLog().log( IStatus.INFO, "Creel plugin started" );
+		getLogHelper().log( IStatus.INFO, "Creel plugin started" );
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class Plugin extends AbstractUIPlugin
 	{
 		plugin = null;
 		super.stop( context );
-		getSimpleLog().log( IStatus.INFO, "Creel plugin stopped" );
+		getLogHelper().log( IStatus.INFO, "Creel plugin stopped" );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
@@ -79,5 +79,5 @@ public class Plugin extends AbstractUIPlugin
 
 	private static volatile Plugin plugin;
 
-	private static volatile SimpleLog log;
+	private static volatile LogHelper logHelper;
 }

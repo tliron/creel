@@ -33,6 +33,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 
+import com.threecrickets.creel.eclipse.internal.ConfigurationUtil;
 import com.threecrickets.creel.eclipse.internal.EclipseUtil;
 import com.threecrickets.creel.eclipse.internal.Text;
 
@@ -61,17 +62,17 @@ public class AddNatureCommand extends AbstractHandler
 				if( confirm( project ) )
 				{
 					EclipseUtil.addNature( project, Nature.ID );
-					Plugin.getSimpleLog().log( IStatus.INFO, "Added Creel nature to: " + project );
+					Plugin.getLogHelper().log( IStatus.INFO, "Added Creel nature to: " + project );
 				}
 			}
 		}
 		catch( CoreException x )
 		{
-			Plugin.getSimpleLog().log( IStatus.ERROR, x );
+			Plugin.getLogHelper().log( IStatus.ERROR, x );
 		}
 		catch( IOException x )
 		{
-			Plugin.getSimpleLog().log( IStatus.ERROR, x );
+			Plugin.getLogHelper().log( IStatus.ERROR, x );
 		}
 
 		return null;
@@ -93,28 +94,32 @@ public class AddNatureCommand extends AbstractHandler
 		Composite main = new Composite( dialog, SWT.NO_BACKGROUND );
 		main.setLayout( new GridLayout( 1, false ) );
 
-		final AtomicBoolean isUseConfigurationFile = new AtomicBoolean( true );
+		final AtomicBoolean isUseScriptFile = new AtomicBoolean( true );
+		final AtomicBoolean isUseConfigurationFile = new AtomicBoolean( false );
 
-		Button useConfigurationFile = new Button( main, SWT.RADIO );
-		useConfigurationFile.setText( Builder.hasDefaultConfigurationFile( project ) ? Text.AddNatureUseExistingConfiguration : Text.AddNatureCreateConfiguration );
-		useConfigurationFile.setSelection( true );
+		final Button useScriptFile = new Button( main, SWT.RADIO );
+		useScriptFile.setText( ConfigurationUtil.hasDefaultScriptFile( project ) ? Text.AddNatureUseExistingScript : Text.AddNatureCreateScript );
+		useScriptFile.setSelection( true );
+		useScriptFile.addListener( SWT.Selection, new Listener()
+		{
+			public void handleEvent( Event event )
+			{
+				isUseScriptFile.set( useScriptFile.getSelection() );
+			}
+		} );
+
+		final Button useConfigurationFile = new Button( main, SWT.RADIO );
+		useConfigurationFile.setText( ConfigurationUtil.hasDefaultConfigurationFile( project ) ? Text.AddNatureUseExistingConfiguration : Text.AddNatureCreateConfiguration );
 		useConfigurationFile.addListener( SWT.Selection, new Listener()
 		{
 			public void handleEvent( Event event )
 			{
-				isUseConfigurationFile.set( true );
+				isUseConfigurationFile.set( useConfigurationFile.getSelection() );
 			}
 		} );
 
 		Button selfManaged = new Button( main, SWT.RADIO );
 		selfManaged.setText( Text.AddNatureOtherwise );
-		useConfigurationFile.addListener( SWT.Selection, new Listener()
-		{
-			public void handleEvent( Event event )
-			{
-				isUseConfigurationFile.set( false );
-			}
-		} );
 
 		Composite buttons = new Composite( main, SWT.NO_BACKGROUND );
 		buttons.setLayoutData( new GridData( SWT.END, SWT.CENTER, true, false ) );
@@ -149,8 +154,10 @@ public class AddNatureCommand extends AbstractHandler
 		if( !add.get() )
 			return false;
 
-		if( isUseConfigurationFile.get() )
-			Builder.ensureDefaultConfiguration( project );
+		if( isUseScriptFile.get() )
+			ConfigurationUtil.ensureDefaultScript( project );
+		else if( isUseConfigurationFile.get() )
+			ConfigurationUtil.ensureDefaultConfiguration( project );
 
 		return true;
 	}

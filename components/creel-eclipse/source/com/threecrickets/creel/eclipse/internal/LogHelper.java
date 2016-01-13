@@ -21,19 +21,19 @@ import org.eclipse.core.runtime.Status;
  * 
  * @author Tal Liron
  */
-public class SimpleLog
+public class LogHelper
 {
 	//
 	// Construction
 	//
 
-	public SimpleLog( ILog log, String id )
+	public LogHelper( ILog log, String id )
 	{
 		this.log = log;
 		this.id = id;
 	}
 
-	public SimpleLog( String id )
+	public LogHelper( String id )
 	{
 		this( Platform.getLog( Platform.getBundle( id ) ), id );
 	}

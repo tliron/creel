@@ -31,32 +31,42 @@
 	<property name="distribution.api" value="${distribution.reference}/api/${component.group}/${component.artifact}/${component.version}${component.version.postfix}" />
 	<property name="distribution.source" value="${distribution.reference}/source" />
 
+	<property name="eclipse.group" value="org.eclipse.scout.sdk.deps" />
+
 	<resources id="require-bundle">
+		<string>org.eclipse.core.resources</string>
 		<string>org.eclipse.core.runtime</string>
 		<string>org.eclipse.core.variables</string>
-		<string>org.eclipse.debug.ui</string>
 		<string>org.eclipse.jdt.core</string>
-		<string>org.eclipse.jdt.debug.ui</string>
-		<string>org.eclipse.jdt.launching</string>
 		<string>org.eclipse.jdt.ui</string>
 		<string>org.eclipse.ui</string>
+		<string>org.eclipse.ui.console</string>
 	</resources>
 	<pathconvert property="require-bundle" refid="require-bundle" pathsep="," />
 	
 	<resources id="export-package-uses">
+		<string>com.threecrickets.creel</string>
 		<string>com.threecrickets.creel.eclipse.internal</string>
+		<string>com.threecrickets.creel.event</string>
+		<string>com.threecrickets.creel.util</string>
+		<string>org.eclipse.core.commands</string>
 		<string>org.eclipse.core.resources</string>
 		<string>org.eclipse.core.runtime</string>
 		<string>org.eclipse.core.runtime.preferences</string>
-		<string>org.eclipse.core.commands</string>
 		<string>org.eclipse.core.variables</string>
-		<string>org.eclipse.debug.core</string>
-		<string>org.eclipse.debug.ui</string>
 		<string>org.eclipse.jdt.core</string>
+		<string>org.eclipse.jface.preference</string>
 		<string>org.eclipse.jface.viewers</string>
+		<string>org.eclipse.jface.wizard</string>
+		<string>org.eclipse.osgi.util</string>
+		<string>org.eclipse.swt</string>
+		<string>org.eclipse.swt.layout</string>
 		<string>org.eclipse.swt.widgets</string>
 		<string>org.eclipse.ui</string>
+		<string>org.eclipse.ui.console</string>
+		<string>org.eclipse.ui.handlers</string>
 		<string>org.eclipse.ui.plugin</string>
+		<string>org.eclipse.ui.wizards</string>
 		<string>org.osgi.framework</string>
 	</resources>
 	<pathconvert property="export-package-uses" refid="export-package-uses" pathsep="," />
@@ -79,20 +89,21 @@
 
 	<target name="eclipse-dependencies" description="Resolve Eclipse plugin dependencies" if="eclipse-plugin">
 		<creel:run ref="eclipse-dependencies" libraryDir="${cache.jars}" state="${cache.jars}/.creel-eclipse">
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.core.commands" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.core.jobs" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.core.resources" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.core.runtime" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.equinox.common" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.equinox.preferences" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.equinox.registry" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.jdt.core" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.jdt.ui" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.jdt.debug.ui" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.jface" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.osgi" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.swt.win32.win32.x86" />
-			<module group="org.eclipse.scout.sdk.deps" name="org.eclipse.ui.workbench" />
+			<module group="${eclipse.group}" name="org.eclipse.core.commands" />
+			<module group="${eclipse.group}" name="org.eclipse.core.jobs" />
+			<module group="${eclipse.group}" name="org.eclipse.core.resources" />
+			<module group="${eclipse.group}" name="org.eclipse.core.runtime" />
+			<module group="${eclipse.group}" name="org.eclipse.equinox.common" />
+			<module group="${eclipse.group}" name="org.eclipse.equinox.preferences" />
+			<module group="${eclipse.group}" name="org.eclipse.equinox.registry" />
+			<module group="${eclipse.group}" name="org.eclipse.jdt.core" />
+			<module group="${eclipse.group}" name="org.eclipse.jdt.ui" />
+			<module group="${eclipse.group}" name="org.eclipse.jdt.debug.ui" />
+			<module group="${eclipse.group}" name="org.eclipse.jface" />
+			<module group="${eclipse.group}" name="org.eclipse.osgi" />
+			<module group="${eclipse.group}" name="org.eclipse.swt.win32.win32.x86" />
+			<module group="${eclipse.group}" name="org.eclipse.ui.console" />
+			<module group="${eclipse.group}" name="org.eclipse.ui.workbench" />
 			 <!-- Unfortunately the following two modules are not being deployed to Maven Central with Scout SDK -->
 			<module group="org.eclipse.core" name="core-variables" />
 			<module group="org.eclipse.debug" name="debug-core" />
