@@ -2,12 +2,59 @@
 <?eclipse version="3.4"?>
 <plugin>
 
-<!-- Menus -->
+<!-- Schemas -->
 
 <extension-point
 	id="org.eclipse.ui.menus"
 	name="org.eclipse.ui.menus"
 	schema="schema/menus.exsd"/>
+
+<extension-point
+	id="org.eclipse.ui.preferencePages"
+	name="org.eclipse.ui.preferencePages"
+	schema="schema/preferencePages.exsd"/>
+
+<extension-point
+	id="org.eclipse.core.runtime.preferences"
+	name="org.eclipse.core.runtime.preferences"
+	schema="schema/preferences.exsd"/>
+
+<extension-point
+	id="org.eclipse.core.resources.natures"
+	name="org.eclipse.core.resources.natures"
+	schema="schema/natures.exsd"/>
+
+<extension-point
+	id="org.eclipse.core.resources.builders"
+	name="org.eclipse.core.resources.builders"
+	schema="schema/builders.exsd"/>
+
+<extension-point
+	id="org.eclipse.ui.propertyPages"
+	name="org.eclipse.ui.propertyPages"
+	schema="schema/propertyPages.exsd"/>
+
+<extension-point
+	id="org.eclipse.jdt.core.classpathContainerInitializer"
+	name="org.eclipse.jdt.core.classpathContainerInitializer"
+	schema="schema/classpathContainerInitializer.exsd"/>
+
+<extension-point
+	id="org.eclipse.jdt.ui.classpathContainerPage"
+	name="org.eclipse.jdt.ui.classpathContainerPage"
+	schema="schema/classpathContainerPage.exsd"/>
+
+<extension-point
+	id="org.eclipse.ui.commands"
+	name="org.eclipse.ui.commands"
+	schema="schema/commands.exsd"/>
+
+<extension-point
+	id="org.eclipse.ui.handlers"
+	name="org.eclipse.ui.handlers"
+	schema="schema/handlers.exsd"/>
+
+<!-- Menus -->
 
 <extension
 	point="org.eclipse.ui.menus">
@@ -22,16 +69,6 @@
 </extension>
 
 <!-- Preferences -->
-
-<extension-point
-	id="org.eclipse.ui.preferencePages"
-	name="org.eclipse.ui.preferencePages"
-	schema="schema/preferencePages.exsd"/>
-
-<extension-point
-	id="org.eclipse.core.runtime.preferences"
-	name="org.eclipse.core.runtime.preferences"
-	schema="schema/preferences.exsd"/>
 
 <extension
 	point="org.eclipse.ui.preferencePages">
@@ -48,16 +85,6 @@
 
 <!-- Project Nature and Builder -->
 
-<extension-point
-	id="org.eclipse.core.resources.natures"
-	name="org.eclipse.core.resources.natures"
-	schema="schema/natures.exsd"/>
-
-<extension-point
-	id="org.eclipse.core.resources.builders"
-	name="org.eclipse.core.resources.builders"
-	schema="schema/builders.exsd"/>
-
 <extension
 	point="org.eclipse.core.resources.natures"
 	id="nature"
@@ -72,24 +99,24 @@
 	id="builder"
 	name="Creel Builder">
 	<builder>
-		<run class="com.threecrickets.creel.eclipse.Builder">
-			<parameter name="optimize" value="true"/>
-			<parameter name="comment" value="Builder comment"/>
-		</run>
+		<run class="com.threecrickets.creel.eclipse.Builder"/>
 	</builder>
 </extension>
 
+<extension point="org.eclipse.ui.propertyPages">
+	<page
+		id="com.threecrickets.creel.eclipse.projectProperties" 
+		name="Creel"
+		class="com.threecrickets.creel.eclipse.ProjectProperties">
+		<enabledWhen>
+			<adapt type="org.eclipse.core.resources.IProject">
+				<test property="org.eclipse.core.resources.projectNature" value="com.threecrickets.creel.nature"/>
+			</adapt>
+		</enabledWhen>
+	</page>
+</extension>
+    
 <!-- Classpath Containers -->
-
-<extension-point
-	id="org.eclipse.jdt.core.classpathContainerInitializer"
-	name="org.eclipse.jdt.core.classpathContainerInitializer"
-	schema="schema/classpathContainerInitializer.exsd"/>
-
-<extension-point
-	id="org.eclipse.jdt.ui.classpathContainerPage"
-	name="org.eclipse.jdt.ui.classpathContainerPage"
-	schema="schema/classpathContainerPage.exsd"/>
 
 <extension
 	point="org.eclipse.jdt.core.classpathContainerInitializer"
@@ -107,17 +134,7 @@
 		class="com.threecrickets.creel.eclipse.ClasspathPage"/>
 </extension>
 
-<!-- Commands and Handlers -->
-
-<extension-point
-	id="org.eclipse.ui.commands"
-	name="org.eclipse.ui.commands"
-	schema="schema/commands.exsd"/>
-
-<extension-point
-	id="org.eclipse.ui.handlers"
-	name="org.eclipse.ui.handlers"
-	schema="schema/handlers.exsd"/>
+<!-- Commands -->
 
 <extension
 	point="org.eclipse.ui.commands">

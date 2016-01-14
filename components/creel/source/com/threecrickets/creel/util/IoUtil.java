@@ -193,7 +193,7 @@ public abstract class IoUtil
 	// Copy
 
 	/**
-	 * Copies entire channels. Does <i>not</> close the channels when done.
+	 * Copies entire channels. Does <i>not</i> close the channels when done.
 	 * 
 	 * @param source
 	 *        The source channel
@@ -223,7 +223,7 @@ public abstract class IoUtil
 	}
 
 	/**
-	 * Copies entire streams. Does <i>not</> close the streams when done.
+	 * Copies entire streams. Does <i>not</i> close the streams when done.
 	 * 
 	 * @param source
 	 *        The source input stream
@@ -250,7 +250,7 @@ public abstract class IoUtil
 	}
 
 	/**
-	 * Copies an entire stream to a file at a specific location. Does <i>not</>
+	 * Copies an entire stream to a file at a specific location. Does <i>not</i>
 	 * close the stream when done.
 	 * 
 	 * @param source
@@ -356,9 +356,9 @@ public abstract class IoUtil
 	// Read
 
 	/**
-	 * Reads all bytes from a stream. Does <i>not</> close the stream when done.
-	 * If you know the stream is of a file and you don't absolutely need an
-	 * array of bytes, use {@link IoUtil#readBuffer(File)}, which is more
+	 * Reads all bytes from a stream. Does <i>not</i> close the stream when
+	 * done. If you know the stream is of a file and you don't absolutely need
+	 * an array of bytes, use {@link IoUtil#readBuffer(File)}, which is more
 	 * efficient.
 	 * 
 	 * @param source
@@ -485,7 +485,7 @@ public abstract class IoUtil
 	}
 
 	/**
-	 * Reads all UTF-8 text from a stream. Does <i>not</> close the stream when
+	 * Reads all UTF-8 text from a stream. Does <i>not</i> close the stream when
 	 * done.
 	 * 
 	 * @param source
