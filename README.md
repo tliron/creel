@@ -24,8 +24,8 @@ Features:
 
 The above is for complete distributions. Other options for downloading:
 
-* TODO: Maven: Creel is published in [Maven Central](http://mvnrepository.com/artifact/com.threecrickets.creel) and in the [Three Crickets Repository](https://threecrickets.com/repository/maven/)
-* TODO: Eclipse Update Site: for easy updating of the Eclipse plugin, add [http://repository.threecrickets.com/eclipse/](http://repository.threecrickets.com/eclipse/) in "Help -> Install New Software" (hosted by Three Crickets)
+* Maven: Creel is published in [Maven Central](http://mvnrepository.com/artifact/com.threecrickets.creel) and in the [Three Crickets Repository](https://threecrickets.com/repository/maven/)
+* Eclipse Update Site: for easy updating of the Eclipse plugin, add [http://repository.threecrickets.com/eclipse/](http://repository.threecrickets.com/eclipse/) in "Help -> Install New Software" (hosted by Three Crickets)
 * JavaDocs: browse them [here](http://threecrickets.com/api/java/creel/) (hosted by Three Crickets)
 
 How does Creel compare to [Gradle](http://gradle.org/)? Well, Creel is _much_ lighter and _much_ faster, but it's also a one-trick pony designed only for resolving and downloading dependencies, while Gradle can be used for complete project development and management. Note that Creel could be a great choice as a library with which to build your own Gradle-like tool.

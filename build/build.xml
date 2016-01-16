@@ -258,7 +258,7 @@
 		</copy>
 		<exec executable="${maven}" dir="${cache.maven.pom}">
 			<arg value="deploy" />
-			<arg value="-DaltDeploymentRepository=default::default::${distribution.repo}" />
+			<arg value="-DaltDeploymentRepository=${distribution.repo.id}::default::${distribution.repo}" />
 			<arg value="-Djarsigner.keystore=${sign.keystore}" />
 			<arg value="-Djarsigner.storepass=${sign.storepass}" />
 			<arg value="-Djarsigner.alias=${sign.alias}" />
