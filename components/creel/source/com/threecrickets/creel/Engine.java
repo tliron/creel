@@ -498,9 +498,9 @@ public class Engine extends Notifier implements Runnable
 	 * 
 	 * @return The explicit modules
 	 */
-	public Iterable<Module> getExplicitModules()
+	public Iterable<Module> getModules()
 	{
-		return Collections.unmodifiableCollection( explicitModules );
+		return Collections.unmodifiableCollection( modules );
 	}
 
 	/**
@@ -513,16 +513,16 @@ public class Engine extends Notifier implements Runnable
 	 * @param moduleSpecificationConfigs
 	 *        The module specification configs
 	 */
-	public void setExplicitModules( Collection<Map<String, ?>> moduleSpecificationConfigs )
+	public void setModules( Collection<Map<String, ?>> moduleSpecificationConfigs )
 	{
-		explicitModules.clear();
+		modules.clear();
 		for( Map<String, ?> config : moduleSpecificationConfigs )
 		{
 			ConfigHelper configHelper = new ConfigHelper( config );
 			String platform = configHelper.getString( "platform", defaultPlatform );
 			ModuleSpecification moduleSpecification = newModuleSpecification( platform, config );
 			Module module = new Module( true, null, moduleSpecification );
-			explicitModules.add( module );
+			modules.add( module );
 		}
 	}
 
@@ -719,7 +719,7 @@ public class Engine extends Notifier implements Runnable
 	public void loadConfiguration( File configurationFile ) throws IOException
 	{
 		Configuration configuration = new Configuration( configurationFile );
-		setExplicitModules( configuration.getModuleSpecificationConfigs() );
+		setModules( configuration.getModuleSpecificationConfigs() );
 		setRepositories( configuration.getRepositoryConfigs() );
 		setRules( configuration.getRuleConfigs() );
 	}
@@ -796,7 +796,7 @@ public class Engine extends Notifier implements Runnable
 				ConcurrentIdentificationContext concurrentContext = new ConcurrentIdentificationContext( 10 );
 				try
 				{
-					for( Module explicitModule : getExplicitModules() )
+					for( Module explicitModule : getModules() )
 						concurrentContext.identifyModule( new IdentifyModule( explicitModule, true, concurrentContext ) );
 				}
 				finally
@@ -806,7 +806,7 @@ public class Engine extends Notifier implements Runnable
 			}
 			else
 			{
-				for( Module explicitModule : getExplicitModules() )
+				for( Module explicitModule : getModules() )
 					identifyModule( explicitModule, true, null );
 			}
 
@@ -1173,7 +1173,7 @@ public class Engine extends Notifier implements Runnable
 
 	private int delay;
 
-	private final List<Module> explicitModules = new ArrayList<Module>();
+	private final List<Module> modules = new ArrayList<Module>();
 
 	private final Modules identifiedModules = new Modules();
 
@@ -1356,7 +1356,7 @@ public class Engine extends Notifier implements Runnable
 
 	private void replaceModule( Module oldModule, Module newModule )
 	{
-		for( ListIterator<Module> i = explicitModules.listIterator(); i.hasNext(); )
+		for( ListIterator<Module> i = modules.listIterator(); i.hasNext(); )
 		{
 			Module explicitModule = i.next();
 			if( ( explicitModule.getIdentifier() != null ) && ( explicitModule.getIdentifier().equals( oldModule.getIdentifier() ) ) )

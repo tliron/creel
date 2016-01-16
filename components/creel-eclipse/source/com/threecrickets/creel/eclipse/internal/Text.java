@@ -46,6 +46,26 @@ public abstract class Text extends NLS
 
 	public static String AddNatureCancel;
 
+	public static String PropertiesTitle;
+
+	public static String PropertiesDescription;
+
+	public static String PropertiesScriptFile;
+
+	public static String PropertiesScriptEngine;
+
+	public static String PropertiesConfigurationFile;
+
+	public static String PropertiesDefaultDir;
+
+	public static String PropertiesLibraryDir;
+
+	public static String PropertiesApiDir;
+
+	public static String PropertiesSourceDir;
+
+	public static String PropertiesStateFile;
+
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 

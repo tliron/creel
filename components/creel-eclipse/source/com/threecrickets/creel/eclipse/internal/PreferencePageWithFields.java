@@ -51,7 +51,13 @@ public abstract class PreferencePageWithFields extends PreferencePage
 		super.performDefaults();
 	}
 
-	protected void addField( FieldEditor fieldEditor )
+	/**
+	 * Hooks up a field editor to performOk and performDefaults.
+	 * 
+	 * @param fieldEditor
+	 *        The field editor
+	 */
+	protected void addFieldEditor( FieldEditor fieldEditor )
 	{
 		fieldEditors.add( fieldEditor );
 		fieldEditor.setPage( this );

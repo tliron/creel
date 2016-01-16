@@ -74,7 +74,7 @@
 	point="org.eclipse.ui.preferencePages">
  	<page
  		id="com.threecrickets.creel.preferencesPage"
- 		name="Creel Preferences"
+ 		name="Creel"
 		class="com.threecrickets.creel.eclipse.PreferencesPage"/>
 </extension>
 

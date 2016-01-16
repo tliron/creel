@@ -12,6 +12,7 @@
 package com.threecrickets.creel.eclipse;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
+import org.eclipse.jface.preference.IPreferenceStore;
 
 /**
  * Initializes default preferences for the Creel plugin.
@@ -26,8 +27,8 @@ public class PreferencesInitializer extends AbstractPreferenceInitializer
 
 	public void initializeDefaultPreferences()
 	{
+		IPreferenceStore preferences = Plugin.instance.getPreferenceStore();
+		preferences.setValue( PreferencesPage.QUIET, false );
+		preferences.setValue( PreferencesPage.VERBOSITY, 1 );
 	}
-
-	// //////////////////////////////////////////////////////////////////////////
-	// Private
 }

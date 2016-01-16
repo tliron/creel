@@ -11,7 +11,6 @@
 
 package com.threecrickets.creel.eclipse;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
@@ -20,7 +19,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 
-import com.threecrickets.creel.eclipse.internal.ConfigurationUtil;
 import com.threecrickets.creel.eclipse.internal.EclipseUtil;
 
 /**
@@ -49,20 +47,8 @@ public class Nature implements IProjectNature
 			EclipseUtil.setClasspathContainer( javaProject, new Classpath( project ) );
 		}
 
-		Map<String, String> arguments = new HashMap<String, String>();
-		if( ConfigurationUtil.hasDefaultScriptFile( project ) )
-		{
-			arguments.put( Builder.SCRIPT_ARGUMENT, "creel.js" );
-			arguments.put( Builder.SCRIPT_ENGINE_ARGUMENT, "JavaScript" );
-		}
-		else if( ConfigurationUtil.hasDefaultConfigurationFile( project ) )
-			arguments.put( Builder.CONFIGURATION_ARGUMENT, "creel.properties" );
-		arguments.put( Builder.DEFAULT_ARGUMENT, "" );
-		arguments.put( Builder.LIBRARY_ARGUMENT, "libraries/jars" );
-		arguments.put( Builder.API_ARGUMENT, "reference/api" );
-		arguments.put( Builder.SOURCE_ARGUMENT, "reference/source" );
-
-		EclipseUtil.addBuilder( project, Builder.ID, arguments );
+		Map<String, String> arguments = Builder.getDefaultArguments( project );
+		EclipseUtil.setBuilder( project, Builder.ID, arguments );
 	}
 
 	public void deconfigure() throws CoreException

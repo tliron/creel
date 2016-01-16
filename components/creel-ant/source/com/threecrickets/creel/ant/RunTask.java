@@ -357,7 +357,7 @@ public class RunTask extends Task
 		engine.setOverwrite( overwrite );
 		engine.setFlat( flat );
 		engine.setVerbosity( verbosity );
-		engine.setExplicitModules( modules );
+		engine.setModules( modules );
 		engine.setRepositories( repositories );
 		engine.setRules( rules );
 

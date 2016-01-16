@@ -33,8 +33,8 @@ For example, here is a simple `/META-INF/MANIFEST.MF` file:
 All packaged files would be expected under the `/package/` directory inside the Jar.
 
 
-Building with Ant
------------------
+Building a Package using Ant
+----------------------------
 
 Easy. Just nest a manifest inside a [jar task](https://ant.apache.org/manual/Tasks/jar.html):
 
@@ -49,10 +49,10 @@ Easy. Just nest a manifest inside a [jar task](https://ant.apache.org/manual/Tas
     </target>
 
 
-Building with Maven
--------------------
+Building a Package using Maven
+------------------------------
 
-As usual, everything is complicated with Maven.
+As usual, anything straightforward becomes complicated with Maven.
 
 You can use the [assembly plugin](http://maven.apache.org/plugins/maven-assembly-plugin/). Here's a section in `pom.xml`:
 

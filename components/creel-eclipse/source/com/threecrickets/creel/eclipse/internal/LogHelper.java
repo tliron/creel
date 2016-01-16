@@ -27,12 +27,26 @@ public class LogHelper
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param log
+	 *        The log
+	 * @param id
+	 *        The ID
+	 */
 	public LogHelper( ILog log, String id )
 	{
 		this.log = log;
 		this.id = id;
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        The ID
+	 */
 	public LogHelper( String id )
 	{
 		this( Platform.getLog( Platform.getBundle( id ) ), id );
@@ -42,14 +56,52 @@ public class LogHelper
 	// Operations
 	//
 
-	public void log( int severity, Throwable x )
+	/**
+	 * Logs an {@link IStatus#INFO} severity message.
+	 * 
+	 * @param message
+	 *        The message
+	 */
+	public void info( String message )
 	{
-		log.log( new Status( severity, id, IStatus.OK, x.getMessage(), x ) );
+		log( IStatus.INFO, message );
 	}
 
+	/**
+	 * Logs an {@link IStatus#ERROR} severity exception.
+	 * 
+	 * @param x
+	 *        The exception
+	 */
+	public void error( Throwable x )
+	{
+		log( IStatus.ERROR, x );
+	}
+
+	/**
+	 * Logs a message.
+	 * 
+	 * @param severity
+	 *        The severity level
+	 * @param message
+	 *        The message
+	 */
 	public void log( int severity, String message )
 	{
 		log.log( new Status( severity, id, IStatus.OK, message, null ) );
+	}
+
+	/**
+	 * Logs an exception.
+	 * 
+	 * @param severity
+	 *        The severity level
+	 * @param x
+	 *        The exception
+	 */
+	public void log( int severity, Throwable x )
+	{
+		log.log( new Status( severity, id, IStatus.OK, x.getMessage(), x ) );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

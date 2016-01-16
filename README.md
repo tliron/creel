@@ -8,7 +8,7 @@ It can be run as a command line tool, via [Ant](http://ant.apache.org/) tasks, a
 
 Features:
 
-* _No dependencies._ Just one tiny jar (135Kb). Requires just JVM 7+.
+* _No dependencies._ Just one tiny jar (190Kb with _all_ the goodies). Requires just JVM 7+.
 * Very fast multi-threaded, multi-part downloads. (The downloader class is general purpose and you can use it independently of Creel.)
 * Optimizes even further when using a filesystem-based ("file:" URL) repository, using fast copies and memory-mapped loading.
 * Resolves version conflicts according to policy, your choice of newest (cutting-edge) or oldest (conservative).
@@ -48,7 +48,7 @@ Here's a simple example in JavaScript, let's call it `creel.js`. If you have JVM
     engine.eventHandler.add(new com.threecrickets.creel.event.ConsoleEventHandler(true, false)) // ansi=true, stracktraces=false
     
     engine.modules = [
-        {group: 'com.github.sommeri', name: 'less4j', version: '(,1.15.2)'},
+        {id: 'com.github.sommeri:less4j:(,1.15.2)'},
         {group: 'org.jsoup', name: 'jsoup', version: '1.8.1'},
         {group: 'com.fasterxml.jackson', name: 'jackson'},
         {group: 'com.threecrickets.prudence', name: 'prudence'},
@@ -77,13 +77,13 @@ To run it:
 
 Creel keeps a small hidden state file in which it keeps track what it downloaded. This is used mostly for deleting old files during upgrades. By default, the file will be `.creel` in `directories.default`, or in the current directory if that is not set. 
 
-You can specify modules either by a colon-separated "id" (the version can be omitted), or by "group", "name", and optionally "version" separately, as we did in this example.
+You can specify modules either by a colon-separated "id" (the version can be omitted), or by "group", "name", and optionally "version" separately. We used both in this example.
 
 
 Command Line
 ------------
 
-If you really don't want to or can't use scripting, then Creel has a basic command line tool:
+If you really don't want to or can't use scripting, then Creel has a basic command line tool, with a straightforward configuration file format:
 
     java -jar creel.jar
 
@@ -137,9 +137,9 @@ Use Creel to download your dependency Jars and include them in the classpath. He
         </target>
     </project>
 
-Note how lovely it is that you can include everything in your single `build.xml` file. (Still, if you prefer a separate file, the task supports loading a `creel.properties` as with the command line tool.)
+Note how nice it is that you can include everything in your single `build.xml` file. (Still, if you prefer a separate file, the task supports loading a `creel.properties` as with the command line tool.)
 
-The task purposely does not run again if it was already completed successfully. If you've made want the task to run again, then you should run the clean task.
+The task purposely does not run again if it was already completed successfully. If you've made changes to `build.xml` and want the task to run again, then you should run the clean task.
 
 See the [online documentation](http://threecrickets.com/api/java/creel/index.html?com/threecrickets/creel/ant/package-summary.html) for all available tasks and attributes.
 
@@ -158,6 +158,8 @@ For both options, a "Creel Managed Dependencies" classpath will be added for you
 A "Creel Builder" will be added to your project. If you chose the first option, by default it will pull in library Jars, JavaDocs, and sources, as well as unpack into your project's base directory. The builder will detect any change to your `creel.properties` and will silently run Creel to update the classpath. It will also clean the dependencies if you clean your project.
 
 If you chose to manage Creel on your own, the builder will not do anything. Instead, you will need to manually refresh the "Creel Managed Dependencies" classpath from its properties page.
+
+You can configure the builder via a "Creel" tab that is now added to your project properties page.
 
 All Creel output will be to the "Creel" console. You can configure verbosity, turn it off, and otherwise configure Creel defaults in "Windows -> Preferences -> Creel".
 

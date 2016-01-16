@@ -34,25 +34,26 @@ public class Plugin extends AbstractUIPlugin
 
 	public static final String INTERNAL_INSTALLATION_BUNDLE = "com.threecrickets.creel";
 
+	/**
+	 * The plugin singleton or null if not started.
+	 */
+	public static volatile Plugin instance;
+
 	//
 	// Static attributes
 	//
 
-	public static Plugin getDefault()
-	{
-		return plugin;
-	}
-
+	/**
+	 * Log helper.
+	 * 
+	 * @return The log helper
+	 */
 	public static LogHelper getLogHelper()
 	{
 		if( logHelper == null )
 			logHelper = new LogHelper( ID );
 		return logHelper;
 	}
-
-	//
-	// Attributes
-	//
 
 	//
 	// AbstractUIPlugin
@@ -62,22 +63,20 @@ public class Plugin extends AbstractUIPlugin
 	public void start( BundleContext context ) throws Exception
 	{
 		super.start( context );
-		plugin = this;
+		instance = this;
 		getLogHelper().log( IStatus.INFO, "Creel plugin started" );
 	}
 
 	@Override
 	public void stop( BundleContext context ) throws Exception
 	{
-		plugin = null;
+		instance = null;
 		super.stop( context );
 		getLogHelper().log( IStatus.INFO, "Creel plugin stopped" );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
-
-	private static volatile Plugin plugin;
 
 	private static volatile LogHelper logHelper;
 }

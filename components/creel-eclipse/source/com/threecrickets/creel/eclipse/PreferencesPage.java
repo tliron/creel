@@ -11,6 +11,8 @@
 
 package com.threecrickets.creel.eclipse;
 
+import org.eclipse.jface.preference.BooleanFieldEditor;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IWorkbench;
@@ -27,12 +29,29 @@ import com.threecrickets.creel.eclipse.internal.PreferencePageWithFields;
 public class PreferencesPage extends PreferencePageWithFields implements IWorkbenchPreferencePage
 {
 	//
+	// Constants
+	//
+
+	public static final String QUIET = "quiet";
+
+	public static final String VERBOSITY = "verbosity";
+
+	//
 	// PreferencePage
 	//
 
 	protected Control createContents( Composite parent )
 	{
-		Composite top = EclipseUtil.createComposite( parent, 1, 1, true, false );
+		Composite top = EclipseUtil.createGrid( parent, 1, 1, true, false );
+
+		Composite quietComposite = EclipseUtil.createGrid( top );
+		quiet = new BooleanFieldEditor( QUIET, "Quiet", quietComposite );
+		Composite verbosityComposite = EclipseUtil.createGrid( top );
+		verbosity = new IntegerFieldEditor( VERBOSITY, "Verbosity", verbosityComposite );
+
+		addFieldEditor( quiet );
+		addFieldEditor( verbosity );
+
 		return top;
 	}
 
@@ -42,9 +61,13 @@ public class PreferencesPage extends PreferencePageWithFields implements IWorkbe
 
 	public void init( IWorkbench workbench )
 	{
-		setPreferenceStore( Plugin.getDefault().getPreferenceStore() );
+		setPreferenceStore( Plugin.instance.getPreferenceStore() );
 	}
 
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
+
+	private BooleanFieldEditor quiet;
+
+	private IntegerFieldEditor verbosity;
 }

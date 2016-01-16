@@ -11,7 +11,6 @@
 
 package com.threecrickets.creel.eclipse;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +27,6 @@ import org.eclipse.jdt.core.JavaCore;
 
 import com.threecrickets.creel.Artifact;
 import com.threecrickets.creel.Engine;
-import com.threecrickets.creel.eclipse.internal.ConfigurationUtil;
 import com.threecrickets.creel.eclipse.internal.Text;
 
 /**
@@ -50,18 +48,15 @@ public class Classpath implements IClasspathContainer
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param project
+	 *        The project
+	 */
 	public Classpath( IProject project )
 	{
 		this.project = project;
-	}
-
-	//
-	// Attributes
-	//
-
-	public boolean has( File file )
-	{
-		return true;
 	}
 
 	//
@@ -77,7 +72,7 @@ public class Classpath implements IClasspathContainer
 	{
 		try
 		{
-			Engine engine = ConfigurationUtil.createEngine( project );
+			Engine engine = Builder.createEngine( project );
 			engine.load();
 
 			Collection<IClasspathEntry> entries = new ArrayList<IClasspathEntry>();

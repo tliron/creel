@@ -118,7 +118,7 @@ public class Tool
 			engine.setOverwrite( overwrite );
 			engine.setFlat( flat );
 			engine.setMultithreaded( multithreaded );
-			engine.setExplicitModules( configuration.getModuleSpecificationConfigs() );
+			engine.setModules( configuration.getModuleSpecificationConfigs() );
 			engine.setRepositories( configuration.getRepositoryConfigs() );
 			engine.setRules( configuration.getRuleConfigs() );
 

@@ -38,6 +38,9 @@ public class ClasspathPage extends WizardPage implements IClasspathContainerPage
 	// Construction
 	//
 
+	/**
+	 * Constructor.
+	 */
 	public ClasspathPage()
 	{
 		super( Text.ClasspathName, Text.ClasspathName, null );
@@ -50,7 +53,7 @@ public class ClasspathPage extends WizardPage implements IClasspathContainerPage
 
 	public void createControl( Composite parent )
 	{
-		Composite top = EclipseUtil.createComposite( parent, 1, 1, true, false );
+		Composite top = EclipseUtil.createGrid( parent, 1, 1, true, false );
 		Button refresh = new Button( top, SWT.PUSH );
 		refresh.setText( Text.ClasspathRefresh );
 		refresh.addListener( SWT.Selection, new Listener()
