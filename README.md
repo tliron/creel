@@ -20,7 +20,7 @@ Features:
 * Supports an innovative, straightforward [packaging format](PACKAGE.md) that allows you to easily distribute arbitrary files (not just Jars) in any repo.
 * Colorful, animated ANSI terminal feedback where supported. See your downloads woosh!
 
-TODO: [![Download](http://threecrickets.com/media/download.png "Download")](https://drive.google.com/folderview?id=0B5XU4AmCevRXYVVhbWhCbUM1NjQ)
+[![Download](http://threecrickets.com/media/download.png "Download")](https://drive.google.com/folderview?id=0B5XU4AmCevRXWV83Um44emdKLXM)
 
 The above is for complete distributions. Other options for downloading:
 

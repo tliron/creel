@@ -4,6 +4,8 @@ Creel
 
 Creel is a lightweight and lightning-fast library for resolving and downloading JVM dependencies from Maven repositories.
 
+https://github.com/tliron/creel
+
 
 Having Trouble?
 ---------------
