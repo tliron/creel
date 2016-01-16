@@ -91,8 +91,8 @@ By default it will look for a file called `creel.properties` in the current dire
 
     library=lib
 
-    module.1.id=com.github.sommeri:less4j:(,1.15.2)
-    module.2.id=org.jsoup:jsoup
+    module.1.id=com.github.sommeri\:less4j\:(,1.15.2)
+    module.2.id=org.jsoup\:jsoup
     
     repository.1.url=https\://repo1.maven.org/maven2/
     
