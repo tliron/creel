@@ -122,6 +122,7 @@ public class Builder extends IncrementalProjectBuilder
 	 *        The builder arguments
 	 * @return The script file or null
 	 * @throws CoreException
+	 *         In case of an Eclipse error
 	 */
 	public static IFile getScriptFile( IProject project, Map<String, String> arguments ) throws CoreException
 	{

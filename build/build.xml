@@ -159,17 +159,22 @@
 		<antcall target="javadocs-overwrite" />
 	</target>
 
-	<target name="javadocs-overwrite" depends="dependencies" description="Create API documentation" unless="javadocs-present">
+	<target name="javadocs-overwrite" depends="dependencies, ant-dependencies, eclipse-dependencies" description="Create API documentation" unless="javadocs-present">
 		<javadoc
-			destdir="${distribution.api}" sourcepath="${component.source}" excludepackagenames="**.internal.*"
+			destdir="${distribution.api}" excludepackagenames="**.internal.*"
 			access="protected" source="${compile.version}"
 			windowtitle="${documentation.title} ${component.version}${component.version.postfix}" doctitle="${documentation.title} ${component.version}${component.version.postfix}"
 			author="true" splitindex="true" use="true" version="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false"
 			bootclasspath="${compile.boot}">
+			<packageset dir="${component.source}"/>
+			<packageset dir="${ant.source}"/>
+			<packageset dir="${eclipse.source}"/>
 			
 			<link href="${documentation.jvm}" />
 			<!-- Apache Ant has no online javadocs -->
 			<classpath refid="dependencies" />
+			<classpath refid="ant-dependencies" />
+			<classpath refid="eclipse-dependencies" />
 			<bottom>
 				<![CDATA[<i>${documentation.copyright}</i>]]>
 			</bottom>

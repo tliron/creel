@@ -120,6 +120,7 @@ public abstract class Task implements Runnable
 	 * reaches 0 calls {@link Task#done(boolean)}.
 	 * 
 	 * @param counter
+	 *        The counter
 	 */
 	protected void done( AtomicInteger counter )
 	{

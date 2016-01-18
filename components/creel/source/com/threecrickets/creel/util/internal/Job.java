@@ -47,6 +47,7 @@ public class Job
 	 * Adds a task to run when the job finishes.
 	 * 
 	 * @param onEnd
+	 *        The task
 	 */
 	public void onEnd( Runnable onEnd )
 	{

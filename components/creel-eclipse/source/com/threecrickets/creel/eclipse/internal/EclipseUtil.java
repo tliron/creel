@@ -78,8 +78,8 @@ public abstract class EclipseUtil
 
 	/**
 	 * Interpolates and gets a folder relative to the project root. Note that
-	 * "." will mean the project root, but an empty string will mean <i>no
-	 * <i> folder and will return null.
+	 * "." will mean the project root, but an empty string will mean <i>no</i>
+	 * folder and will return null.
 	 * 
 	 * @param project
 	 *        The project
@@ -519,7 +519,7 @@ public abstract class EclipseUtil
 	 *        True to grab excess horizontal space in the parent
 	 * @param grabExcessVerticalSpace
 	 *        True to grab excess vertical space in the parent
-	 * @return
+	 * @return The group
 	 */
 	public static Group createGroup( Composite parent, String text, int columns, int hspan, boolean grabExcessHorizontalSpace, boolean grabExcessVerticalSpace )
 	{
@@ -547,7 +547,7 @@ public abstract class EclipseUtil
 	 *        The argument name or null
 	 * @param arguments
 	 *        The arguments or null
-	 * @return
+	 * @return The text widget
 	 */
 	public static Text createText( Composite parent, String label, String argument, Map<String, String> arguments )
 	{

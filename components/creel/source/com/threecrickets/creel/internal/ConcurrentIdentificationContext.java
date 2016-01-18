@@ -123,6 +123,7 @@ public class ConcurrentIdentificationContext implements Closeable
 	 * submitted.
 	 * 
 	 * @param module
+	 *        The module
 	 */
 	public void notifyIdentified( Module module )
 	{
