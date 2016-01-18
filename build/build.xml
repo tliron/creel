@@ -161,14 +161,14 @@
 
 	<target name="javadocs-overwrite" depends="dependencies, ant-dependencies, eclipse-dependencies" description="Create API documentation" unless="javadocs-present">
 		<javadoc
-			destdir="${distribution.api}" excludepackagenames="**.internal.*"
+			destdir="${distribution.api}"
 			access="protected" source="${compile.version}"
 			windowtitle="${documentation.title} ${component.version}${component.version.postfix}" doctitle="${documentation.title} ${component.version}${component.version.postfix}"
 			author="true" splitindex="true" use="true" version="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false"
 			bootclasspath="${compile.boot}">
-			<packageset dir="${component.source}" />
-			<packageset dir="${ant.source}" />
-			<packageset dir="${eclipse.source}" />
+			<packageset dir="${component.source}" excludes="**/internal" />
+			<packageset dir="${ant.source}" excludes="**/internal" />
+			<packageset dir="${eclipse.source}" excludes="**/internal" />
 			
 			<link href="${documentation.jvm}" />
 			<link href="http://help.eclipse.org/mars/topic/org.eclipse.platform.doc.isv/reference/api" />
