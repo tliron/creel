@@ -643,16 +643,28 @@ public class Engine extends Notifier implements Runnable
 	 * <p>
 	 * If the platform is not specified in the config, it will be
 	 * {@link Engine#getDefaultPlatform()}.
+	 * <p>
+	 * If the ID is not specified, an ordinal number will be assigned.
 	 * 
 	 * @param repositoryConfigs
 	 *        The repository configs
 	 */
+	@SuppressWarnings("unchecked")
 	public void setRepositories( Collection<Map<String, ?>> repositoryConfigs )
 	{
 		repositories.clear();
+		int id = 1;
 		for( Map<String, ?> config : repositoryConfigs )
 		{
+			// Make sure we have an ID
+			if( !config.containsKey( "id" ) )
+			{
+				config = new HashMap<String, Object>( config );
+				( (Map<String, Object>) config ).put( "id", String.valueOf( id++ ) );
+			}
+
 			ConfigHelper configHelper = new ConfigHelper( config );
+
 			String platform = configHelper.getString( "platform", defaultPlatform );
 			Repository repository = newRepository( platform, config );
 			repositories.add( repository );
