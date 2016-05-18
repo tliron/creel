@@ -8,7 +8,7 @@ It can be run as a command line tool, via [Ant](http://ant.apache.org/) tasks, a
 
 Features:
 
-* _No dependencies._ Just one tiny jar (190Kb with _all_ the goodies). Requires just JVM 7+.
+* _No dependencies,_ just run on top of JVM 7+. One tiny jar: 190Kb with _all_ the goodies (Ivy is 1.3Mb).
 * Very fast multi-threaded, multi-part downloads. (The downloader class is general purpose and you can use it independently of Creel.)
 * Optimizes even further when using a filesystem-based ("file:" URL) repository, using fast copies and memory-mapped loading.
 * Resolves version conflicts according to policy, your choice of newest (cutting-edge) or oldest (conservative).
