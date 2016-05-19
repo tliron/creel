@@ -146,7 +146,7 @@ public class Notifier
 	 */
 	public void error( Throwable exception )
 	{
-		fireEvent( Event.Type.ERROR, null, exception != null ? exception.getMessage() : null, null, exception );
+		fireEvent( Event.Type.ERROR, null, null, null, exception );
 	}
 
 	/**

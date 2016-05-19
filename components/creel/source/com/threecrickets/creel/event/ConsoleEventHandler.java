@@ -402,41 +402,40 @@ public class ConsoleEventHandler extends OngoingEventHandler
 			output.append( getProgressEnd() );
 		}
 
-		CharSequence message = null;
-		if( event.getMessage() != null )
-			message = event.getMessage();
-		else if( event.getException() != null )
-			message = event.getException().getMessage();
+		CharSequence message = event.getMessage();
+		Throwable exception = event.getException();
+		boolean printStackTrace = isStacktrace() && ( exception != null );
+		if( ( message == null ) && ( exception != null ) && !printStackTrace )
+			message = exception.toString();
+
 		if( message != null )
+		{
 			output.append( message );
 
-		// We are making sure that we always advance one row only, even if we
-		// print a line longer than a row
-		int length = output.length();
-		int terminalWidth = getTerminalWidth();
-		if( length >= terminalWidth )
-		{
-			// Will automatically advance to the next line
-			getOut().print( output.substring( 0, terminalWidth ) );
-		}
-		else
-		{
-			getOut().print( output );
-			// Reset graphics and erase to end of line
-			ansi( "0m", "K" );
-			getOut().println();
+			// We are making sure that we always advance one row only, even if
+			// we print a line longer than a row
+			int length = output.length();
+			int terminalWidth = getTerminalWidth();
+			if( length >= terminalWidth )
+			{
+				// Will automatically advance to the next line
+				getOut().print( output.substring( 0, terminalWidth ) );
+			}
+			else
+			{
+				getOut().print( output );
+				// Reset graphics and erase to end of line
+				ansi( "0m", "K" );
+				getOut().println();
+			}
 		}
 
 		// Exception stack trace
-		if( isStacktrace() )
+		if( printStackTrace )
 		{
-			Throwable exception = event.getException();
-			if( exception != null )
-			{
-				ansi( getErrorGraphics() + 'm' );
-				exception.printStackTrace( getOut() );
-				ansi( "0m" );
-			}
+			ansi( getErrorGraphics() + 'm' );
+			exception.printStackTrace( getOut() );
+			ansi( "0m" );
 		}
 	}
 

@@ -245,8 +245,8 @@ public class Artifact implements Comparable<Artifact>
 	public Map<String, Object> toConfig( Directories directories )
 	{
 		Map<String, Object> config = new HashMap<String, Object>();
-		if( moduleIdentifier != null )
-			config.put( "module", moduleIdentifier );
+		if( getModuleIdentifier() != null )
+			config.put( "module", getModuleIdentifier() );
 		if( getType() != null )
 			config.put( "type", getType().toString() );
 		config.put( "url", getSourceUrl().toString() );

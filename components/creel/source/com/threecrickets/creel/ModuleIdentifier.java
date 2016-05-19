@@ -11,6 +11,7 @@
 
 package com.threecrickets.creel;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -96,6 +97,17 @@ public abstract class ModuleIdentifier implements Comparable<ModuleIdentifier>, 
 	public abstract Iterable<Artifact> getArtifacts( Directories directories, boolean flat );
 
 	//
+	// Operations
+	//
+
+	/**
+	 * Converts the artifact to a config.
+	 * 
+	 * @return The config
+	 */
+	public abstract Map<String, Object> toConfig();
+
+	//
 	// Cloneable
 	//
 
@@ -112,7 +124,13 @@ public abstract class ModuleIdentifier implements Comparable<ModuleIdentifier>, 
 		if( ( object == null ) || ( getClass() != object.getClass() ) )
 			return false;
 		ModuleIdentifier moduleIdentifier = (ModuleIdentifier) object;
-		return getRepository().equals( moduleIdentifier.getRepository() );
+		Repository a = getRepository();
+		Repository b = moduleIdentifier.getRepository();
+		if( ( a == null ) && ( b == null ) )
+			return true;
+		if( ( a != null ) && ( b != null ) )
+			return a.equals( b );
+		return false;
 	}
 
 	@Override

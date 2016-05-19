@@ -80,6 +80,21 @@ public class MavenModuleSpecification extends ModuleSpecification
 	//
 
 	/**
+	 * Constructor.
+	 * 
+	 * @param options
+	 *        The options
+	 * @param strict
+	 *        Whether we are in strict Maven mode
+	 */
+	public MavenModuleSpecification( Iterable<SpecificationOption> options, boolean strict )
+	{
+		for( SpecificationOption option : options )
+			this.options.add( option );
+		this.strict = strict;
+	}
+
+	/**
 	 * Constructor for a single option.
 	 * 
 	 * @param group
@@ -94,21 +109,6 @@ public class MavenModuleSpecification extends ModuleSpecification
 	public MavenModuleSpecification( String group, String name, String version, boolean strict )
 	{
 		this( Collections.singleton( new SpecificationOption( group, name, version, strict ) ), strict );
-	}
-
-	/**
-	 * Constructor.
-	 * 
-	 * @param options
-	 *        The options
-	 * @param strict
-	 *        Whether we are in strict Maven mode
-	 */
-	public MavenModuleSpecification( Iterable<SpecificationOption> options, boolean strict )
-	{
-		for( SpecificationOption option : options )
-			this.options.add( option );
-		this.strict = strict;
 	}
 
 	/**

@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.creel.internal;
+package com.threecrickets.creel;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -18,8 +18,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -27,9 +29,6 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.threecrickets.creel.Artifact;
-import com.threecrickets.creel.Directories;
-import com.threecrickets.creel.Engine;
 import com.threecrickets.creel.exception.CreelException;
 import com.threecrickets.creel.util.IoUtil;
 import com.threecrickets.creel.util.MultiValueProperties;
@@ -51,12 +50,14 @@ public class State
 	 * 
 	 * @param file
 	 *        The JVM properties file
+	 * @param factory
+	 *        The factory
 	 * @param directories
 	 *        The directories in which to install artifacts
 	 * @throws IOException
 	 *         In case of an I/O error
 	 */
-	public State( File file, Directories directories ) throws IOException
+	public State( File file, Factory factory, Directories directories ) throws IOException
 	{
 		try
 		{
@@ -72,18 +73,23 @@ public class State
 		try
 		{
 			MultiValueProperties properties = new MultiValueProperties();
-			properties.load( new BufferedReader( new FileReader( file ), IoUtil.bufferSize ) );
-
-			for( Map<String, String> config : properties.toMaps() )
+			Reader reader = new BufferedReader( new FileReader( file ), IoUtil.bufferSize );
+			try
 			{
-				try
-				{
-					addArtifact( new Artifact( config, directories ) );
-				}
-				catch( CreelException x )
-				{
-				}
+				properties.load( reader );
 			}
+			finally
+			{
+				reader.close();
+			}
+
+			for( Map<String, String> config : properties.toMaps( "module" ) )
+				addModule( new Module( factory, config ) );
+
+			organizeModules();
+
+			for( Map<String, String> config : properties.toMaps( "artifact" ) )
+				addArtifact( new Artifact( config, directories ) );
 		}
 		catch( FileNotFoundException x )
 		{
@@ -114,9 +120,25 @@ public class State
 		return directories;
 	}
 
-	//
-	// Operations
-	//
+	/**
+	 * The modules in the database.
+	 * 
+	 * @return The modules
+	 */
+	public Iterable<Module> getModules()
+	{
+		return Collections.unmodifiableCollection( modules );
+	}
+
+	/**
+	 * The artifacts in the database.
+	 * 
+	 * @return The artifacts
+	 */
+	public Iterable<Artifact> getArtifacts()
+	{
+		return Collections.unmodifiableCollection( artifacts );
+	}
 
 	/**
 	 * Gets an artifact from the database if it already is there.
@@ -134,13 +156,92 @@ public class State
 	}
 
 	/**
-	 * The artifacts in the database.
+	 * Gets all artifacts in the database that are <i>not</i> listed.
 	 * 
-	 * @return The artifacts
+	 * @param allArtifacts
+	 *        The listed artifacts
+	 * @return The redundant artifacts
 	 */
-	public Iterable<Artifact> getArtifacts()
+	public Iterable<Artifact> getRedundantArtifacts( Iterable<Artifact> allArtifacts )
 	{
-		return Collections.unmodifiableCollection( artifacts );
+		Collection<Artifact> reundantArtifacts = new LinkedList<Artifact>();
+		for( Artifact artifact : getArtifacts() )
+			reundantArtifacts.add( artifact );
+		for( Artifact artifact : allArtifacts )
+			reundantArtifacts.remove( artifact );
+		return Collections.unmodifiableCollection( reundantArtifacts );
+	}
+
+	//
+	// Operations
+	//
+
+	/**
+	 * Adds a module to the database.
+	 * <p>
+	 * The module must be identified.
+	 * 
+	 * @param module
+	 *        The module
+	 * @return True if added, false if already in database
+	 */
+	public boolean addModule( Module module )
+	{
+		ModuleIdentifier moduleIdentifier = module.getIdentifier();
+		for( Module m : getModules() )
+			if( moduleIdentifier.equals( m.getIdentifier() ) )
+				return false;
+		modules.add( module );
+		return true;
+	}
+
+	/**
+	 * Adds modules to the database.
+	 * <p>
+	 * The modules must be identified.
+	 * 
+	 * @param modules
+	 *        The modules
+	 * @return True if anything was added
+	 */
+	public boolean addModules( Iterable<Module> modules )
+	{
+		boolean added = false;
+		for( Module module : modules )
+			if( addModule( module ) )
+				added = true;
+		return added;
+	}
+
+	/**
+	 * Organizes the added modules into a tree structure.
+	 */
+	public void organizeModules()
+	{
+		// Replace all supplicants with existing instances
+		for( Module module : modules )
+			for( Module supplicant : module.getSupplicants() )
+			{
+				ModuleIdentifier supplicantIdentifier = supplicant.getIdentifier();
+				for( Module m : modules )
+					if( supplicantIdentifier.equals( m.getIdentifier() ) )
+					{
+						module.removeSupplicant( supplicant );
+						module.addSupplicant( m );
+					}
+			}
+
+		// Match supplicants with dependents
+		for( Module module : modules )
+			for( Module supplicant : module.getSupplicants() )
+				supplicant.addDependency( module );
+
+		// Set our modules just to the explicit ones
+		ArrayList<Module> copy = new ArrayList<Module>( modules );
+		modules.clear();
+		for( Module module : copy )
+			if( module.isExplicit() )
+				modules.add( module );
 	}
 
 	/**
@@ -184,23 +285,6 @@ public class State
 	}
 
 	/**
-	 * Gets all artifacts in the database that are <i>not</i> listed.
-	 * 
-	 * @param allArtifacts
-	 *        The listed artifacts
-	 * @return The redundant artifacts
-	 */
-	public Iterable<Artifact> getRedundantArtifacts( Iterable<Artifact> allArtifacts )
-	{
-		Collection<Artifact> reundantArtifacts = new LinkedList<Artifact>();
-		for( Artifact artifact : getArtifacts() )
-			reundantArtifacts.add( artifact );
-		for( Artifact artifact : allArtifacts )
-			reundantArtifacts.remove( artifact );
-		return Collections.unmodifiableCollection( reundantArtifacts );
-	}
-
-	/**
 	 * Saves the database to the JVM properties file.
 	 * 
 	 * @throws IOException
@@ -213,10 +297,16 @@ public class State
 		MultiValueProperties properties = new MultiValueProperties();
 
 		int index = 0;
+		for( Module module : getModules() )
+		{
+			Map<String, Object> config = module.toConfig();
+			properties.putMap( "module", index++, config );
+		}
+		index = 0;
 		for( Artifact artifact : getArtifacts() )
 		{
 			Map<String, Object> config = artifact.toConfig( getDirectories() );
-			properties.putMap( index++, config );
+			properties.putMap( "artifact", index++, config );
 		}
 
 		Writer writer = new BufferedWriter( new FileWriter( file ), IoUtil.bufferSize );
@@ -236,6 +326,8 @@ public class State
 	private final File file;
 
 	private final Directories directories;
+
+	private final ArrayList<Module> modules = new ArrayList<Module>();
 
 	private final SortedSet<Artifact> artifacts = new TreeSet<Artifact>();
 }

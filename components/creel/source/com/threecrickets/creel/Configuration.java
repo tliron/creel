@@ -9,7 +9,7 @@
  * at http://threecrickets.com/
  */
 
-package com.threecrickets.creel.internal;
+package com.threecrickets.creel;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,7 +26,7 @@ import java.util.TreeMap;
 import com.threecrickets.creel.util.IoUtil;
 
 /**
- * Creel's configuration, formatted as a JVM properties file.
+ * Creel configuration, formatted as a JVM properties file.
  * 
  * @author Tal Liron
  */
@@ -53,13 +53,20 @@ public class Configuration extends java.util.Properties
 	 * Constructor.
 	 * 
 	 * @param reader
-	 *        The reader
+	 *        The reader (will be closed)
 	 * @throws IOException
 	 *         In case of an I/O error
 	 */
 	public Configuration( Reader reader ) throws IOException
 	{
-		load( reader );
+		try
+		{
+			load( reader );
+		}
+		finally
+		{
+			reader.close();
+		}
 	}
 
 	//

@@ -23,13 +23,13 @@ import org.apache.tools.ant.types.Path;
 import org.apache.tools.ant.types.resources.FileResource;
 
 import com.threecrickets.creel.Artifact;
+import com.threecrickets.creel.Configuration;
 import com.threecrickets.creel.Engine;
 import com.threecrickets.creel.Engine.ConflictPolicy;
 import com.threecrickets.creel.Tool;
 import com.threecrickets.creel.ant.internal.DynamicType;
 import com.threecrickets.creel.event.ConsoleEventHandler;
 import com.threecrickets.creel.event.EventHandlers;
-import com.threecrickets.creel.internal.Configuration;
 
 /**
  * <a href="http://ant.apache.org/">Ant</a> task for Creel. Allows you to
@@ -350,7 +350,7 @@ public class RunTask extends Task
 			throw new BuildException( x );
 		}
 
-		engine.setDefaultPlatform( defaultPlatform );
+		engine.getFactory().setDefaultPlatform( defaultPlatform );
 		if( conflictPolicy != null )
 			engine.setConflictPolicy( conflictPolicy );
 		engine.setMultithreaded( multithreaded );

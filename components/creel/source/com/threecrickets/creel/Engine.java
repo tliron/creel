@@ -14,6 +14,7 @@ package com.threecrickets.creel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,14 +32,11 @@ import com.threecrickets.creel.downloader.Downloader;
 import com.threecrickets.creel.event.EventHandlers;
 import com.threecrickets.creel.event.Notifier;
 import com.threecrickets.creel.exception.CreelException;
-import com.threecrickets.creel.exception.UnsupportedPlatformException;
 import com.threecrickets.creel.internal.ArtifactsClassLoader;
 import com.threecrickets.creel.internal.ConcurrentIdentificationContext;
-import com.threecrickets.creel.internal.Configuration;
 import com.threecrickets.creel.internal.Conflicts;
 import com.threecrickets.creel.internal.IdentificationContext;
 import com.threecrickets.creel.internal.Modules;
-import com.threecrickets.creel.internal.State;
 import com.threecrickets.creel.packaging.PackagingUtil;
 import com.threecrickets.creel.util.ClassUtil;
 import com.threecrickets.creel.util.ConfigHelper;
@@ -60,7 +58,7 @@ import com.threecrickets.creel.util.ConfigHelper;
  * technologies, here called "platforms". Those specifics are handled by classes
  * that extend {@link ModuleIdentifier}, {@link ModuleSpecification}, and
  * {@link Repository}. By default, support for Maven is installed and is used as
- * the default platform. Use {@link Engine#setPlatform(String, String)} to add
+ * the default platform. Use {@link Factory#setPlatform(String, String)} to add
  * more.
  * <p>
  * The class is <i>not</i> thread-safe.
@@ -164,14 +162,23 @@ public class Engine extends Notifier implements Runnable
 	//
 
 	/**
-	 * Constructor.
-	 * <p>
-	 * By default supports the Maven platform as "mvn".
+	 * Constructor with default factory.
 	 */
 	public Engine()
 	{
+		this( new Factory() );
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param factory
+	 *        The factory
+	 */
+	public Engine( Factory factory )
+	{
 		super( new EventHandlers() );
-		setPlatform( "mvn", "com.threecrickets.creel.maven.Maven" );
+		this.factory = factory;
 	}
 
 	//
@@ -179,47 +186,13 @@ public class Engine extends Notifier implements Runnable
 	//
 
 	/**
-	 * The supported platforms.
+	 * The factory.
 	 * 
-	 * @return A map of platform names to class prefixes
+	 * @return The factory
 	 */
-	public Map<String, String> getPlatforms()
+	public Factory getFactory()
 	{
-		return Collections.unmodifiableMap( platforms );
-	}
-
-	/**
-	 * Adds support for a platform.
-	 * 
-	 * @param name
-	 *        The platform name
-	 * @param prefix
-	 *        The class prefix
-	 */
-	public void setPlatform( String name, String prefix )
-	{
-		platforms.put( name, prefix );
-	}
-
-	/**
-	 * The default platform to use if none is specified. Defaults to "mvn".
-	 * 
-	 * @return The default platform name
-	 */
-	public String getDefaultPlatform()
-	{
-		return defaultPlatform;
-	}
-
-	/**
-	 * The default platform to use if none is specified. Defaults to "mvn".
-	 * 
-	 * @param defaultPlatform
-	 *        The default platform name
-	 */
-	public void setDefaultPlatform( String defaultPlatform )
-	{
-		this.defaultPlatform = defaultPlatform;
+		return factory;
 	}
 
 	/**
@@ -508,7 +481,7 @@ public class Engine extends Notifier implements Runnable
 	 * These should be set <i>before</i> calling {@link Engine#run()}.
 	 * <p>
 	 * If the platform is not specified in the config, it will be
-	 * {@link Engine#getDefaultPlatform()}.
+	 * {@link Factory#getDefaultPlatform()}.
 	 * 
 	 * @param moduleSpecificationConfigs
 	 *        The module specification configs
@@ -519,8 +492,8 @@ public class Engine extends Notifier implements Runnable
 		for( Map<String, ?> config : moduleSpecificationConfigs )
 		{
 			ConfigHelper configHelper = new ConfigHelper( config );
-			String platform = configHelper.getString( "platform", defaultPlatform );
-			ModuleSpecification moduleSpecification = newModuleSpecification( platform, config );
+			String platform = configHelper.getString( "platform" );
+			ModuleSpecification moduleSpecification = getFactory().newModuleSpecification( platform, config );
 			Module module = new Module( true, null, moduleSpecification );
 			modules.add( module );
 		}
@@ -642,7 +615,7 @@ public class Engine extends Notifier implements Runnable
 	 * <i>before</i> calling {@link Engine#run()}.
 	 * <p>
 	 * If the platform is not specified in the config, it will be
-	 * {@link Engine#getDefaultPlatform()}.
+	 * {@link Factory#getDefaultPlatform()}.
 	 * <p>
 	 * If the ID is not specified, an ordinal number will be assigned.
 	 * 
@@ -664,9 +637,8 @@ public class Engine extends Notifier implements Runnable
 			}
 
 			ConfigHelper configHelper = new ConfigHelper( config );
-
-			String platform = configHelper.getString( "platform", defaultPlatform );
-			Repository repository = newRepository( platform, config );
+			String platform = configHelper.getString( "platform" );
+			Repository repository = getFactory().newRepository( platform, config );
 			repositories.add( repository );
 		}
 	}
@@ -686,7 +658,7 @@ public class Engine extends Notifier implements Runnable
 	 * <i>before</i> calling {@link Engine#run()}.
 	 * <p>
 	 * If the platform is not specified in the config, it will be
-	 * {@link Engine#getDefaultPlatform()}.
+	 * {@link Factory#getDefaultPlatform()}.
 	 * 
 	 * @param ruleConfigs
 	 *        The rule configs
@@ -695,9 +667,14 @@ public class Engine extends Notifier implements Runnable
 	{
 		rules.clear();
 		for( Map<String, ?> config : ruleConfigs )
-			rules.add( new Rule( config, getDefaultPlatform() ) );
+			rules.add( new Rule( config, getFactory().getDefaultPlatform() ) );
 	}
 
+	/**
+	 * The number of hits we got in the identified module cache when running.
+	 * 
+	 * @return The number of cache hits
+	 */
 	public int getIdentifiedCacheHits()
 	{
 		return identifiedCacheHits.get();
@@ -741,25 +718,10 @@ public class Engine extends Notifier implements Runnable
 	 */
 	public void load()
 	{
-		try
-		{
-			for( Artifact artifact : new State( getStateFile(), getDirectories() ).getArtifacts() )
+		State state = loadState();
+		if( state != null )
+			for( Artifact artifact : state.getArtifacts() )
 				installedArtifacts.add( artifact );
-		}
-		catch( FileNotFoundException x )
-		{
-		}
-		catch( IOException x )
-		{
-			try
-			{
-				error( "Could not load state from " + getStateFile(), x );
-			}
-			catch( IOException xx )
-			{
-				error( xx );
-			}
-		}
 	}
 
 	/**
@@ -792,7 +754,7 @@ public class Engine extends Notifier implements Runnable
 	 */
 	public void run( Stage stage )
 	{
-		info( "Creel " + getVersion() );
+		info( "Creel " + getVersion() + " running " + ( stage != Stage.ALL ? "until " : "" ) + stage.toString().toLowerCase() );
 
 		State state = loadState();
 		boolean stateChanged = false;
@@ -1059,11 +1021,16 @@ public class Engine extends Notifier implements Runnable
 			}
 		}
 
+		if( state.addModules( getIdentifiedModules() ) )
+			stateChanged = true;
+
 		if( state.addArtifacts( getInstalledArtifacts() ) )
 			stateChanged = true;
 
 		if( stateChanged )
 			saveState( state );
+
+		new Report( loadState() ).print( new PrintWriter( System.out, true ) );
 	}
 
 	/**
@@ -1159,9 +1126,7 @@ public class Engine extends Notifier implements Runnable
 	// //////////////////////////////////////////////////////////////////////////
 	// Private
 
-	private final Map<String, String> platforms = new HashMap<String, String>();
-
-	private String defaultPlatform = "mvn";
+	private final Factory factory;
 
 	private ConflictPolicy conflictPolicy = ConflictPolicy.NEWEST;
 
@@ -1385,13 +1350,14 @@ public class Engine extends Notifier implements Runnable
 	{
 		try
 		{
-			State state = new State( getStateFile(), getDirectories() );
+			State state = new State( getStateFile(), getFactory(), getDirectories() );
 			if( getVerbosity() > 0 )
 				info( "Loaded state from " + getStateFile() );
 			return state;
 		}
 		catch( FileNotFoundException x )
 		{
+			return null;
 		}
 		catch( IOException x )
 		{
@@ -1404,7 +1370,6 @@ public class Engine extends Notifier implements Runnable
 				throw new CreelException( xx );
 			}
 		}
-		return null;
 	}
 
 	private void deleteState()
@@ -1451,24 +1416,5 @@ public class Engine extends Notifier implements Runnable
 				throw new CreelException( xx );
 			}
 		}
-	}
-
-	private Repository newRepository( String platform, Map<String, ?> config )
-	{
-		return newInstance( platform, Repository.class.getSimpleName(), config );
-	}
-
-	private ModuleSpecification newModuleSpecification( String platform, Map<String, ?> config )
-	{
-		return newInstance( platform, ModuleSpecification.class.getSimpleName(), config );
-	}
-
-	private <T> T newInstance( String platform, String baseClassName, Map<String, ?> config )
-	{
-		String prefix = platforms.get( platform );
-		if( prefix == null )
-			throw new UnsupportedPlatformException( platform );
-		String className = prefix + baseClassName;
-		return ClassUtil.newInstance( className, config );
 	}
 }

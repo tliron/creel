@@ -14,6 +14,8 @@ package com.threecrickets.creel.maven;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import com.threecrickets.creel.Artifact;
@@ -22,6 +24,7 @@ import com.threecrickets.creel.ModuleIdentifier;
 import com.threecrickets.creel.exception.IncompatibleIdentifiersException;
 import com.threecrickets.creel.exception.IncompatiblePlatformException;
 import com.threecrickets.creel.maven.internal.Version;
+import com.threecrickets.creel.util.ConfigHelper;
 
 /**
  * Creel implementation of <a href="https://maven.apache.org/">Maven</a> m2
@@ -83,6 +86,21 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 		this.version = version == null ? "" : version.trim();
 	}
 
+	/**
+	 * Config constructor.
+	 * 
+	 * @param config
+	 *        The config
+	 */
+	public MavenModuleIdentifier( Map<String, ?> config )
+	{
+		super( null );
+		ConfigHelper configHelper = new ConfigHelper( config );
+		group = configHelper.getString( "group" );
+		name = configHelper.getString( "name" );
+		version = configHelper.getString( "version" );
+	}
+
 	//
 	// Attributes
 	//
@@ -132,6 +150,16 @@ public class MavenModuleIdentifier extends ModuleIdentifier
 	//
 	// ModuleIdentifier
 	//
+
+	public Map<String, Object> toConfig()
+	{
+		Map<String, Object> config = new HashMap<String, Object>();
+		config.put( "platform", "mvn" );
+		config.put( "group", getGroup() );
+		config.put( "name", getName() );
+		config.put( "version", getVersion() );
+		return Collections.unmodifiableMap( config );
+	}
 
 	public Iterable<Artifact> getArtifacts( Directories directories, boolean flat )
 	{

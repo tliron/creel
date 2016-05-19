@@ -11,6 +11,8 @@
 
 package com.threecrickets.creel.util;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -128,6 +130,78 @@ public class ConfigHelper
 		if( value instanceof Number )
 			return ( (Number) value ).intValue() != 0;
 		return value != null ? Boolean.parseBoolean( value.toString() ) : defaultValue;
+	}
+
+	/**
+	 * Gets a config containing entries whose keys begin with a prefix. The
+	 * config's keys will be stripped of the prefix.
+	 * 
+	 * @param keyPrefix
+	 *        The key prefix
+	 * @return The map
+	 */
+	public Map<String, Object> getSubConfig( String keyPrefix )
+	{
+		int keyPrefixLength = keyPrefix.length();
+		Map<String, Object> map = new HashMap<String, Object>();
+		for( Map.Entry<String, ?> entry : config.entrySet() )
+		{
+			String key = entry.getKey();
+			if( key.startsWith( keyPrefix ) )
+			{
+				key = key.substring( keyPrefixLength );
+				map.put( key, entry.getValue() );
+			}
+		}
+		return map;
+	}
+
+	/**
+	 * Gets all configs containing entries whose keys begin with a prefix and
+	 * then have a three-part dot notation. The configs' keys will be stripped
+	 * of the prefix and the first two parts.
+	 * 
+	 * @param keyPrefix
+	 *        The key prefix
+	 * @return The map
+	 */
+	public Collection<Map<String, Object>> getSubConfigs( String keyPrefix )
+	{
+		Map<Integer, Map<String, Object>> maps = new HashMap<Integer, Map<String, Object>>();
+		int keyPrefixLength = keyPrefix.length();
+		for( Map.Entry<String, ?> entry : config.entrySet() )
+		{
+			String key = entry.getKey();
+			if( key.startsWith( keyPrefix ) )
+			{
+				key = key.substring( keyPrefixLength );
+				String[] parts = key.split( "\\.", 2 );
+				if( parts.length < 2 )
+					continue;
+
+				int index;
+				try
+				{
+					index = Integer.parseInt( parts[0] );
+				}
+				catch( NumberFormatException x )
+				{
+					continue;
+				}
+
+				key = parts[1];
+
+				Map<String, Object> map = maps.get( index );
+				if( map == null )
+				{
+					map = new HashMap<String, Object>();
+					maps.put( index, map );
+				}
+
+				map.put( key, entry.getValue() );
+			}
+		}
+		return maps.values();
 	}
 
 	// //////////////////////////////////////////////////////////////////////////

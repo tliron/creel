@@ -13,9 +13,13 @@ package com.threecrickets.creel;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+
+import com.threecrickets.creel.util.ConfigHelper;
 
 /**
  * Represents information about a module.
@@ -56,6 +60,32 @@ public class Module
 		this.explicit = explicit;
 		this.identifier = identifier;
 		this.specification = specification;
+	}
+
+	/**
+	 * Config constructor.
+	 * <p>
+	 * Supports identifiers, but not specifications; supplicants, but not
+	 * dependents.
+	 * 
+	 * @param factory
+	 *        The factory
+	 * @param config
+	 *        The config
+	 */
+	public Module( Factory factory, Map<String, ?> config )
+	{
+		ConfigHelper configHelper = new ConfigHelper( config );
+		explicit = configHelper.getBoolean( "explicit" );
+		Map<String, Object> identifierConfig = configHelper.getSubConfig( "identifier." );
+		String platform = new ConfigHelper( identifierConfig ).getString( "platform" );
+		identifier = factory.newModuleIdentifier( platform, identifierConfig );
+		for( Map<String, Object> supplicantConfig : configHelper.getSubConfigs( "supplicant." ) )
+		{
+			platform = new ConfigHelper( supplicantConfig ).getString( "platform" );
+			ModuleIdentifier supplicantIdentifier = factory.newModuleIdentifier( platform, supplicantConfig );
+			supplicants.add( new Module( false, supplicantIdentifier, null ) );
+		}
 	}
 
 	//
@@ -126,6 +156,31 @@ public class Module
 	//
 	// Operations
 	//
+
+	/**
+	 * Converts the module to a config.
+	 * <p>
+	 * Supports identifiers, but not specifications; supplicants, but not
+	 * dependents.
+	 * 
+	 * @return The config
+	 */
+	public Map<String, Object> toConfig()
+	{
+		Map<String, Object> config = new HashMap<String, Object>();
+		if( isExplicit() )
+			config.put( "explicit", true );
+		for( Map.Entry<String, Object> entry : getIdentifier().toConfig().entrySet() )
+			config.put( "identifier." + entry.getKey(), entry.getValue() );
+		int i = 0;
+		for( Module supplicant : getSupplicants() )
+		{
+			for( Map.Entry<String, Object> entry : supplicant.getIdentifier().toConfig().entrySet() )
+				config.put( "supplicant." + i + '.' + entry.getKey(), entry.getValue() );
+			i++;
+		}
+		return Collections.unmodifiableMap( config );
+	}
 
 	/**
 	 * Sets another module as a dependency of this module.

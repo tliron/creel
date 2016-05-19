@@ -16,7 +16,6 @@ import java.io.PrintStream;
 
 import com.threecrickets.creel.event.ConsoleEventHandler;
 import com.threecrickets.creel.event.EventHandlers;
-import com.threecrickets.creel.internal.Configuration;
 import com.threecrickets.creel.util.ArgumentsHelper;
 
 /**
@@ -106,14 +105,14 @@ public class Tool
 			if( !quiet )
 				( (EventHandlers) engine.getEventHandler() ).add( new ConsoleEventHandler( ansi, verbosity > 1 ) );
 
-			engine.info( "Configuration: " + configFile );
+			engine.info( "Loading configuration: " + configFile );
 
 			engine.getDirectories().setDefault( defaultPath );
 			engine.getDirectories().setLibrary( libraryPath );
 			engine.getDirectories().setApi( apiPath );
 			engine.getDirectories().setSource( sourcePath );
 			engine.setStateFile( statePath );
-			engine.setDefaultPlatform( defaultPlatform );
+			engine.getFactory().setDefaultPlatform( defaultPlatform );
 			engine.setVerbosity( verbosity );
 			engine.setOverwrite( overwrite );
 			engine.setFlat( flat );
