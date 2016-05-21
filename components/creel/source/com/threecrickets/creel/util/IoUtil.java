@@ -43,9 +43,9 @@ public abstract class IoUtil
 	//
 
 	/**
-	 * The timeout for operations in milliseconds. Defaults to 5000.
+	 * The timeout for operations in milliseconds. Defaults to 8000.
 	 */
-	public static volatile int timeout = 5000;
+	public static volatile int timeout = 8000;
 
 	/**
 	 * The buffer size in bytes. Defaults to 16Kb.

@@ -767,7 +767,10 @@ public class Engine extends Notifier implements Runnable
 
 			if( isMultithreaded() )
 			{
-				ConcurrentIdentificationContext concurrentContext = new ConcurrentIdentificationContext( 10 );
+				// Using threads-per-host is a simplification here: the threads
+				// may actually be spread across many hosts. But it's still a
+				// good value for the maximum concurrency we want to allow.
+				ConcurrentIdentificationContext concurrentContext = new ConcurrentIdentificationContext( getThreadsPerHost() );
 				try
 				{
 					for( Module explicitModule : getModules() )
@@ -961,9 +964,15 @@ public class Engine extends Notifier implements Runnable
 			else
 			{
 				if( !getIdentifiedModules().iterator().hasNext() )
-					info( "Not installing because no modules have been identified" );
+				{
+					info( "Not continuing because no modules have been identified" );
+					return;
+				}
 				else if( getUnidentifiedModules().iterator().hasNext() )
-					info( "Not installing because could not identify all modules" );
+				{
+					info( "Not continuing because could not identify all modules" );
+					return;
+				}
 			}
 		}
 

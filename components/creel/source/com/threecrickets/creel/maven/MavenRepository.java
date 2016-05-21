@@ -353,7 +353,7 @@ public class MavenRepository extends Repository
 		if( notifier == null )
 			notifier = new Notifier();
 
-		// TODO: cache POMs
+		// TODO: cache POMs?
 		URL url = getUrl( moduleIdentifier, "pom", null );
 		try
 		{
@@ -399,7 +399,7 @@ public class MavenRepository extends Repository
 		if( notifier == null )
 			notifier = new Notifier();
 
-		// TODO: cache metadata!
+		// TODO: cache metadata?
 		URL url = getMetaDataUrl( group, name );
 		try
 		{

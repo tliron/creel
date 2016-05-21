@@ -68,12 +68,12 @@ public class Module
 	 * Supports identifiers, but not specifications; supplicants, but not
 	 * dependents.
 	 * 
-	 * @param factory
-	 *        The factory
 	 * @param config
 	 *        The config
+	 * @param factory
+	 *        The factory
 	 */
-	public Module( Factory factory, Map<String, ?> config )
+	public Module( Map<String, ?> config, Factory factory )
 	{
 		ConfigHelper configHelper = new ConfigHelper( config );
 		explicit = configHelper.getBoolean( "explicit" );
@@ -183,14 +183,25 @@ public class Module
 	}
 
 	/**
-	 * Sets another module as a dependency of this module.
+	 * Sets another module as a dependency of this module. Makes sure that
+	 * duplicate dependencies are not added.
 	 * 
-	 * @param dependency
-	 *        The dependency
+	 * @param module
+	 *        The dependency module
 	 */
-	public synchronized void addDependency( Module dependency )
+	public synchronized void addDependency( Module module )
 	{
-		dependencies.add( dependency );
+		boolean found = false;
+		ModuleIdentifier moduleIdentifier = module.getIdentifier();
+		if( moduleIdentifier != null )
+			for( Module dependency : getDependencies() )
+				if( moduleIdentifier.equals( dependency.getIdentifier() ) )
+				{
+					found = true;
+					break;
+				}
+		if( !found )
+			dependencies.add( module );
 	}
 
 	/**
@@ -203,8 +214,9 @@ public class Module
 	public synchronized void addSupplicant( Module module )
 	{
 		boolean found = false;
+		ModuleIdentifier moduleIdentifier = module.getIdentifier();
 		for( Module supplicant : getSupplicants() )
-			if( module.getIdentifier().equals( supplicant.getIdentifier() ) )
+			if( moduleIdentifier.equals( supplicant.getIdentifier() ) )
 			{
 				found = true;
 				break;
@@ -221,10 +233,11 @@ public class Module
 	 */
 	public synchronized void removeSupplicant( Module module )
 	{
+		ModuleIdentifier moduleIdentifier = module.getIdentifier();
 		for( ListIterator<Module> i = supplicants.listIterator(); i.hasNext(); )
 		{
 			Module supplicant = i.next();
-			if( module.getIdentifier().equals( supplicant.getIdentifier() ) )
+			if( moduleIdentifier.equals( supplicant.getIdentifier() ) )
 			{
 				i.remove();
 				break;
@@ -244,7 +257,7 @@ public class Module
 		identifier = module.getIdentifier().clone();
 		dependencies.clear();
 		for( Module dependency : module.getDependencies() )
-			dependencies.add( dependency );
+			addDependency( dependency );
 	}
 
 	/**
@@ -275,10 +288,11 @@ public class Module
 	public synchronized void replaceModule( Module oldModule, Module newModule, boolean recursive )
 	{
 		removeSupplicant( oldModule );
+		ModuleIdentifier oldModuleIdentifier = oldModule.getIdentifier();
 		for( ListIterator<Module> i = dependencies.listIterator(); i.hasNext(); )
 		{
 			Module dependency = i.next();
-			if( oldModule.getIdentifier().equals( dependency.getIdentifier() ) )
+			if( oldModuleIdentifier.equals( dependency.getIdentifier() ) )
 			{
 				dependency = newModule;
 				i.set( dependency );
@@ -300,22 +314,24 @@ public class Module
 	public String toString( boolean longForm )
 	{
 		StringBuilder r = new StringBuilder(), prefix = new StringBuilder();
-		if( getIdentifier() != null )
+		ModuleIdentifier moduleIdentifier = getIdentifier();
+		ModuleSpecification moduleSpecification = getSpecification();
+		if( moduleIdentifier != null )
 		{
 			r.append( "id=" );
-			r.append( getIdentifier() );
+			r.append( moduleIdentifier );
 		}
-		if( ( longForm || ( getIdentifier() != null ) ) && ( getSpecification() != null ) )
+		if( ( longForm || ( moduleIdentifier != null ) ) && ( moduleSpecification != null ) )
 		{
 			if( r.length() != 0 )
 				r.append( ", " );
 			r.append( "spec=" );
-			r.append( getSpecification() );
+			r.append( moduleSpecification );
 		}
 		if( longForm )
 		{
 			prefix.append( isExplicit() ? '*' : '+' ); // explicit?
-			prefix.append( getIdentifier() != null ? '!' : '?' ); // identified?
+			prefix.append( moduleIdentifier != null ? '!' : '?' ); // identified?
 			Iterator<?> i = getDependencies().iterator();
 			if( i.hasNext() )
 			{

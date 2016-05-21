@@ -19,7 +19,8 @@ import java.util.Objects;
  * <p>
  * These are implemented differently per platform.
  * <p>
- * Child classes <b>must</b> override {@link Object#equals(Object)} and
+ * Child classes must have a config constructor (accepting a Map&lt;String,
+ * ?$gt;). Additional, they must override {@link Object#equals(Object)} and
  * {@link Object#hashCode()} with a proper implementation. The following
  * semantics are supported and recommended:
  * 
@@ -101,7 +102,7 @@ public abstract class ModuleIdentifier implements Comparable<ModuleIdentifier>, 
 	//
 
 	/**
-	 * Converts the artifact to a config.
+	 * Converts the module identifier to a config.
 	 * 
 	 * @return The config
 	 */

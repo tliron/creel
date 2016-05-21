@@ -34,8 +34,8 @@ import com.threecrickets.creel.util.IoUtil;
 import com.threecrickets.creel.util.MultiValueProperties;
 
 /**
- * A database of artifacts that be saved to and loaded from a JVM properties
- * file.
+ * A database of modules and artifacts that be saved to and loaded from a JVM
+ * properties file.
  * 
  * @author Tal Liron
  */
@@ -84,9 +84,7 @@ public class State
 			}
 
 			for( Map<String, String> config : properties.toMaps( "module" ) )
-				addModule( new Module( factory, config ) );
-
-			organizeModules();
+				addModule( new Module( config, factory ) );
 
 			for( Map<String, String> config : properties.toMaps( "artifact" ) )
 				addArtifact( new Artifact( config, directories ) );
@@ -192,6 +190,7 @@ public class State
 			if( moduleIdentifier.equals( m.getIdentifier() ) )
 				return false;
 		modules.add( module );
+		fixModules();
 		return true;
 	}
 
@@ -211,37 +210,6 @@ public class State
 			if( addModule( module ) )
 				added = true;
 		return added;
-	}
-
-	/**
-	 * Organizes the added modules into a tree structure.
-	 */
-	public void organizeModules()
-	{
-		// Replace all supplicants with existing instances
-		for( Module module : modules )
-			for( Module supplicant : module.getSupplicants() )
-			{
-				ModuleIdentifier supplicantIdentifier = supplicant.getIdentifier();
-				for( Module m : modules )
-					if( supplicantIdentifier.equals( m.getIdentifier() ) )
-					{
-						module.removeSupplicant( supplicant );
-						module.addSupplicant( m );
-					}
-			}
-
-		// Match supplicants with dependents
-		for( Module module : modules )
-			for( Module supplicant : module.getSupplicants() )
-				supplicant.addDependency( module );
-
-		// Set our modules just to the explicit ones
-		ArrayList<Module> copy = new ArrayList<Module>( modules );
-		modules.clear();
-		for( Module module : copy )
-			if( module.isExplicit() )
-				modules.add( module );
 	}
 
 	/**
@@ -330,4 +298,25 @@ public class State
 	private final ArrayList<Module> modules = new ArrayList<Module>();
 
 	private final SortedSet<Artifact> artifacts = new TreeSet<Artifact>();
+
+	private void fixModules()
+	{
+		// Replace all supplicants with existing instances
+		for( Module module : modules )
+			for( Module supplicant : module.getSupplicants() )
+			{
+				ModuleIdentifier supplicantIdentifier = supplicant.getIdentifier();
+				for( Module m : modules )
+					if( supplicantIdentifier.equals( m.getIdentifier() ) )
+					{
+						module.removeSupplicant( supplicant );
+						module.addSupplicant( m );
+					}
+			}
+
+		// Match supplicants with dependents
+		for( Module module : modules )
+			for( Module supplicant : module.getSupplicants() )
+				supplicant.addDependency( module );
+	}
 }
