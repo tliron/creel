@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Three Crickets LLC.
+ * Copyright 2015-2017 Three Crickets LLC.
  * <p>
  * The contents of this file are subject to the terms of the LGPL version 3.0:
  * http://www.gnu.org/copyleft/lesser.html
@@ -13,6 +13,7 @@ package com.threecrickets.creel;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 
 import com.threecrickets.creel.event.ConsoleEventHandler;
 import com.threecrickets.creel.event.EventHandlers;
@@ -122,6 +123,8 @@ public class Tool
 			engine.setRules( configuration.getRuleConfigs() );
 
 			engine.run( end );
+
+			new Report( engine.load() ).print( new PrintWriter( System.out, true ) );
 		}
 		catch( Throwable x )
 		{

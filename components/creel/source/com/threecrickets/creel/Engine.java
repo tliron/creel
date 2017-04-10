@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Three Crickets LLC.
+ * Copyright 2015-2017 Three Crickets LLC.
  * <p>
  * The contents of this file are subject to the terms of the LGPL version 3.0:
  * http://www.gnu.org/copyleft/lesser.html
@@ -14,7 +14,6 @@ package com.threecrickets.creel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +25,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.threecrickets.creel.downloader.Downloader;
@@ -714,14 +715,17 @@ public class Engine extends Notifier implements Runnable
 	}
 
 	/**
-	 * Loads the known artifacts from the state file.
+	 * Loads the state file if exists, and adds the known artifacts.
+	 * 
+	 * @return The state or null
 	 */
-	public void load()
+	public State load()
 	{
 		State state = loadState();
 		if( state != null )
 			for( Artifact artifact : state.getArtifacts() )
 				installedArtifacts.add( artifact );
+		return state;
 	}
 
 	/**
@@ -957,7 +961,10 @@ public class Engine extends Notifier implements Runnable
 				}
 
 				if( installedCount == 0 )
+				{
 					end( installingId, "No new artifacts to install" );
+					return;
+				}
 				else
 					end( installingId, "Installed " + installedCount + ( installedCount != 1 ? " new artifacts" : " new artifact" ) );
 			}
@@ -965,12 +972,12 @@ public class Engine extends Notifier implements Runnable
 			{
 				if( !getIdentifiedModules().iterator().hasNext() )
 				{
-					info( "Not continuing because no modules have been identified" );
+					info( "Did not install because no modules have been identified" );
 					return;
 				}
 				else if( getUnidentifiedModules().iterator().hasNext() )
 				{
-					info( "Not continuing because could not identify all modules" );
+					info( "Did not install because could not identify all modules" );
 					return;
 				}
 			}
@@ -1038,8 +1045,6 @@ public class Engine extends Notifier implements Runnable
 
 		if( stateChanged )
 			saveState( state );
-
-		new Report( loadState() ).print( new PrintWriter( System.out, true ) );
 	}
 
 	/**
@@ -1167,7 +1172,7 @@ public class Engine extends Notifier implements Runnable
 
 	private final Modules excludedModules = new Modules();
 
-	private final Collection<Artifact> installedArtifacts = new ArrayList<Artifact>();
+	private final SortedSet<Artifact> installedArtifacts = new TreeSet<Artifact>();
 
 	private final Conflicts conflicts = new Conflicts();
 
